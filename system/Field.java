@@ -7,6 +7,7 @@ import com.microsoft.z3.*;
 
 import system.parsers.refinement_type_clause;
 import system.parsers.modifiers;
+import system.parsers.refinement_type;
 
 public class Field {
 	public int id;
@@ -138,7 +139,7 @@ public class Field {
 			if(f.refinement_type_clause.refinement_type!=null){
 				f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, f.get_Expr(cs));
 			}else{
-				Refinement_type rt = cs.get_refinement_type(f.refinement_type_clause.ident);
+				refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
 				if(rt!=null){
 					rt.add_refinement_constraint(cs, f, f.get_Expr(cs));
 				}

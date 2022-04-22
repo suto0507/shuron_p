@@ -10,7 +10,6 @@ import system.Check_status;
 import system.Field;
 import system.Parser;
 import system.Parser_status;
-import system.Refinement_type;
 import system.Source;
 import system.Variable;
 
@@ -90,7 +89,7 @@ public class method_decl implements Parser<String>{
 			
 			
 			if(this.type_spec!=null){
-				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers);
+				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field);
 			}else{
 				//コンストラクタでの初期化
 				for(Field f : cs.fields){
@@ -242,7 +241,7 @@ public class method_decl implements Parser<String>{
 				if(cs.return_v.refinement_type_clause.refinement_type!=null){
 					cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr);
 				}else if(cs.return_v.refinement_type_clause.ident!=null){
-					Refinement_type rt = cs.get_refinement_type(cs.return_v.refinement_type_clause.ident);
+					refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(cs.return_v.refinement_type_clause.ident, cs.return_v.class_object.type);
 					if(rt!=null){
 						rt.assert_refinement(cs, cs.return_v, cs.return_expr);
 					}else{

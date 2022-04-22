@@ -117,6 +117,7 @@ public class compilation_unit implements Parser<String>{
 		}
 		return null;
 	}
+
 	
 	public variable_definition search_field(String class_name, String field_name){
 		for(class_declaration cd : classes){
@@ -124,6 +125,20 @@ public class compilation_unit implements Parser<String>{
 				for(variable_definition vd : cd.class_block.variable_definitions){
 					if(vd.variable_decls.ident.equals(field_name)){
 						return vd;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	
+	public refinement_type search_refinement_type(String class_name, String type_name){
+		for(class_declaration cd : classes){
+			if(cd.class_name.equals(class_name)){
+				for(def_type_clause dtc : cd.class_block.def_type_clauses){
+					if(dtc.ident.equals(type_name)){
+						return dtc.refinement_type;
 					}
 				}
 			}

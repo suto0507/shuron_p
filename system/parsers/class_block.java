@@ -75,9 +75,6 @@ public class class_block implements Parser<String>{
 	}
 	
 	public void check(Check_status cs) throws Exception{
-		for(def_type_clause p : def_type_clauses){
-			p.check(cs);
-		}
 		//invariantとフィールドについて書く
 		cs.invariants = this.invariants;
 		

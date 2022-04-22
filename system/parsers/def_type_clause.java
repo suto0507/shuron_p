@@ -27,8 +27,6 @@ public class def_type_clause implements Parser<String>{
 		return this.st;
 	}
 	
-	public void check(Check_status cs){
-		cs.add_refinement_type(this.refinement_type.ident, this.refinement_type.predicates, this.refinement_type.type.type, ident);
-	}
+	
 
 }

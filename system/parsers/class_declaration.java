@@ -40,7 +40,7 @@ public class class_declaration implements Parser<String>{
 		csc.clone_list();
 		modifiers m = new modifiers();
 		m.is_final = true;
-		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", this.class_name, 0, null, m);
+		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", this.class_name, 0, null, m, null );
 		this_field.temp_num = 0;
 		csc.fields.add(this_field);
 		csc.this_field = this_field;

@@ -12,12 +12,12 @@ public class Check_status {
 	public BoolExpr pathcondition;
 	public List<Variable> variables;
 	//List<Variable> before_if_variables;
-	public List<Refinement_type> refinement_types;
 	public List<Field> fields;
 	public List<invariant> invariants;
 	public Context ctx;
 	public Solver solver;
 	public Field this_field;
+	public List<Pair<String, refinement_type>> local_refinements;
 	
 	public boolean in_refinement_predicate;
 	public Field refined_Field;
@@ -63,7 +63,6 @@ public class Check_status {
 		this.Check_status_share = new Check_status_share(cu);
 		this.ctx = new Context(new HashMap<>());
 		this.solver = ctx.mkSolver();
-		this.refinement_types = new ArrayList<Refinement_type>();
 		this.fields = new ArrayList<Field>();
 		this.return_exprs = new ArrayList<Expr>();
 		this.return_pathconditions = new ArrayList<BoolExpr>();
@@ -178,17 +177,6 @@ public class Check_status {
 		//return null;
 	}
 
-	
-	public Refinement_type get_refinement_type(String ident) throws Exception{
-		for(Refinement_type rt :this.refinement_types){
-			if(ident.equals(rt.type_name)){
-				return rt;
-			}
-		}
-		//System.out.println("cant find " + ident + "\n");
-		throw new Exception("can not find " + ident + "\n");
-		//return null;
-	}
 
 	
 	public String new_temp(){
@@ -242,7 +230,7 @@ public class Check_status {
 	}
 	
 	public Variable add_variable(String variable, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers) throws Exception{
-		Variable v = new Variable(this.Check_status_share.get_tmp_num(), variable, type, dims, refinement_type_clause, modifiers);
+		Variable v = new Variable(this.Check_status_share.get_tmp_num(), variable, type, dims, refinement_type_clause, modifiers, this.this_field);
 		this.variables.add(v);
 		return v;
 	}
@@ -271,10 +259,7 @@ public class Check_status {
 			cs.variables.add(v);
 		}
 		//cs.before_if_variables = this.before_if_variables;
-		cs.refinement_types = new ArrayList<Refinement_type>();
-		for(Refinement_type rt : this.refinement_types){
-			cs.refinement_types.add(rt);
-		}
+		
 		cs.fields = new ArrayList<Field>();
 		for(Field f : this.fields){
 			cs.fields.add(f);
@@ -374,9 +359,6 @@ public class Check_status {
 		this.solver.pop();
 	}
 	
-	public void add_refinement_type(String ident, predicates predicates, String type, String type_name){
-		this.refinement_types.add(new Refinement_type(ident, predicates, type, type_name));
-	}
 	
 	public void constructor_refinement_check() throws Exception{
 		System.out.println("check all refinement type predicates");
@@ -385,7 +367,7 @@ public class Check_status {
 				if(f.refinement_type_clause.refinement_type!=null){
 					f.refinement_type_clause.refinement_type.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)));
 				}else if(f.refinement_type_clause.ident!=null){
-					Refinement_type rt = this.get_refinement_type(f.refinement_type_clause.ident);
+					refinement_type rt = this.Check_status_share.compilation_unit.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
 					if(rt!=null){
 						rt.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)));
 					}else{

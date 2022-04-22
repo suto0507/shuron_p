@@ -8,7 +8,6 @@ import system.Check_status;
 import system.Field;
 import system.Parser;
 import system.Parser_status;
-import system.Refinement_type;
 import system.Source;
 
 public class primary_expr implements Parser<String>{
@@ -172,7 +171,7 @@ public class primary_expr implements Parser<String>{
 					if(f.refinement_type_clause.refinement_type!=null){
 						f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex);
 					}else if(f.refinement_type_clause.ident!=null){
-						Refinement_type rt = cs.get_refinement_type(f.refinement_type_clause.ident);
+						refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
 						if(rt!=null){
 							rt.add_refinement_constraint(cs, f, ex);
 						}else{

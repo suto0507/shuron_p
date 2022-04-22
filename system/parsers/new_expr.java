@@ -12,7 +12,6 @@ import system.Check_status;
 import system.Field;
 import system.Parser;
 import system.Parser_status;
-import system.Refinement_type;
 import system.Source;
 import system.Variable;
 
@@ -40,7 +39,7 @@ public class new_expr implements Parser<String>{
 			Variable ret = null;
 			cs.right_side_status.length = length;
 			
-			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, 1, null, new modifiers());
+			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, 1, null, new modifiers(), cs.this_field);
 
 			ret.temp_num++;
 			return ret;
@@ -54,7 +53,7 @@ public class new_expr implements Parser<String>{
 			
 			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type.type);
 			if(cd == null){
-				throw new Exception("can't find method " + this.type.type);
+				throw new Exception("can't find class " + this.type.type);
 			}
 			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type.type, this.type.type);
 			if(md == null){
@@ -69,7 +68,7 @@ public class new_expr implements Parser<String>{
 
 			
 			//ï‘ÇËíl
-			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type.type + "_constructor_tmp", this.type.type, 0, null, md.modifiers);
+			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type.type + "_constructor_tmp", this.type.type, 0, null, md.modifiers, cs.this_field);
 			result.temp_num++;
 			cs.result = result;
 
@@ -81,7 +80,7 @@ public class new_expr implements Parser<String>{
 				param_declaration pd = md.formals.param_declarations.get(j);
 				modifiers m = new modifiers();
 				m.is_final = pd.is_final;
-				Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m);
+				Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, result);
 				cs.called_method_args.add(v);
 				v.temp_num = 0;
 				//à¯êîÇ…ílÇïRÇ√ÇØÇÈ
@@ -91,7 +90,7 @@ public class new_expr implements Parser<String>{
 					if(v.refinement_type_clause.refinement_type!=null){
 						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs));
 					}else{
-						Refinement_type rt = cs.get_refinement_type(v.refinement_type_clause.ident);
+						refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(v.refinement_type_clause.ident, v.class_object.type);
 						if(rt!=null){
 							rt.assert_refinement(cs, v, v.get_Expr(cs));
 						}else{

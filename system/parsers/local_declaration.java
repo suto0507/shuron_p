@@ -5,7 +5,6 @@ import com.microsoft.z3.BoolExpr;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
-import system.Refinement_type;
 import system.Source;
 import system.Variable;
 
@@ -49,7 +48,7 @@ public class local_declaration implements Parser<String>{
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs));
 				}else if(v.refinement_type_clause.ident!=null){
-					Refinement_type rt = cs.get_refinement_type(v.refinement_type_clause.ident);
+					refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(v.refinement_type_clause.ident, v.class_object.type);
 					if(rt!=null){
 						rt.assert_refinement(cs, v, v.get_Expr(cs));
 					}else{

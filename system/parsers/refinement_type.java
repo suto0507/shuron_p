@@ -7,7 +7,6 @@ import system.Check_status;
 import system.Field;
 import system.Parser;
 import system.Parser_status;
-import system.Refinement_type;
 import system.Source;
 
 public class refinement_type implements Parser<String>{
@@ -56,7 +55,7 @@ public class refinement_type implements Parser<String>{
 		}else if(this.type.type.equals(refined_Field.type)){
 			//ƒNƒ‰ƒXŒ^
 		}else{
-			Refinement_type rt = cs.get_refinement_type(type.type);
+			refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(type.type, refined_Field.type);
 			if(rt!=null){
 				rt.assert_refinement(cs, refined_Field, refined_Expr);
 			}else{
@@ -91,7 +90,7 @@ public class refinement_type implements Parser<String>{
 		}else if(this.type.type.equals(refined_Field.type)){
 			//ƒNƒ‰ƒXŒ^
 		}else{
-			Refinement_type rt = cs.get_refinement_type(type.type);
+			refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(type.type, refined_Field.type);
 			if(rt!=null){
 				rt.add_refinement_constraint(cs, refined_Field, refined_Expr);
 			}else{

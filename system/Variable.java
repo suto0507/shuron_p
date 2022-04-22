@@ -21,10 +21,10 @@ public class Variable extends Field{
 	Expr assign_Expr;
 	
 	
-	Field class_object;
+	Field class_object; //Variableでは、篩型のスコープ関連で使ったりする
 	*/
 	
-	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers) throws Exception{
+	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object) throws Exception{
 		this.id = id;
 		this.temp_num = - 1;
 		this.field_name = field_name;
@@ -32,7 +32,7 @@ public class Variable extends Field{
 		this.dims = dims;
 		this.refinement_type_clause = refinement_type_clause;
 		this.modifiers = modifiers;
-		this.class_object = null;
+		this.class_object = class_object;
 		if(this.dims>0 && this.refinement_type_clause!=null){
 			throw new Exception("Cannot use refinement type for array");
 		}
@@ -40,7 +40,7 @@ public class Variable extends Field{
 	
 	@Override
 	public Variable clone_e() throws Exception{
-		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers);
+		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object);
 		ret.temp_num = this.temp_num;
 		return ret;
 	}

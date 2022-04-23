@@ -55,7 +55,7 @@ public class refinement_type implements Parser<String>{
 		}else if(this.type.type.equals(refined_Field.type)){
 			//クラス型
 		}else{
-			refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(type.type, refined_Field.type);
+			refinement_type rt = cs.search_refinement_type(type.type, refined_Field.type);
 			if(rt!=null){
 				rt.assert_refinement(cs, refined_Field, refined_Expr);
 			}else{
@@ -90,7 +90,7 @@ public class refinement_type implements Parser<String>{
 		}else if(this.type.type.equals(refined_Field.type)){
 			//クラス型
 		}else{
-			refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(type.type, refined_Field.type);
+			refinement_type rt = cs.search_refinement_type(type.type, refined_Field.type);
 			if(rt!=null){
 				rt.add_refinement_constraint(cs, refined_Field, refined_Expr);
 			}else{

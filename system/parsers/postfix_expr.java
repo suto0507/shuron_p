@@ -504,7 +504,7 @@ public class postfix_expr implements Parser<String>{
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs));
 				}else{
-					refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(v.refinement_type_clause.ident, v.class_object.type);
+					refinement_type rt = cs.search_refinement_type(v.refinement_type_clause.ident, v.class_object.type);
 					if(rt!=null){
 						rt.assert_refinement(cs, v, v.get_Expr(cs));
 					}else{
@@ -625,7 +625,7 @@ public class postfix_expr implements Parser<String>{
 			if(result.refinement_type_clause.refinement_type!=null){
 				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs));
 			}else{
-				refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(result.refinement_type_clause.ident, result.class_object.type);
+				refinement_type rt = cs.search_refinement_type(result.refinement_type_clause.ident, result.class_object.type);
 				if(rt!=null){
 					rt.add_refinement_constraint(cs, result, result.get_Expr(cs));
 				}else{
@@ -685,7 +685,7 @@ public class postfix_expr implements Parser<String>{
 	        if(f.refinement_type_clause.refinement_type!=null){
 	            f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex);
 	        }else if(f.refinement_type_clause.ident!=null){
-	        	refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
+	        	refinement_type rt = cs.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
 	            if(rt!=null){
 	                rt.add_refinement_constraint(cs, f, ex);
 	            }else{

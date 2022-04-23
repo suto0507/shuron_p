@@ -8,6 +8,7 @@ import com.microsoft.z3.Expr;
 
 import system.Check_status;
 import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -249,7 +250,7 @@ import system.Variable;
 			}else if(this.compound_statement!=null){
 				this.compound_statement.check(cs);
 			}else if(this.def_type_clause!=null){
-				this.def_type_clause.check(cs);
+				cs.local_refinements.add(new Pair<String,refinement_type>(this.def_type_clause.ident,this.def_type_clause.refinement_type));
 			}else if(this.is_return){
 				cs.return_exprs.add(this.expression.check(cs));
 				cs.return_pathconditions.add(cs.pathcondition);

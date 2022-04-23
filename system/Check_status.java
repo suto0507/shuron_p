@@ -63,6 +63,7 @@ public class Check_status {
 		this.Check_status_share = new Check_status_share(cu);
 		this.ctx = new Context(new HashMap<>());
 		this.solver = ctx.mkSolver();
+		this.local_refinements = new ArrayList<Pair<String, refinement_type>>();
 		this.fields = new ArrayList<Field>();
 		this.return_exprs = new ArrayList<Expr>();
 		this.return_pathconditions = new ArrayList<BoolExpr>();
@@ -259,6 +260,10 @@ public class Check_status {
 			cs.variables.add(v);
 		}
 		//cs.before_if_variables = this.before_if_variables;
+		cs.local_refinements = new ArrayList<Pair<String,refinement_type>>();
+		for(Pair<String,refinement_type> rt : this.local_refinements){
+			cs.local_refinements.add(rt);
+		}
 		
 		cs.fields = new ArrayList<Field>();
 		for(Field f : this.fields){
@@ -376,5 +381,17 @@ public class Check_status {
 				}
 			}
 		}
+	}
+	
+	//localの篩型も含めて探す
+	public refinement_type search_refinement_type(String class_name, String type_name){
+		//フィールド
+		this.Check_status_share.compilation_unit.search_refinement_type(class_name, type_name);
+		//ローカル
+		for(Pair<String,refinement_type> rt : this.local_refinements){
+			refinement_type refinement_type = rt.get_snd(type_name);
+			if(refinement_type != null) return refinement_type; 
+		}
+		return null;
 	}
 }

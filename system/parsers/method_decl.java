@@ -241,7 +241,7 @@ public class method_decl implements Parser<String>{
 				if(cs.return_v.refinement_type_clause.refinement_type!=null){
 					cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr);
 				}else if(cs.return_v.refinement_type_clause.ident!=null){
-					refinement_type rt = cs.Check_status_share.compilation_unit.search_refinement_type(cs.return_v.refinement_type_clause.ident, cs.return_v.class_object.type);
+					refinement_type rt = cs.search_refinement_type(cs.return_v.refinement_type_clause.ident, cs.return_v.class_object.type);
 					if(rt!=null){
 						rt.assert_refinement(cs, cs.return_v, cs.return_expr);
 					}else{

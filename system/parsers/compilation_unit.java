@@ -2,6 +2,7 @@ package system.parsers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import system.Check_status;
 import system.Pair;
@@ -31,7 +32,7 @@ public class compilation_unit implements Parser<String>{
 	}
 	
 	public void link_inheritance(List<Pair<String, String>> extends_pairs) throws Exception{
-		//全てのクラスのextends_classフィールドを埋める
+		//全てのクラスのsuper_classフィールドを埋める
 		for(Pair<String, String> extends_pair : extends_pairs){
 			for(class_declaration class_decl :classes){
 				String extends_class_name = extends_pair.get_snd(class_decl.class_name);
@@ -40,7 +41,7 @@ public class compilation_unit implements Parser<String>{
 					if(extends_class == null){
 						throw new Exception(extends_class + "don't exist");
 					}
-					class_decl.extends_class = extends_class;
+					class_decl.super_class = extends_class;
 					break;
 				}
 			}
@@ -48,33 +49,61 @@ public class compilation_unit implements Parser<String>{
 		
 		//篩型の継承に関する処理をする
 		for(class_declaration class_decl :classes){
-			if(class_decl.extends_class != null){
+			if(class_decl.super_class != null){
 				//メソッド
 				for(method_decl md : class_decl.class_block.method_decls){
 					//返り値の型の篩型
-					if(md.type_spec.refinement_type_clause!=null){
-						if(md.type_spec.refinement_type_clause.ident!=null){//identの場合は親が篩型を持っていない、または親もidentかつ同名
-							class_declaration extends_class = class_decl.extends_class;
-							while(true){
-								method_decl super_md = this.search_method(extends_class.class_name, md.ident);
-								if(super_md == null || super_md.type_spec.refinement_type_clause==null){//篩型が見つかるまでsuper classを探索
-									if(extends_class.extends_class == null){
-										break;//親に篩型がないなら良い
-									}else{
-										extends_class = extends_class.extends_class;
-									}
-								}else{
-									if(super_md.type_spec.refinement_type_clause.ident!=null){//親がident
-										if(super_md.type_spec.refinement_type_clause.ident.equals(md.type_spec.refinement_type_clause.ident)){
-											break;//同じならよい
-										}else if(){
-											
-										}else{
-											throw new Exception("Base type must be the refinement type that this method has in the super class.");
-										}
+						
+					class_declaration super_class = class_decl.super_class;
+					while(true){
+						method_decl super_md = this.search_method(super_class.class_name, md.ident);
+						if(super_md == null || super_md.type_spec.refinement_type_clause==null){//篩型が見つかるまでsuper classを探索
+							if(super_class.super_class == null){
+								break;//親に篩型がないなら良い
+							}else{
+								super_class = super_class.super_class;
+							}
+						}else if(md.type_spec.refinement_type_clause!=null){//篩型を持つ親クラスが見つかった場合、かつ篩型を持っている場合
+							if(super_md.type_spec.refinement_type_clause.ident!=null){//親がident
+								String rt_name;
+								if(md.type_spec.refinement_type_clause.ident!=null){//identの場合は、親が篩型を持っていない、または親もidentかつBaseタイプと同名
+									rt_name = md.type_spec.refinement_type_clause.ident;
+								}else{//refinement_typeを持っている場合
+									rt_name = md.type_spec.refinement_type_clause.refinement_type.ident;
+									if(rt_name.equals("Super_type")){
+										md.type_spec.refinement_type_clause.refinement_type.ident = super_md.type_spec.refinement_type_clause.ident;
+										break;
 									}
 								}
+								while(true){
+									if(super_md.type_spec.refinement_type_clause.ident.equals(rt_name)){
+										break;//同じならよい
+									}
+									refinement_type rt = this.search_refinement_type(class_decl.class_name, rt_name);
+									if(rt == null){
+										throw new Exception("Base type must be the refinement type that this method has in the super class.");
+									}
+									rt_name = rt.ident;
+								}
+								break;
+							}else{//親がrefinement_typeを持っている
+								if(md.type_spec.refinement_type_clause.refinement_type!=null){//refinement_typeを持っている場合はSuper_typeが必要
+									if(md.type_spec.refinement_type_clause.refinement_type.ident.equals("Super_type")){
+										def_type_clause tmp_def_type = new def_type_clause();
+										//名前は一意のはずだが、この篩型名を宣言する怖い人がいるかもしれないので数字をくっつける
+										tmp_def_type.ident = class_decl.class_name + "_" + md.ident + "_ret_val_tmp_refinement_type" + (new Random().nextInt(88889) + 11111);
+										tmp_def_type.refinement_type = super_md.type_spec.refinement_type_clause.refinement_type;
+										class_decl.class_block.def_type_clauses.add(tmp_def_type);
+										md.type_spec.refinement_type_clause.refinement_type.ident = tmp_def_type.ident;
+										break;
+									}	
+								}
+								throw new Exception("Base type must be the refinement type that this method has in the super class.");
 							}
+						}else{//篩型を持つ親クラスが見つかった場合、かつ篩型を持っていなかった場合
+							//親のrefinement_typeのインスタンスをそのまま受け継ぐ
+							md.type_spec.refinement_type_clause = super_md.type_spec.refinement_type_clause;
+							break;
 						}
 					}
 				}
@@ -113,6 +142,15 @@ public class compilation_unit implements Parser<String>{
 						return md;
 					}
 				}
+				class_declaration super_class = cd;
+				while(super_class.super_class != null){
+					super_class = super_class.super_class;
+					for(method_decl md : super_class.class_block.method_decls){
+						if(md.ident.equals(method_name)){
+							return md;
+						}
+					}
+				}
 			}
 		}
 		return null;
@@ -127,6 +165,15 @@ public class compilation_unit implements Parser<String>{
 						return vd;
 					}
 				}
+				class_declaration super_class = cd;
+				while(super_class.super_class != null){
+					super_class = super_class.super_class;
+					for(variable_definition vd : super_class.class_block.variable_definitions){
+						if(vd.variable_decls.ident.equals(field_name)){
+							return vd;
+						}
+					}
+				}
 			}
 		}
 		return null;
@@ -139,6 +186,15 @@ public class compilation_unit implements Parser<String>{
 				for(def_type_clause dtc : cd.class_block.def_type_clauses){
 					if(dtc.ident.equals(type_name)){
 						return dtc.refinement_type;
+					}
+				}
+				class_declaration super_class = cd;
+				while(super_class.super_class != null){
+					super_class = super_class.super_class;
+					for(def_type_clause dtc : super_class.class_block.def_type_clauses){
+						if(dtc.ident.equals(type_name)){
+							return dtc.refinement_type;
+						}
 					}
 				}
 			}

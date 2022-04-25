@@ -139,7 +139,7 @@ public class Field {
 			if(f.refinement_type_clause.refinement_type!=null){
 				f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, f.get_Expr(cs));
 			}else{
-				refinement_type rt = cs.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
+				refinement_type rt = cs.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
 				if(rt!=null){
 					rt.add_refinement_constraint(cs, f, f.get_Expr(cs));
 				}

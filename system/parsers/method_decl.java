@@ -241,11 +241,11 @@ public class method_decl implements Parser<String>{
 				if(cs.return_v.refinement_type_clause.refinement_type!=null){
 					cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr);
 				}else if(cs.return_v.refinement_type_clause.ident!=null){
-					refinement_type rt = cs.search_refinement_type(cs.return_v.refinement_type_clause.ident, cs.return_v.class_object.type);
+					refinement_type rt = cs.search_refinement_type(cs.return_v.class_object.type, cs.return_v.refinement_type_clause.ident);
 					if(rt!=null){
 						rt.assert_refinement(cs, cs.return_v, cs.return_expr);
 					}else{
-						throw new Exception("cant find refinement type " + cs.return_v.refinement_type_clause.ident);
+						throw new Exception("can't find refinement type " + cs.return_v.refinement_type_clause.ident);
 					}
 				}
 			}

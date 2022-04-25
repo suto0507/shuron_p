@@ -1,39 +1,39 @@
 class A{
-	/*@' def_type Nat = {int x | x > 0};*/
+	/*`@ def_type Nat = {int x | x > 0};*/
 	
-	/*@' refinement_type Nat*/int test(){
+	int/*`@ refinement_type Nat*/ test(){
 		return 1;
 	}
 	
-	/*@' refinement_type Nat*/int test2(){
+	int/*`@ refinement_type Nat*/ test2(){
 		return 3;
 	}
 	
-	/*@' refinement_type Nat*/int test3(){
+	int/*`@ refinement_type Nat*/ test3(){
 		return 5;
 	}
 	
-	/*@' refinement_type {int x | x > 0}*/int test4(){
+	int/*`@ refinement_type {int x | x > 0}*/ test4(){
 		return 7;
 	}
 }
 
 class B extends A{
-	/*@'def_type NatEven = {int x | x % 2 == 0};*/
+	/*`@def_type NatEven = {int x | x % 2 == 0};*/
 
-	/*@' refinement_type Nat*/int test(){
+	int/*`@ refinement_type Nat*/ test(){
 		return 2;
 	}
 	
-	/*@' refinement_type {Nat x | x % 2 == 0}*/int test2(){
+	int/*`@ refinement_type {Nat x | x % 2 == 0}*/ test2(){
 		return 4;
 	}
 	
-	/*@' refinement_type {Super_type x | x % 2 == 0}*/int test3(){
+	int/*`@ refinement_type {Super_type x | x % 2 == 0}*/ test3(){
 		return 6;
 	}
 	
-	/*@' refinement_type {Super_type x | x % 2 == 0}*/int test4(){
+	int/*`@ refinement_type {Super_type x | x % 2 == 0}*/ test4(){
 		return 8;
 	}
 }

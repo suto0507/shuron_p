@@ -90,7 +90,7 @@ public class new_expr implements Parser<String>{
 					if(v.refinement_type_clause.refinement_type!=null){
 						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs));
 					}else{
-						refinement_type rt = cs.search_refinement_type(v.refinement_type_clause.ident, v.class_object.type);
+						refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 						if(rt!=null){
 							rt.assert_refinement(cs, v, v.get_Expr(cs));
 						}else{

@@ -171,7 +171,7 @@ public class primary_expr implements Parser<String>{
 					if(f.refinement_type_clause.refinement_type!=null){
 						f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex);
 					}else if(f.refinement_type_clause.ident!=null){
-						refinement_type rt = cs.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
+						refinement_type rt = cs.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
 						if(rt!=null){
 							rt.add_refinement_constraint(cs, f, ex);
 						}else{

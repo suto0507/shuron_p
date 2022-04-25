@@ -133,7 +133,7 @@ public class Check_status {
 				return v;
 			}
 		}
-		throw new Exception("cant find " + ident + "\n");
+		throw new Exception("can't find " + ident + "\n");
 		//return null;
 	}
 	
@@ -164,7 +164,7 @@ public class Check_status {
 				}
 			}
 		}
-		throw new Exception("cant find " + ident + "\n");
+		throw new Exception("can't find " + ident + "\n");
 		//return null;
 	}
 	
@@ -174,7 +174,7 @@ public class Check_status {
 				return v;
 			}
 		}
-		throw new Exception("cant find " + ident + "\n");
+		throw new Exception("can't find " + ident + "\n");
 		//return null;
 	}
 
@@ -372,11 +372,11 @@ public class Check_status {
 				if(f.refinement_type_clause.refinement_type!=null){
 					f.refinement_type_clause.refinement_type.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)));
 				}else if(f.refinement_type_clause.ident!=null){
-					refinement_type rt = this.Check_status_share.compilation_unit.search_refinement_type(f.refinement_type_clause.ident, f.class_object.type);
+					refinement_type rt = this.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
 					if(rt!=null){
 						rt.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)));
 					}else{
-						throw new Exception("cant find refinement type " + f.refinement_type_clause.ident);
+						throw new Exception("can't find refinement type " + f.refinement_type_clause.ident);
 					}
 				}
 			}
@@ -384,12 +384,14 @@ public class Check_status {
 	}
 	
 	//localの篩型も含めて探す
+	
 	public refinement_type search_refinement_type(String class_name, String type_name){
 		//フィールド
-		this.Check_status_share.compilation_unit.search_refinement_type(class_name, type_name);
+		refinement_type rt = this.Check_status_share.compilation_unit.search_refinement_type(class_name, type_name);
+		if(rt != null) return rt;
 		//ローカル
-		for(Pair<String,refinement_type> rt : this.local_refinements){
-			refinement_type refinement_type = rt.get_snd(type_name);
+		for(Pair<String,refinement_type> local_rt : this.local_refinements){
+			refinement_type refinement_type = local_rt.get_snd(type_name);
 			if(refinement_type != null) return refinement_type; 
 		}
 		return null;

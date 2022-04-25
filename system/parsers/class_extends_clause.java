@@ -8,6 +8,7 @@ public class class_extends_clause {
 		new string("extends").parse(s,ps);
 		new spaces().parse(s,ps);
 		String class_name = new ident().parse(s,ps);
+		new spaces().parse(s,ps);
 		return class_name;//extends‚ð•Ô‚³‚È‚¢
 	}
 }

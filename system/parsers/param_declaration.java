@@ -47,7 +47,7 @@ public class param_declaration implements Parser<String>{
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.add_refinement_constraint(cs, v, v.get_Expr(cs));
 				}else{
-					refinement_type rt = cs.search_refinement_type(v.refinement_type_clause.ident, v.class_object.type);
+					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
 						rt.add_refinement_constraint(cs, v, v.get_Expr(cs));
 					}else{

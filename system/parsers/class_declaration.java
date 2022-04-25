@@ -19,6 +19,7 @@ public class class_declaration implements Parser<String>{
 		this.class_name = new ident().parse(s,ps);
 		String extends_clause = "";
 		Source s_backup = s.clone();
+		new spaces().parse(s,ps);
 		try{
 			String extends_class_name = new class_extends_clause().parse(s, ps);
 			ps.extends_pairs.add(new Pair<String,String>(class_name, extends_class_name));//åpè≥ä÷åWÇìoò^
@@ -26,7 +27,6 @@ public class class_declaration implements Parser<String>{
 		}catch (Exception e){
 			s.revert(s_backup);
 		}
-		new spaces().parse(s,ps);
 		this.class_block = new class_block();
 		String content = class_block.parse(s,ps);
 		new newLines().parse(s,ps);

@@ -11,7 +11,7 @@ import system.parsers.compilation_unit;
 public class Test1 {
 	public static void main(String[] args) throws Exception {
 		String st = "";
-		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ƒ‰ƒ{\\shuron\\shuron\\src\\testcases\\valid\\extends_refinement_type.java");
+		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ƒ‰ƒ{\\shuron\\shuron\\src\\testcases\\valid\\extends_refinement_type_param.java");
 		List<String> list = Files.readAllLines(file);
 		Iterator<String> ite = list.iterator();
 		while(ite.hasNext()){

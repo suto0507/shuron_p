@@ -52,60 +52,7 @@ public class compilation_unit implements Parser<String>{
 			if(class_decl.super_class != null){
 				//メソッド
 				for(method_decl md : class_decl.class_block.method_decls){
-					//返り値の型の篩型
-						
-					class_declaration super_class = class_decl.super_class;
-					while(true){
-						method_decl super_md = this.search_method(super_class.class_name, md.ident);
-						if(super_md == null || super_md.type_spec.refinement_type_clause==null){//篩型が見つかるまでsuper classを探索
-							if(super_class.super_class == null){
-								break;//親に篩型がないなら良い
-							}else{
-								super_class = super_class.super_class;
-							}
-						}else if(md.type_spec.refinement_type_clause!=null){//篩型を持つ親クラスが見つかった場合、かつ篩型を持っている場合
-							if(super_md.type_spec.refinement_type_clause.ident!=null){//親がident
-								String rt_name;
-								if(md.type_spec.refinement_type_clause.ident!=null){//identの場合は、親が篩型を持っていない、または親もidentかつBaseタイプと同名
-									rt_name = md.type_spec.refinement_type_clause.ident;
-								}else{//refinement_typeを持っている場合
-									rt_name = md.type_spec.refinement_type_clause.refinement_type.type.type;
-									if(rt_name.equals("Super_type")){
-										md.type_spec.refinement_type_clause.refinement_type.type.type = super_md.type_spec.refinement_type_clause.ident;
-										break;
-									}
-								}
-								while(true){
-									if(super_md.type_spec.refinement_type_clause.ident.equals(rt_name)){
-										break;//同じならよい
-									}
-									refinement_type rt = this.search_refinement_type(class_decl.class_name, rt_name);
-									if(rt == null){
-										throw new Exception(md.ident + ": return value: Base type must be the refinement type that this method has in the super class.");
-									}
-									rt_name = rt.ident;
-								}
-								break;
-							}else{//親がrefinement_typeを持っている
-								if(md.type_spec.refinement_type_clause.refinement_type!=null){//refinement_typeを持っている場合はSuper_typeが必要
-									if(md.type_spec.refinement_type_clause.refinement_type.type.type.equals("Super_type")){
-										def_type_clause tmp_def_type = new def_type_clause();
-										//名前は一意のはずだが、この篩型名を宣言する怖い人がいるかもしれないので数字をくっつける
-										tmp_def_type.ident = class_decl.class_name + "_" + md.ident + "_ret_val_tmp_refinement_type" + (new Random().nextInt(88889) + 11111);
-										tmp_def_type.refinement_type = super_md.type_spec.refinement_type_clause.refinement_type;
-										class_decl.class_block.def_type_clauses.add(tmp_def_type);
-										md.type_spec.refinement_type_clause.refinement_type.type.type = tmp_def_type.ident;
-										break;
-									}	
-								}
-								throw new Exception(md.ident + ": return value: Base type must be the refinement type that this method has in the super class.");
-							}
-						}else{//篩型を持つ親クラスが見つかった場合、かつ篩型を持っていなかった場合
-							//親のrefinement_typeのインスタンスをそのまま受け継ぐ
-							md.type_spec.refinement_type_clause = super_md.type_spec.refinement_type_clause;
-							break;
-						}
-					}
+					md.inheritance_refinement_types(class_decl, this);
 				}
 			}
 			

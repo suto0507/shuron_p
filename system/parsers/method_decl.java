@@ -2,6 +2,7 @@ package system.parsers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BoolExpr;
@@ -278,5 +279,124 @@ public class method_decl implements Parser<String>{
 		
 	}
 
+	public void inheritance_refinement_types(class_declaration class_decl, compilation_unit cu) throws Exception{
+		
+		class_declaration super_class = class_decl.super_class;
+		
+		//返り値の型の篩型
+		while(true){
+			method_decl super_md = cu.search_method(super_class.class_name, this.ident);
+			if(super_md == null || super_md.type_spec.refinement_type_clause==null){//篩型が見つかるまでsuper classを探索
+				if(super_class.super_class == null){
+					break;//親に篩型がないなら良い
+				}else{
+					super_class = super_class.super_class;
+				}
+			}else if(this.type_spec.refinement_type_clause!=null){//篩型を持つ親クラスが見つかった場合、かつ篩型を持っている場合
+				if(super_md.type_spec.refinement_type_clause.ident!=null){//親がident
+					String rt_name;
+					if(this.type_spec.refinement_type_clause.ident!=null){//identの場合は、親が篩型を持っていない、または親もidentかつBaseタイプと同名
+						rt_name = this.type_spec.refinement_type_clause.ident;
+					}else{//refinement_typeを持っている場合
+						rt_name = this.type_spec.refinement_type_clause.refinement_type.type.type;
+						if(rt_name.equals("Super_type")){
+							this.type_spec.refinement_type_clause.refinement_type.type.type = super_md.type_spec.refinement_type_clause.ident;
+							break;
+						}
+					}
+					while(true){
+						if(super_md.type_spec.refinement_type_clause.ident.equals(rt_name)){
+							break;//同じならよい
+						}
+						refinement_type rt = cu.search_refinement_type(class_decl.class_name, rt_name);
+						if(rt == null){
+							throw new Exception(this.ident + ": return value: Base type must be the refinement type that this method has in the super class.");
+						}
+						rt_name = rt.type.type;
+					}
+					break;
+				}else{//親がrefinement_typeを持っている
+					if(this.type_spec.refinement_type_clause.refinement_type!=null){//refinement_typeを持っている場合はSuper_typeが必要
+						if(this.type_spec.refinement_type_clause.refinement_type.type.type.equals("Super_type")){
+							def_type_clause tmp_def_type = new def_type_clause();
+							//名前は一意のはずだが、この篩型名を宣言する怖い人がいるかもしれないので数字をくっつける
+							tmp_def_type.ident = class_decl.class_name + "_" + this.ident + "_ret_val_tmp_refinement_type" + (new Random().nextInt(88889) + 11111);
+							tmp_def_type.refinement_type = super_md.type_spec.refinement_type_clause.refinement_type;
+							class_decl.class_block.def_type_clauses.add(tmp_def_type);
+							this.type_spec.refinement_type_clause.refinement_type.type.type = tmp_def_type.ident;
+							break;
+						}	
+					}
+					throw new Exception(this.ident + ": return value: Base type must be the refinement type that this method has in the super class.");
+				}
+			}else{//篩型を持つ親クラスが見つかった場合、かつ篩型を持っていなかった場合
+				//親のrefinement_typeのインスタンスをそのまま受け継ぐ
+				this.type_spec.refinement_type_clause = super_md.type_spec.refinement_type_clause;
+				break;
+			}
+		}
+		
+		//引数の型の篩型
+		
+		//Check_statusの用意
+		Check_status cs = new Check_status(cu);
+		modifiers m = new modifiers();
+		m.is_final = true;
+		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", class_decl.class_name, 0, null, m, null );
+		this_field.temp_num = 0;
+		cs.fields.add(this_field);
+		cs.this_field = this_field;
+		//初期化
+		cs.refined_class_Expr = this_field.get_Expr(cs);
+		cs.refined_class_Field = this_field;
+		cs.refined_class_Field_index = null;
+		
+		//各引数のチェック
+		for(int i = 0; i < this.formals.param_declarations.size(); i++){
+			
+			//処理する引数を表すVariable
+			modifiers modi = new modifiers();
+			modi.is_final = this.formals.param_declarations.get(i).is_final;
+			modi.is_privte = false;
+			modi.is_spec_public = false;
+			Variable v = cs.add_variable(this.formals.param_declarations.get(i).ident, this.formals.param_declarations.get(i).type_spec.type.type, this.formals.param_declarations.get(i).type_spec.dims, this.formals.param_declarations.get(i).type_spec.refinement_type_clause, modi);
+			v.temp_num=0;
+			
+			while(true){
+				method_decl super_md = cu.search_method(super_class.class_name, this.ident);
+				if(super_md == null || super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause==null){//篩型が見つかるまでsuper classを探索
+					if(super_class.super_class == null){
+						break;//親に篩型がないなら良い
+					}else{
+						super_class = super_class.super_class;
+					}
+				}else if(this.formals.param_declarations.get(i).type_spec.refinement_type_clause!=null){//篩型を持つ親クラスが見つかった場合、かつ篩型を持っている場合
+					refinement_type this_refinement_type,super_refinement_type;
+					if(this.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type != null){
+						this_refinement_type = this.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type;
+					}else{
+						this_refinement_type = cu.search_refinement_type(class_decl.class_name, this.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
+						if(this_refinement_type==null) throw new Exception("can't find refinement type " + this.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
+					}
+					
+					if(super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type != null){
+						super_refinement_type = super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type;
+					}else{
+						super_refinement_type = cu.search_refinement_type(class_decl.class_name, super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
+						if(super_refinement_type==null) throw new Exception("can't find refinement type " + super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
+					}
+					
+					this_refinement_type.check_subtype(v, super_refinement_type, cs);
+					break;
+					
+				}else{//篩型を持つ親クラスが見つかった場合、かつ篩型を持っていなかった場合
+					//親のrefinement_typeのインスタンスをそのまま受け継ぐ
+					this.formals.param_declarations.get(i).type_spec.refinement_type_clause = super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause;
+					break;
+				}
+			}
+
+		}
+	}
 }
 

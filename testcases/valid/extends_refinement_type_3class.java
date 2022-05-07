@@ -24,12 +24,16 @@ class A{
 	int/*`@ refinement_type Nat*/ test6(){
 		return 11;
 	}
+	
 }
 
 class B extends A{
 	/*`@def_type NatEven = {Nat x | x % 2 == 0};*/
 	/*`@def_type NatEvenMini = {NatEven x | x < 20};*/
 
+}
+
+class C extends B{
 	int/*`@ refinement_type Nat*/ test(){
 		return 2;
 	}

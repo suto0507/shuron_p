@@ -1,13 +1,14 @@
 package system.parsers;
 
-import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Expr;
+
+import com.microsoft.z3.*;
 
 import system.Check_status;
 import system.Field;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Variable;
 
 public class refinement_type implements Parser<String>{
 	type type;
@@ -95,6 +96,38 @@ public class refinement_type implements Parser<String>{
 				rt.add_refinement_constraint(cs, refined_Field, refined_Expr);
 			}else{
 				throw new Exception("can't find refinement type " + type.type);
+			}
+		}
+	}
+	
+	// subtype <= this
+	public void check_subtype(Variable refined_variable,  refinement_type sub_type, Check_status cs) throws Exception{
+		cs.in_refinement_predicate = true;
+		
+		sub_type.add_refinement_constraint(cs, refined_variable, refined_variable.get_Expr(cs));
+		this.assert_refinement(cs, refined_variable, refined_variable.get_Expr(cs));
+		
+		
+		
+		//BoolExpr expr = cs.ctx.mkImplies(sub_expr,this_expr);
+		//cs.assert_constraint(expr);
+		cs.in_refinement_predicate = false;
+	}
+	
+	//Žg‚í‚È‚¢‚©‚à
+	public String base_type(String class_name, compilation_unit cu) throws Exception{
+		if(this.type.type.equals("boolean") || this.type.type.equals("int")){
+			return this.type.type;
+		}else if(cu.search_class(this.type.type)!=null){
+			return this.type.type;
+		}else{
+			
+			
+			refinement_type rt = cu.search_refinement_type(class_name, type.type);
+			if(rt!=null){
+				return rt.base_type(class_name, cu);
+			}else{
+				throw new Exception("can't find base type " + type.type);
 			}
 		}
 	}

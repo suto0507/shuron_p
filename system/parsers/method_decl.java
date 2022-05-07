@@ -359,7 +359,10 @@ public class method_decl implements Parser<String>{
 			modi.is_final = this.formals.param_declarations.get(i).is_final;
 			modi.is_privte = false;
 			modi.is_spec_public = false;
-			Variable v = cs.add_variable(this.formals.param_declarations.get(i).ident, this.formals.param_declarations.get(i).type_spec.type.type, this.formals.param_declarations.get(i).type_spec.dims, this.formals.param_declarations.get(i).type_spec.refinement_type_clause, modi);
+			//«‚Ìv‚Éâ¿Œ^‚ğ‚Â‚¯‚È‚­‚Ä‚à“®‚­(§–ñ‚Í’Ç‰Á‚µ‚Ä‚¢‚­‚Ì‚Å)
+			Variable v = cs.add_variable(this.formals.param_declarations.get(i).ident, this.formals.param_declarations.get(i).type_spec.type.type
+					, this.formals.param_declarations.get(i).type_spec.dims, null, modi);
+			
 			v.temp_num=0;
 			
 			while(true){

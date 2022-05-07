@@ -54,6 +54,9 @@ public class compilation_unit implements Parser<String>{
 				for(method_decl md : class_decl.class_block.method_decls){
 					md.inheritance_refinement_types(class_decl, this);
 				}
+				//override-refinement type-clause
+				
+				
 			}
 			
 		}

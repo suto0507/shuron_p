@@ -4,7 +4,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Source;
 
-public class override_refinement_type_clause {
+public class override_refinement_type_clause implements Parser<String>{
 	String st;
 	String ident;
 	type_or_refinement_type type_or_refinement_type;

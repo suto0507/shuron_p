@@ -18,12 +18,14 @@ public class class_block implements Parser<String>{
 	List<def_type_clause> def_type_clauses;
 	List<method_decl> method_decls;
 	List<variable_definition> variable_definitions;
+	List<override_refinement_type_clause> override_refinement_type_clauses;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		invariants = new ArrayList<invariant>();
 		def_type_clauses = new ArrayList<def_type_clause>();
 		method_decls = new ArrayList<method_decl>();
 		variable_definitions = new ArrayList<variable_definition>();
+		override_refinement_type_clauses = new ArrayList<override_refinement_type_clause>();
 
 		new string("{").parse(s,ps);
 		new newLines().parse(s,ps);
@@ -41,6 +43,8 @@ public class class_block implements Parser<String>{
 					method_decls.add((method_decl) p);
 				}else if(p instanceof variable_definition){
 					variable_definitions.add((variable_definition) p);
+				}else if(p instanceof override_refinement_type_clause){
+					override_refinement_type_clauses.add((override_refinement_type_clause)p);
 				}
 			}
 		}catch (Exception e){

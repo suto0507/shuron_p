@@ -13,10 +13,16 @@ public class jml_declaration implements Parser<Parser>{
 			p = new def_type_clause();
 			new my_jml_anotation_newLine(p).parse(s,ps);
 		}catch (Exception e){
-			s.revert(s_backup);
-			jml_declaration_invariant supp = new jml_declaration_invariant();
-			new jml_anotation_newLine(supp).parse(s,ps);
-			p = supp.return_p();
+			try{
+				s.revert(s_backup);
+				jml_declaration_invariant supp = new jml_declaration_invariant();
+				new jml_anotation_newLine(supp).parse(s,ps);
+				p = supp.return_p();
+			}catch (Exception e2){
+				s.revert(s_backup);
+				p = new override_refinement_type_clause();
+				new my_jml_anotation_newLine(p).parse(s,ps);
+			}
 		}
 		return p;
 	}

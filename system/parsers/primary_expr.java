@@ -137,11 +137,17 @@ public class primary_expr implements Parser<String>{
 				}else if(cs.search_field(this.ident, cs.this_field, null, cs)){
 					f = cs.get_field(this.ident, cs.this_field, null, cs);
 					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
+				}else{
+					Field f_tmp = cs.add_field(this.ident, cs.this_field, null);
+					if(f_tmp != null){
+						f = f_tmp;
+						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
+					}
 				}
 			}
 			
 			if(ex == null){
-				throw new Exception("cant find " + this.ident);
+				throw new Exception("can't find " + this.ident);
 			}
 			if(cs.in_refinement_predicate==true){//â¿Œ^‚Ì’†‚Å‚Ífinal‚Å‚ ‚é•K—v‚ª‚ ‚é
 				if(f.modifiers.is_final==false){

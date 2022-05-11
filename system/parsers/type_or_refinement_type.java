@@ -10,6 +10,7 @@ public class type_or_refinement_type {
 	refinement_type refinement_type;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
+		st = "";
 		Source s_backup = s.clone();
 		try{
 			type t = new type();

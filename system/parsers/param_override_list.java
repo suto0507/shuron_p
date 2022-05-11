@@ -12,6 +12,8 @@ public class param_override_list {
 	String st;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
+		st = "";
+		
 		param_overrides = new ArrayList<Pair<String, type_or_refinement_type>>();
 		
 		type_or_refinement_type type_or_refinement_type = new type_or_refinement_type();

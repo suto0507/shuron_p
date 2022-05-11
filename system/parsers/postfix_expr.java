@@ -112,9 +112,15 @@ public class postfix_expr implements Parser<String>{
 							f = cs.get_field(primary_expr.ident, cs.this_field, null ,cs);
 							ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.this_field.get_Expr(cs));
 						}else{
-							ident = this.primary_expr.ident;
-							f = cs.this_field;
-							ex = f.get_Expr(cs);
+							Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
+							if(f_tmp != null){
+								f = f_tmp;
+								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
+							}else{
+								ident = this.primary_expr.ident;
+								f = cs.this_field;
+								ex = f.get_Expr(cs);
+							}
 						}
 					}
 

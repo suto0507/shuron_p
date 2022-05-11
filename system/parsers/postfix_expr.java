@@ -268,7 +268,7 @@ public class postfix_expr implements Parser<String>{
 					ex = cs.ctx.mkSelect((ArrayExpr) ex, f_index);
 					ident = null;
 					if(cs.in_refinement_predicate==true){//â¿Œ^‚Ì’†‚Å‚Í”z—ñ‚ÍŽg‚¦‚È‚¢
-						throw new Exception("cannot use array in refinement type");
+						throw new Exception("can not use array in refinement type");
 					}
 					
 				}else if(ps.is_method){
@@ -306,12 +306,12 @@ public class postfix_expr implements Parser<String>{
 				}
 
 			}else if(this.primary_expr.java_literal!=null){
-				//System.out.println("cant assign java literal");
-				throw new Exception("cant assign java literal");
+				//System.out.println("can't assign java literal");
+				throw new Exception("can't assign java literal");
 				//return null;
 			}else{
-				//System.out.println("cant write in lef side");
-				throw new Exception("cant write in lef side");
+				//System.out.println("can't write in lef side");
+				throw new Exception("can't write in lef side");
 				//return null;
 			}
 			return f;
@@ -508,7 +508,7 @@ public class postfix_expr implements Parser<String>{
 					if(rt!=null){
 						rt.assert_refinement(cs, v, v.get_Expr(cs));
 					}else{
-						throw new Exception("cant find refinement type " + v.refinement_type_clause.ident);
+						throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
 					}
 				}
 			}

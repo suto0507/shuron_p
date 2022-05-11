@@ -55,7 +55,9 @@ public class compilation_unit implements Parser<String>{
 					md.inheritance_refinement_types(class_decl, this);
 				}
 				//override-refinement type-clause
-				
+				for(override_refinement_type_clause ortc : class_decl.class_block.override_refinement_type_clauses){
+					ortc.inheritance_refinement_types(class_decl, this);
+				}
 				
 			}
 			
@@ -110,17 +112,33 @@ public class compilation_unit implements Parser<String>{
 	public variable_definition search_field(String class_name, String field_name){
 		for(class_declaration cd : classes){
 			if(cd.class_name.equals(class_name)){
+				refinement_type_clause rc = null;
 				for(variable_definition vd : cd.class_block.variable_definitions){
 					if(vd.variable_decls.ident.equals(field_name)){
+						if(rc != null) vd.variable_decls.type_spec.refinement_type_clause = rc;
 						return vd;
 					}
 				}
 				class_declaration super_class = cd;
+				System.out.println("hogeee");
 				while(super_class.super_class != null){
 					super_class = super_class.super_class;
 					for(variable_definition vd : super_class.class_block.variable_definitions){
 						if(vd.variable_decls.ident.equals(field_name)){
+							if(rc != null) vd.variable_decls.type_spec.refinement_type_clause = rc;
 							return vd;
+						}
+					}
+					//override_refinement_type
+					for(override_refinement_type_clause ortc : cd.class_block.override_refinement_type_clauses){
+						if(ortc.param_override_list==null && ortc.ident.equals(field_name)){
+							if(ortc.type_or_refinement_type.type != null && rc == null){
+								rc = new refinement_type_clause();
+								rc.ident = ortc.type_or_refinement_type.type.type;
+							}else if(ortc.type_or_refinement_type.refinement_type != null && rc == null){
+								rc = new refinement_type_clause();
+								rc.refinement_type = ortc.type_or_refinement_type.refinement_type;
+							}
 						}
 					}
 				}

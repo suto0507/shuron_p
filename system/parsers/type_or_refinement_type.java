@@ -6,6 +6,7 @@ import system.Source;
 public class type_or_refinement_type {
 	String st;
 	type type;
+	int dims;
 	refinement_type refinement_type;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -14,6 +15,13 @@ public class type_or_refinement_type {
 			type t = new type();
 			st = st + t.parse(s, ps);
 			this.type = t;
+			Source s_backup2 = s.clone();
+			try{
+				dims = new dims().parse(s, ps);
+				st = st + "[]";
+			}catch (Exception e2){
+				s.revert(s_backup2);
+			}
 		}catch (Exception e){
 			s.revert(s_backup);
 			refinement_type rt = new refinement_type();

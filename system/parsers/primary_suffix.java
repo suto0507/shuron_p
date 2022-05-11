@@ -50,7 +50,7 @@ public class primary_suffix implements Parser<String>{
 				}
 				st = st + new string(")").parse(s, ps);
 				if(ps.in_jml){
-					throw new Exception("cant use method in jml");
+					throw new Exception("can't use method in jml");
 				}
 				this.expression_list = el;
 				this.is_method = true;

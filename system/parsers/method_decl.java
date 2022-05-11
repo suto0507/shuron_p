@@ -280,14 +280,24 @@ public class method_decl implements Parser<String>{
 	}
 
 	public void inheritance_refinement_types(class_declaration class_decl, compilation_unit cu) throws Exception{
+		System.out.println("check method type inheritance : " + this.ident);
 		
 		class_declaration super_class = class_decl.super_class;
 		
 		//•Ô‚è’l‚ÌŒ^‚Ìâ¿Œ^
+		boolean exist_super_md = false;
 		while(true){
 			method_decl super_md = cu.search_method(super_class.class_name, this.ident);
+			if(super_md != null) exist_super_md = true;
 			if(super_md == null || super_md.type_spec.refinement_type_clause==null){//â¿Œ^‚ªŒ©‚Â‚©‚é‚Ü‚Åsuper class‚ğ’Tõ
 				if(super_class.super_class == null){
+					if(this.type_spec.refinement_type_clause!=null && this.type_spec.refinement_type_clause.refinement_type!=null &&
+							this.type_spec.refinement_type_clause.refinement_type.type.type.equals("Super_type")){
+							if(exist_super_md == false){
+								throw new Exception("super class has not method " + this.ident);
+							}
+						this.type_spec.refinement_type_clause.refinement_type.type.type = this.type_spec.type.type;
+					}
 					break;//e‚Éâ¿Œ^‚ª‚È‚¢‚È‚ç—Ç‚¢
 				}else{
 					super_class = super_class.super_class;

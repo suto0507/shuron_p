@@ -42,93 +42,230 @@ public class postfix_expr implements Parser<String>{
 	
 	public Expr check(Check_status cs) throws Exception{
 		Expr ex = null;
-		if(this.primary_suffixs.size() == 0){
-			ex = this.primary_expr.check(cs);
-		}else{
-			Field f = null;
-			String ident = null;
-			boolean is_refine_value = false;
-			if(this.primary_expr.is_this){
-				f = cs.this_field;
-				ex = f.get_Expr(cs);
-				//関数呼び出し
-				if(cs.in_method_call){
-					f = cs.call_field;
-					ex = cs.call_expr;
-				}else if(cs.in_refinement_predicate){
-					f = cs.refined_class_Field;
-					ex = cs.refined_class_Expr;
-				}
-			}else if(this.primary_expr.ident!=null){
-				if(cs.in_refinement_predicate==true && this.primary_expr.ident.equals(cs.refinement_type_value)){
-					f = cs.refined_Field;
-					ex = cs.refined_Expr;
-					is_refine_value = true;
-				}else{
-					if(cs.in_method_call){//関数呼び出し
-						if(cs.search_called_method_arg(primary_expr.ident)){
-							f = cs.get_called_method_arg(primary_expr.ident);
-							ex = f.get_Expr(cs);
-						}else if(cs.search_field(primary_expr.ident, cs.call_field, cs.call_field_index ,cs)){
-							f = cs.get_field(primary_expr.ident, cs.call_field, cs.call_field_index ,cs);
-							ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.call_expr);
-						}else{
-
-							Field f_tmp = cs.add_field(primary_expr.ident, cs.call_field, cs.call_field_index);
-							if(f_tmp != null){
-								f = f_tmp;
-								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.call_expr);
-							}else{
-								ident = this.primary_expr.ident;
-								f = cs.call_field;
-								ex = cs.call_expr;
-							}
-
-						}
-					}else if(cs.in_refinement_predicate){//篩型
-						if((cs.refined_class_Field==null||cs.refined_class_Field.equals(cs.this_field, cs))&&cs.search_variable(this.primary_expr.ident)){
-							f = cs.get_variable(this.primary_expr.ident);
-							ex = f.get_Expr(cs);
-						}else if(cs.search_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index ,cs)){
-							f = cs.get_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index ,cs);
-							ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.refined_class_Expr);
-						}else{
-
-							Field f_tmp = cs.add_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index);
-							if(f_tmp != null){
-								f = f_tmp;
-								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.refined_class_Expr);
-							}else{
-								ident = this.primary_expr.ident;
-								f = cs.refined_class_Field;
-								ex = cs.refined_class_Expr;
-							}
-						}
+		
+		Field f = null;
+		String ident = null;
+		boolean is_refine_value = false;
+		if(this.primary_expr.is_this){
+			if(this.primary_suffixs.size() == 0 && cs.in_constructor){//this単体のコンストラクターでの使用
+				cs.constructor_refinement_check();
+			}
+			f = cs.this_field;
+			ex = f.get_Expr(cs);
+			//関数呼び出し
+			if(cs.in_method_call){
+				f = cs.call_field;
+				ex = cs.call_expr;
+			}else if(cs.in_refinement_predicate){
+				f = cs.refined_class_Field;
+				ex = cs.refined_class_Expr;
+			}
+		}else if(this.primary_expr.ident!=null){
+			if(cs.in_refinement_predicate==true && this.primary_expr.ident.equals(cs.refinement_type_value)){
+				f = cs.refined_Field;
+				ex = cs.refined_Expr;
+				is_refine_value = true;
+			}else{
+				if(cs.in_method_call){//関数呼び出し
+					if(cs.search_called_method_arg(primary_expr.ident)){
+						f = cs.get_called_method_arg(primary_expr.ident);
+						ex = f.get_Expr(cs);
+					}else if(cs.search_field(primary_expr.ident, cs.call_field, cs.call_field_index ,cs)){
+						f = cs.get_field(primary_expr.ident, cs.call_field, cs.call_field_index ,cs);
+						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.call_expr);
 					}else{
-						if(cs.search_variable(primary_expr.ident)){
-							f = cs.get_variable(primary_expr.ident);
-							ex = f.get_Expr(cs);
-						}else if(cs.search_field(primary_expr.ident, cs.this_field, null ,cs)){
-							f = cs.get_field(primary_expr.ident, cs.this_field, null ,cs);
-							ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.this_field.get_Expr(cs));
+						Field f_tmp = cs.add_field(primary_expr.ident, cs.call_field, cs.call_field_index);
+						if(f_tmp != null){
+							f = f_tmp;
+							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.call_expr);
 						}else{
-							Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
-							if(f_tmp != null){
-								f = f_tmp;
-								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
-							}else{
-								ident = this.primary_expr.ident;
-								f = cs.this_field;
-								ex = f.get_Expr(cs);
-							}
+							ident = this.primary_expr.ident;
+							f = cs.call_field;
+							ex = cs.call_expr;
+						}
+
+					}
+				}else if(cs.in_refinement_predicate){//篩型
+					if((cs.refined_class_Field==null||cs.refined_class_Field.equals(cs.this_field, cs))&&cs.search_variable(this.primary_expr.ident)){
+						f = cs.get_variable(this.primary_expr.ident);
+						ex = f.get_Expr(cs);
+					}else if(cs.search_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index ,cs)){
+						f = cs.get_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index ,cs);
+						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.refined_class_Expr);
+					}else{
+						Field f_tmp = cs.add_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index);
+						if(f_tmp != null){
+							f = f_tmp;
+							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.refined_class_Expr);
+						}else{
+							ident = this.primary_expr.ident;
+							f = cs.refined_class_Field;
+							ex = cs.refined_class_Expr;
 						}
 					}
+				}else{
+					if(cs.search_variable(primary_expr.ident)){
+						f = cs.get_variable(primary_expr.ident);
+						ex = f.get_Expr(cs);
+					}else if(cs.search_field(primary_expr.ident, cs.this_field, null ,cs)){
+						f = cs.get_field(primary_expr.ident, cs.this_field, null ,cs);
+						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.this_field.get_Expr(cs));
+					}else{
+						Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
+						if(f_tmp != null){
+							f = f_tmp;
+							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
+						}else{
+							ident = this.primary_expr.ident;
+							f = cs.this_field;
+							ex = f.get_Expr(cs);
+						}
+					}
+				}
 
-					if(cs.in_refinement_predicate==true){
-						if(f.modifiers.is_final==false){//篩型の中ではfinalである必要がある
+				if(cs.in_refinement_predicate==true){
+					if(f.modifiers.is_final==false){//篩型の中ではfinalである必要がある
+						throw new Exception("can use only final variable in refinement type");
+					}
+				}
+				//JML節での使えない可視性の確認
+				if(cs.ban_default_visibility){
+					if(f.modifiers!=null&&f.modifiers.is_privte==false){
+						throw new Exception("can not use default visibility variable");
+					}
+				}
+				if(cs.ban_private_visibility){
+					if(f.modifiers!=null&&f.modifiers.is_privte==true){
+						throw new Exception("can not use private visibility variable");
+					}
+				}
+			}
+		}else if(this.primary_expr.bracket_expression!=null){
+			if(this.primary_suffixs.size() == 0){
+				ex = this.primary_expr.bracket_expression.check(cs);
+			}else{
+				//たぶん厳しい
+				
+			}
+		}else if(this.primary_expr.java_literal!=null){
+			if(this.primary_suffixs.size() == 0){
+				ex = this.primary_expr.java_literal.check(cs);
+			}else{
+				throw new Exception("literal dont have suffix");
+				
+			}
+		}else if(this.primary_expr.jml_primary!=null){
+			if(cs.in_method_call){
+				if(this.primary_expr.jml_primary.is_result){
+					f = cs.result;
+					ex = f.get_Expr(cs);
+				}else{
+					//これもかっこと同じ理由で厳しい
+					ex = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.old_status);
+				}
+			}else{
+				if(this.primary_expr.jml_primary.is_result){
+					f = cs.return_v;
+					ex = cs.return_expr;
+					//return ex;
+				}else{
+					//これもかっこと同じ理由で厳しい
+					ex = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.this_old_status);
+				}
+			}
+		}else if(this.primary_expr.new_expr!=null){
+			f = this.primary_expr.new_expr.check(cs);
+			ex = f.get_Expr(cs);
+		}else{
+			//return null;
+		}
+		
+		if(f.refinement_type_clause!=null && is_refine_value==false){//篩型
+			add_refinement_constraint(cs, f, ex, cs.in_method_call, cs.call_expr, cs.call_field, cs.call_field_index);
+		}
+		
+		
+		//suffixについて
+		IntExpr f_index = null;
+		
+		for(int i = 0; i < this.primary_suffixs.size(); i++){
+			primary_suffix ps = this.primary_suffixs.get(i);
+			if(ps.is_field){
+				if(ident!=null){
+					Field pre_f = f;
+					Expr pre_ex = ex;
+					IntExpr pre_f_index = f_index;
+					if(cs.search_field(ident, f, f_index, cs)){
+						f = cs.get_field(ident, f, f_index, cs);
+						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+					}else{
+						Field f_tmp = cs.add_field(ident, f, f_index);
+						if(f_tmp != null){
+							f = f_tmp;
+							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+						}else{
+							//System.out.println(ident + " dont exist");
+							throw new Exception(ident + " don't exist");
+						}
+					}
+					
+					if(f.refinement_type_clause!=null){//篩型
+						add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f, pre_f_index);
+					}
+					
+					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
+						if(f.modifiers.is_final==false){
 							throw new Exception("can use only final variable in refinement type");
 						}
 					}
+					
+					//JML節での使えない可視性の確認
+					if(cs.ban_default_visibility){
+						if(f.modifiers!=null&&f.modifiers.is_privte==false){
+							throw new Exception("can not use default visibility variable");
+						}
+					}
+					if(cs.ban_private_visibility){
+						if(f.modifiers!=null&&f.modifiers.is_privte==true){
+							throw new Exception("can not use private visibility variable");
+						}
+					}
+					f_index = null;
+				}
+				
+				ident = ps.ident;
+				
+				//最後がフィールドの時か次が配列のときの処理
+				if(i == this.primary_suffixs.size()-1 || this.primary_suffixs.get(i+1).is_index){
+
+					Field pre_f = f;
+					Expr pre_ex = ex;
+					IntExpr pre_f_index = f_index;
+					if(cs.search_field(ident, f, f_index, cs)){
+						f = cs.get_field(ident, f, f_index, cs);
+						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+					}else{
+						Field f_tmp = cs.add_field(ident, f, f_index);
+						if(f_tmp != null){
+							f = f_tmp;
+							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+						}else{
+							//System.out.println(ident + " dont exist");
+							throw new Exception(ident + " don't exist");
+						}
+					}
+					
+					if(f.refinement_type_clause!=null){//篩型
+						add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f, pre_f_index);
+						
+					}
+					
+					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
+						if(f.modifiers.is_final==false){
+							throw new Exception("can use only final variable in refinement type");
+						}
+					}
+					
 					//JML節での使えない可視性の確認
 					if(cs.ban_default_visibility){
 						if(f.modifiers!=null&&f.modifiers.is_privte==false){
@@ -141,154 +278,28 @@ public class postfix_expr implements Parser<String>{
 						}
 					}
 				}
-			}else if(this.primary_expr.bracket_expression!=null){
-				//たぶん厳しい
-			}else if(this.primary_expr.java_literal!=null){
-				System.out.println("literal dont have suffix");
-			}else if(this.primary_expr.jml_primary!=null){
-				if(cs.in_method_call){
-					if(this.primary_expr.jml_primary.is_result){
-						f = cs.result;
-						ex = f.get_Expr(cs);
-					}else{
-						throw new Exception("the same meaning even without this \\old");
-					}
-				}else{
-					if(this.primary_expr.jml_primary.is_result){
-						f = cs.return_v;
-						ex = cs.return_expr;
-						//return ex;
-					}else{
-						throw new Exception("the same meaning even without this \\old");
-					}
+				
+				f_index = null;
+			}else if(ps.is_index){
+				f_index = (IntExpr) ps.expression.check(cs);
+				ex = cs.ctx.mkSelect((ArrayExpr) ex, f_index);
+				ident = null;
+				if(cs.in_refinement_predicate==true){//篩型の中では配列は使えない
+					throw new Exception("can not use array in refinement type");
 				}
-			}else if(this.primary_expr.new_expr!=null){
-				f = this.primary_expr.new_expr.check(cs);
+				
+			}else if(ps.is_method){
+				//関数の呼び出し
+				f = method(cs, ident,f, ex, ps, f_index);
 				ex = f.get_Expr(cs);
-			}else{
-				//return null;
+				cs.in_method_call = false;
+				ident = null;
+				f_index = null;
 			}
-			
-			if(f.refinement_type_clause!=null && is_refine_value==false){//篩型
-				add_refinement_constraint(cs, f, ex, cs.in_method_call, cs.call_expr, cs.call_field, cs.call_field_index);
-			}
-			
-			
-			//suffixについて
-			IntExpr f_index = null;
-			
-			for(int i = 0; i < this.primary_suffixs.size(); i++){
-				primary_suffix ps = this.primary_suffixs.get(i);
-				if(ps.is_field){
-					if(ident!=null){
-						Field pre_f = f;
-						Expr pre_ex = ex;
-						IntExpr pre_f_index = f_index;
-						if(cs.search_field(ident, f, f_index, cs)){
-							f = cs.get_field(ident, f, f_index, cs);
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-						}else{
-							Field f_tmp = cs.add_field(ident, f, f_index);
-							if(f_tmp != null){
-								f = f_tmp;
-								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-							}else{
-								//System.out.println(ident + " dont exist");
-								throw new Exception(ident + " don't exist");
-							}
-						}
-						
-						if(f.refinement_type_clause!=null){//篩型
-							add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f, pre_f_index);
-						}
-						
-						if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
-							if(f.modifiers.is_final==false){
-								throw new Exception("can use only final variable in refinement type");
-							}
-						}
-						
-						//JML節での使えない可視性の確認
-						if(cs.ban_default_visibility){
-							if(f.modifiers!=null&&f.modifiers.is_privte==false){
-								throw new Exception("can not use default visibility variable");
-							}
-						}
-						if(cs.ban_private_visibility){
-							if(f.modifiers!=null&&f.modifiers.is_privte==true){
-								throw new Exception("can not use private visibility variable");
-							}
-						}
-						f_index = null;
-					}
-					
-					ident = ps.ident;
-					
-					//最後がフィールドの時か次が配列のときの処理
-					if(i == this.primary_suffixs.size()-1 || this.primary_suffixs.get(i+1).is_index){
-
-						Field pre_f = f;
-						Expr pre_ex = ex;
-						IntExpr pre_f_index = f_index;
-						if(cs.search_field(ident, f, f_index, cs)){
-							f = cs.get_field(ident, f, f_index, cs);
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-						}else{
-							Field f_tmp = cs.add_field(ident, f, f_index);
-							if(f_tmp != null){
-								f = f_tmp;
-								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-							}else{
-								//System.out.println(ident + " dont exist");
-								throw new Exception(ident + " don't exist");
-							}
-						}
-						
-						if(f.refinement_type_clause!=null){//篩型
-							add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f, pre_f_index);
-							
-						}
-						
-						if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
-							if(f.modifiers.is_final==false){
-								throw new Exception("can use only final variable in refinement type");
-							}
-						}
-						
-						//JML節での使えない可視性の確認
-						if(cs.ban_default_visibility){
-							if(f.modifiers!=null&&f.modifiers.is_privte==false){
-								throw new Exception("can not use default visibility variable");
-							}
-						}
-						if(cs.ban_private_visibility){
-							if(f.modifiers!=null&&f.modifiers.is_privte==true){
-								throw new Exception("can not use private visibility variable");
-							}
-						}
-					}
-					
-					f_index = null;
-				}else if(ps.is_index){
-					f_index = (IntExpr) ps.expression.check(cs);
-					ex = cs.ctx.mkSelect((ArrayExpr) ex, f_index);
-					ident = null;
-					if(cs.in_refinement_predicate==true){//篩型の中では配列は使えない
-						throw new Exception("can not use array in refinement type");
-					}
-					
-				}else if(ps.is_method){
-					//関数の呼び出し
-					f = method(cs, ident,f, ex, ps, f_index);
-					ex = f.get_Expr(cs);
-					cs.in_method_call = false;
-					ident = null;
-					f_index = null;
-				}
-			}
-			
-
 		}
+			
+
+		
 		
 		return ex;
 	}

@@ -78,10 +78,12 @@ public class postfix_expr implements Parser<String>{
 						if(f_tmp != null){
 							f = f_tmp;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.call_expr);
-						}else{
+						}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
 							ident = this.primary_expr.ident;
 							f = cs.call_field;
 							ex = cs.call_expr;
+						}else{
+							throw new Exception(cs.call_field.type + " don't have " + this.primary_expr.ident);
 						}
 
 					}
@@ -97,10 +99,12 @@ public class postfix_expr implements Parser<String>{
 						if(f_tmp != null){
 							f = f_tmp;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.refined_class_Expr);
-						}else{
+						}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
 							ident = this.primary_expr.ident;
 							f = cs.refined_class_Field;
 							ex = cs.refined_class_Expr;
+						}else{
+							throw new Exception(cs.refined_class_Field.type + " don't have " + this.primary_expr.ident);
 						}
 					}
 				}else{
@@ -115,10 +119,12 @@ public class postfix_expr implements Parser<String>{
 						if(f_tmp != null){
 							f = f_tmp;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
-						}else{
+						}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
 							ident = this.primary_expr.ident;
 							f = cs.this_field;
 							ex = f.get_Expr(cs);
+						}else{
+							throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 						}
 					}
 				}
@@ -191,73 +197,28 @@ public class postfix_expr implements Parser<String>{
 		for(int i = 0; i < this.primary_suffixs.size(); i++){
 			primary_suffix ps = this.primary_suffixs.get(i);
 			if(ps.is_field){
-				if(ident!=null){
+				if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
+					ident = ps.ident;
+				}else{
 					Field pre_f = f;
 					Expr pre_ex = ex;
 					IntExpr pre_f_index = f_index;
-					if(cs.search_field(ident, f, f_index, cs)){
-						f = cs.get_field(ident, f, f_index, cs);
+					if(cs.search_field(ps.ident, f, f_index, cs)){
+						f = cs.get_field(ps.ident, f, f_index, cs);
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 					}else{
-						Field f_tmp = cs.add_field(ident, f, f_index);
+						Field f_tmp = cs.add_field(ps.ident, f, f_index);
 						if(f_tmp != null){
 							f = f_tmp;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 						}else{
 							//System.out.println(ident + " dont exist");
-							throw new Exception(ident + " don't exist");
+							throw new Exception(f.type + " don't have " + ps.ident);
 						}
 					}
 					
 					if(f.refinement_type_clause!=null){//篩型
 						add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f, pre_f_index);
-					}
-					
-					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
-						if(f.modifiers.is_final==false){
-							throw new Exception("can use only final variable in refinement type");
-						}
-					}
-					
-					//JML節での使えない可視性の確認
-					if(cs.ban_default_visibility){
-						if(f.modifiers!=null&&f.modifiers.is_privte==false){
-							throw new Exception("can not use default visibility variable");
-						}
-					}
-					if(cs.ban_private_visibility){
-						if(f.modifiers!=null&&f.modifiers.is_privte==true){
-							throw new Exception("can not use private visibility variable");
-						}
-					}
-					f_index = null;
-				}
-				
-				ident = ps.ident;
-				
-				//最後がフィールドの時か次が配列のときの処理
-				if(i == this.primary_suffixs.size()-1 || this.primary_suffixs.get(i+1).is_index){
-
-					Field pre_f = f;
-					Expr pre_ex = ex;
-					IntExpr pre_f_index = f_index;
-					if(cs.search_field(ident, f, f_index, cs)){
-						f = cs.get_field(ident, f, f_index, cs);
-						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-					}else{
-						Field f_tmp = cs.add_field(ident, f, f_index);
-						if(f_tmp != null){
-							f = f_tmp;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-						}else{
-							//System.out.println(ident + " dont exist");
-							throw new Exception(ident + " don't exist");
-						}
-					}
-					
-					if(f.refinement_type_clause!=null){//篩型
-						add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f, pre_f_index);
-						
 					}
 					
 					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
@@ -298,9 +259,6 @@ public class postfix_expr implements Parser<String>{
 			}
 		}
 			
-
-		
-		
 		return ex;
 	}
 	
@@ -310,6 +268,7 @@ public class postfix_expr implements Parser<String>{
 		if(this.primary_suffixs.size() == 0){
 			if(this.primary_expr.is_this){
 				//これはアウト
+				throw new Exception("can't assign this");
 			}if(this.primary_expr.ident!=null){
 
 				
@@ -320,16 +279,20 @@ public class postfix_expr implements Parser<String>{
 					f = cs.get_field(primary_expr.ident, cs.this_field, null, cs);
 					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
 					f.class_object_expr = cs.this_field.get_Expr(cs);
+				}else{
+					Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
+					if(f_tmp != null){
+						f = f_tmp;
+						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
+					}else{
+						throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
+					}
 				}
 
 			}else if(this.primary_expr.java_literal!=null){
-				//System.out.println("can't assign java literal");
 				throw new Exception("can't assign java literal");
-				//return null;
 			}else{
-				//System.out.println("can't write in lef side");
 				throw new Exception("can't write in lef side");
-				//return null;
 			}
 			return f;
 
@@ -357,13 +320,22 @@ public class postfix_expr implements Parser<String>{
 						f.class_object_expr = cs.this_field.get_Expr(cs);
 					}
 				}else{
-					ident = this.primary_expr.ident;
-					f = cs.this_field;
-					ex = f.get_Expr(cs);
-					//最後が配列のとき
-					if(1 == this.primary_suffixs.size() && this.primary_suffixs.get(0).is_index){
-						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
+					Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
+					if(f_tmp != null){
+						f = f_tmp;
+						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
+						//最後が配列のとき
+						if(1 == this.primary_suffixs.size() && this.primary_suffixs.get(0).is_index){
+							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
+						}
+					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
+						ident = this.primary_expr.ident;
+						f = cs.this_field;
+						ex = f.get_Expr(cs);
+					}else{
+						throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 					}
+					
 				}
 
 				if(cs.in_refinement_predicate==true){
@@ -386,58 +358,43 @@ public class postfix_expr implements Parser<String>{
 			for(int i = 0; i < this.primary_suffixs.size(); i++){
 				primary_suffix ps = this.primary_suffixs.get(i);
 				if(ps.is_field){
-					if(ident!=null){
-						if(cs.search_field(ident, f, f_index, cs)){
-							f = cs.get_field(ident, f, f_index, cs);
+					if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
+						ident = ps.ident;
+					}else{
+						if(cs.search_field(ps.ident, f, f_index, cs)){
+							f = cs.get_field(ps.ident, f, f_index, cs);
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 						}else{
-							Field f_tmp = cs.add_field(ident, f, f_index);
+							Field f_tmp = cs.add_field(ps.ident, f, f_index);
 							if(f_tmp != null){
 								f = f_tmp;
 								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 							}else{
-								//System.out.println(ident + " dont exist");
-								throw new Exception(ident + " dont exist");
+								throw new Exception(ps.ident + " dont exist");
 							}
 						}
 
 					}
-					ident = ps.ident;
 
-					//最後がフィールドの時か次が配列のときの処理
-					if(i == this.primary_suffixs.size()-1 || this.primary_suffixs.get(i+1).is_index){
-						
+					//最後のときの処理
+					if(i == this.primary_suffixs.size()-1 || (i == this.primary_suffixs.size() - 2 && this.primary_suffixs.get(i+1).is_index)){
 						Expr pre_ex = ex;
 						
-						if(cs.search_field(ident, f, f_index, cs)){
-							f = cs.get_field(ident, f, f_index, cs);
+						if(cs.search_field(ps.ident, f, f_index, cs)){
+							f = cs.get_field(ps.ident, f, f_index, cs);
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), ex);
 						}else{
-							Field f_tmp = cs.add_field(ident, f, f_index);
+							Field f_tmp = cs.add_field(ps.ident, f, f_index);
 							if(f_tmp != null){
 								f = f_tmp;
 								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), ex);
 							}else{
-								//System.out.println(ident + " dont exist");
-								throw new Exception(ident + " dont exist");
+								throw new Exception(ps.ident + " dont exist");
 							}
 						}
 						
-						//最後が配列のとき
-						/*これらない？
-						if(i == this.primary_suffixs.size() - 2 && this.primary_suffixs.get(i+1).is_index){
-							f.assign_now_array_Expr = ex;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), pre_ex);
-						}
-						*/
-						
-						//最後なら
-						if(i == this.primary_suffixs.size()-1 || (i == this.primary_suffixs.size() - 2 && this.primary_suffixs.get(i+1).is_index)){
-							f.class_object_expr = pre_ex;
-						}
+						f.class_object_expr = pre_ex;
 					}
-					
-					
 					
 					f_index = null;
 					
@@ -532,18 +489,6 @@ public class postfix_expr implements Parser<String>{
 		}
 		//事前条件
 		BoolExpr pre_invariant_expr = null;
-		/*これはいらん
-		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0){
-			for(invariant inv : cd.class_block.invariants){
-				if(pre_invariant_expr == null){
-					pre_invariant_expr = (BoolExpr) inv.check(cs);
-				}else{
-					pre_invariant_expr = cs.ctx.mkAnd(pre_invariant_expr, (BoolExpr)inv.check(cs));
-				}
-			}
-			cs.assert_constraint(pre_invariant_expr);
-		}
-		*/
 		BoolExpr require_expr = null;
 		if(md.requires!=null&&md.requires.size()>0){
 			for(requires_clause re : md.requires){

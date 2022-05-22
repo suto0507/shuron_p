@@ -186,7 +186,7 @@ public class postfix_expr implements Parser<String>{
 			//return null;
 		}
 		
-		if(f.refinement_type_clause!=null && is_refine_value==false){//‚øå^
+		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false){//‚øå^
 			add_refinement_constraint(cs, f, ex, cs.in_method_call, cs.call_expr, cs.call_field, cs.call_field_index);
 		}
 		
@@ -212,7 +212,6 @@ public class postfix_expr implements Parser<String>{
 							f = f_tmp;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 						}else{
-							//System.out.println(ident + " dont exist");
 							throw new Exception(f.type + " don't have " + ps.ident);
 						}
 					}
@@ -274,16 +273,14 @@ public class postfix_expr implements Parser<String>{
 				
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
-					ex = f.get_Expr_assign(cs);
 				}else if(cs.search_field(primary_expr.ident, cs.this_field, null ,cs)){
 					f = cs.get_field(primary_expr.ident, cs.this_field, null, cs);
-					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
 					f.class_object_expr = cs.this_field.get_Expr(cs);
 				}else{
 					Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
 					if(f_tmp != null){
 						f = f_tmp;
-						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
+						f.class_object_expr = cs.this_field.get_Expr(cs);
 					}else{
 						throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 					}
@@ -307,27 +304,16 @@ public class postfix_expr implements Parser<String>{
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
 					ex = f.get_Expr(cs);
-					//ç≈å„Ç™îzóÒÇÃÇ∆Ç´
-					if(1 == this.primary_suffixs.size() && this.primary_suffixs.get(0).is_index){
-						ex = f.get_Expr_assign(cs);
-					}
 				}else if(cs.search_field(primary_expr.ident, cs.this_field, null, cs)){
 					f = cs.get_field(primary_expr.ident, cs.this_field, null, cs);
+					f.class_object_expr = cs.this_field.get_Expr(cs);
 					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
-					//ç≈å„Ç™îzóÒÇÃÇ∆Ç´
-					if(1 == this.primary_suffixs.size() && this.primary_suffixs.get(0).is_index){
-						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
-						f.class_object_expr = cs.this_field.get_Expr(cs);
-					}
 				}else{
 					Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
 					if(f_tmp != null){
 						f = f_tmp;
+						f.class_object_expr = cs.this_field.get_Expr(cs);
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
-						//ç≈å„Ç™îzóÒÇÃÇ∆Ç´
-						if(1 == this.primary_suffixs.size() && this.primary_suffixs.get(0).is_index){
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), cs.this_field.get_Expr(cs));
-						}
 					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
 						ident = this.primary_expr.ident;
 						f = cs.this_field;
@@ -338,12 +324,7 @@ public class postfix_expr implements Parser<String>{
 					
 				}
 
-				if(cs.in_refinement_predicate==true){
-					if(this.primary_expr.ident.equals(cs.refinement_type_value)){
-						f = cs.refined_Field;
-						ex = cs.refined_Expr;
-					}
-				}
+				
 			}else if(this.primary_expr.bracket_expression!=null){
 				//ÇΩÇ‘ÇÒåµÇµÇ¢
 			}else if(this.primary_expr.java_literal!=null){
@@ -363,37 +344,19 @@ public class postfix_expr implements Parser<String>{
 					}else{
 						if(cs.search_field(ps.ident, f, f_index, cs)){
 							f = cs.get_field(ps.ident, f, f_index, cs);
+							f.class_object_expr = ex;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 						}else{
 							Field f_tmp = cs.add_field(ps.ident, f, f_index);
 							if(f_tmp != null){
 								f = f_tmp;
+								f.class_object_expr = ex;
 								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 							}else{
-								throw new Exception(ps.ident + " dont exist");
+								throw new Exception(f.type + " don't have " + ps.ident);
 							}
 						}
 
-					}
-
-					//ç≈å„ÇÃÇ∆Ç´ÇÃèàóù
-					if(i == this.primary_suffixs.size()-1 || (i == this.primary_suffixs.size() - 2 && this.primary_suffixs.get(i+1).is_index)){
-						Expr pre_ex = ex;
-						
-						if(cs.search_field(ps.ident, f, f_index, cs)){
-							f = cs.get_field(ps.ident, f, f_index, cs);
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), ex);
-						}else{
-							Field f_tmp = cs.add_field(ps.ident, f, f_index);
-							if(f_tmp != null){
-								f = f_tmp;
-								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr_assign(cs), ex);
-							}else{
-								throw new Exception(ps.ident + " dont exist");
-							}
-						}
-						
-						f.class_object_expr = pre_ex;
 					}
 					
 					f_index = null;

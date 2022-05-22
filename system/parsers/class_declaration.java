@@ -18,8 +18,8 @@ public class class_declaration implements Parser<String>{
 		new spaces().parse(s,ps);
 		this.class_name = new ident().parse(s,ps);
 		String extends_clause = "";
-		Source s_backup = s.clone();
 		new spaces().parse(s,ps);
+		Source s_backup = s.clone();
 		try{
 			String extends_class_name = new class_extends_clause().parse(s, ps);
 			ps.extends_pairs.add(new Pair<String,String>(class_name, extends_class_name));//åpè≥ä÷åWÇìoò^

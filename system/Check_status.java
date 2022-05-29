@@ -85,13 +85,20 @@ public class Check_status {
 		return ret;
 	}
 	
-	public boolean search_field(String ident, Field class_object, IntExpr class_object_index, Check_status cs){
-		boolean ret = false;
+	public Field search_field(String ident, Field class_object, IntExpr class_object_index, Check_status cs) throws Exception{
+		
+		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident);
+		
+		if(vd == null){
+			return null;
+		}
+		
+		String field_name = ident + "_" + vd.class_type_name;
 		
 		for(Field v :fields){
-			if(ident.equals(v.field_name)&&v.class_object.equals(class_object)){
+			if(field_name.equals(v.field_name)&&v.class_object.equals(class_object)){
 				if(v.class_object_index==null && class_object_index==null){
-					ret = true;
+					return v;
 				}else if(v.class_object_index!=null && class_object_index!=null){//‚Ç‚¿‚ç‚©‚ªnull‚Íˆê’v‚µ‚È‚¢‚à‚Ì
 				
 					BoolExpr expr;
@@ -106,14 +113,17 @@ public class Check_status {
 					cs.solver.add(expr);
 					if(cs.solver.check() != Status.SATISFIABLE) {
 						cs.solver.pop();
-						ret =  true;
+						return v;
 					}else{
 						cs.solver.pop();
 					}
 				}
 			}
 		}
-		return ret;
+		
+		Field f = new Field(this.Check_status_share.get_tmp_num(),field_name , vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, class_object_index);
+		this.fields.add(f);
+		return f;
 	}
 	
 	public boolean search_called_method_arg(String ident){
@@ -137,6 +147,7 @@ public class Check_status {
 		//return null;
 	}
 	
+	/*
 	public Field get_field(String ident, Field class_object, IntExpr class_object_index, Check_status cs) throws Exception{
 		for(Field v :fields){
 			if(ident.equals(v.field_name)&&( (v.class_object==null && class_object==null) ||v.class_object.equals(class_object))){
@@ -167,6 +178,7 @@ public class Check_status {
 		throw new Exception("can't find " + ident + "\n");
 		//return null;
 	}
+	*/
 	
 	public Variable get_called_method_arg(String ident) throws Exception{
 		for(Variable v :called_method_args){
@@ -236,6 +248,7 @@ public class Check_status {
 		return v;
 	}
 	
+	/*
 	public Field add_field(String field_name, Field class_object, IntExpr class_object_index) throws Exception{
 		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, field_name);
 		if(vd != null){
@@ -247,6 +260,7 @@ public class Check_status {
 			return null;
 		}
 	}
+	*/
 
 	
 	public Check_status clone(){

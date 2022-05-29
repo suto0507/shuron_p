@@ -86,11 +86,12 @@ public class class_block implements Parser<String>{
 			Check_status csc =  cs.clone();
 			csc.clone_list();
 			csc.solver = csc.ctx.mkSolver();
+			/*
 			for(variable_definition vd : this.variable_definitions){
 				Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
 						, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, null);
 				csc.fields.add(f);
-			}
+			}*/
 			//for(Field f : csc.fields){//‚øå^ÇÃämîF
 			/*óvÇÁÇ»Ç≠Ç»Ç¡ÇΩÇÕÇ∏Ç»ÇÃÇ≈è¡Ç∑
 			for(int i = 0; i < csc.fields.size(); i++){

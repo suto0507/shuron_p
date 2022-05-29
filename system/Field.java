@@ -34,7 +34,7 @@ public class Field {
 	public boolean final_initialized;
 	
 	
-	public Field(int id,String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, IntExpr class_object_index) throws Exception{
+	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, IntExpr class_object_index) throws Exception{
 		this.id = id;
 		this.temp_num = 0;
 		this.field_name = field_name;

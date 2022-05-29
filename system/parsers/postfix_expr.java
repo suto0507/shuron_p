@@ -67,65 +67,51 @@ public class postfix_expr implements Parser<String>{
 				is_refine_value = true;
 			}else{
 				if(cs.in_method_call){//ŠÖ”ŒÄ‚Ño‚µ
+					Field searched_field = cs.search_field(primary_expr.ident, cs.call_field, cs.call_field_index ,cs);
 					if(cs.search_called_method_arg(primary_expr.ident)){
 						f = cs.get_called_method_arg(primary_expr.ident);
 						ex = f.get_Expr(cs);
-					}else if(cs.search_field(primary_expr.ident, cs.call_field, cs.call_field_index ,cs)){
-						f = cs.get_field(primary_expr.ident, cs.call_field, cs.call_field_index ,cs);
+					}else if(searched_field != null){
+						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.call_expr);
+					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
+						ident = this.primary_expr.ident;
+						f = cs.call_field;
+						ex = cs.call_expr;
 					}else{
-						Field f_tmp = cs.add_field(primary_expr.ident, cs.call_field, cs.call_field_index);
-						if(f_tmp != null){
-							f = f_tmp;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.call_expr);
-						}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
-							ident = this.primary_expr.ident;
-							f = cs.call_field;
-							ex = cs.call_expr;
-						}else{
-							throw new Exception(cs.call_field.type + " don't have " + this.primary_expr.ident);
-						}
-
+						throw new Exception(cs.call_field.type + " don't have " + this.primary_expr.ident);
 					}
+					
 				}else if(cs.in_refinement_predicate){//â¿Œ^
+					Field searched_field = cs.search_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index ,cs);
 					if((cs.refined_class_Field==null||cs.refined_class_Field.equals(cs.this_field, cs))&&cs.search_variable(this.primary_expr.ident)){
 						f = cs.get_variable(this.primary_expr.ident);
 						ex = f.get_Expr(cs);
-					}else if(cs.search_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index ,cs)){
-						f = cs.get_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index ,cs);
+					}else if(searched_field != null){
+						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.refined_class_Expr);
+					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
+						ident = this.primary_expr.ident;
+						f = cs.refined_class_Field;
+						ex = cs.refined_class_Expr;
 					}else{
-						Field f_tmp = cs.add_field(primary_expr.ident, cs.refined_class_Field, cs.refined_class_Field_index);
-						if(f_tmp != null){
-							f = f_tmp;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.refined_class_Expr);
-						}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
-							ident = this.primary_expr.ident;
-							f = cs.refined_class_Field;
-							ex = cs.refined_class_Expr;
-						}else{
-							throw new Exception(cs.refined_class_Field.type + " don't have " + this.primary_expr.ident);
-						}
+						throw new Exception(cs.refined_class_Field.type + " don't have " + this.primary_expr.ident);
 					}
+					
 				}else{
+					Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, null ,cs);
 					if(cs.search_variable(primary_expr.ident)){
 						f = cs.get_variable(primary_expr.ident);
 						ex = f.get_Expr(cs);
-					}else if(cs.search_field(primary_expr.ident, cs.this_field, null ,cs)){
-						f = cs.get_field(primary_expr.ident, cs.this_field, null ,cs);
+					}else if(searched_field != null){
+						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.this_field.get_Expr(cs));
+					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
+						ident = this.primary_expr.ident;
+						f = cs.this_field;
+						ex = f.get_Expr(cs);
 					}else{
-						Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
-						if(f_tmp != null){
-							f = f_tmp;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
-						}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
-							ident = this.primary_expr.ident;
-							f = cs.this_field;
-							ex = f.get_Expr(cs);
-						}else{
-							throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
-						}
+						throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 					}
 				}
 
@@ -203,17 +189,13 @@ public class postfix_expr implements Parser<String>{
 					Field pre_f = f;
 					Expr pre_ex = ex;
 					IntExpr pre_f_index = f_index;
-					if(cs.search_field(ps.ident, f, f_index, cs)){
-						f = cs.get_field(ps.ident, f, f_index, cs);
+					
+					Field searched_field = cs.search_field(ps.ident, f, f_index, cs);
+					if(searched_field != null){
+						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 					}else{
-						Field f_tmp = cs.add_field(ps.ident, f, f_index);
-						if(f_tmp != null){
-							f = f_tmp;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-						}else{
-							throw new Exception(f.type + " don't have " + ps.ident);
-						}
+						throw new Exception(f.type + " don't have " + ps.ident);
 					}
 					
 					if(f.refinement_type_clause!=null){//â¿Œ^
@@ -270,20 +252,14 @@ public class postfix_expr implements Parser<String>{
 				throw new Exception("can't assign this");
 			}if(this.primary_expr.ident!=null){
 
-				
+				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, null ,cs);
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
-				}else if(cs.search_field(primary_expr.ident, cs.this_field, null ,cs)){
-					f = cs.get_field(primary_expr.ident, cs.this_field, null, cs);
+				}else if(searched_field != null){
+					f = searched_field;
 					f.class_object_expr = cs.this_field.get_Expr(cs);
 				}else{
-					Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
-					if(f_tmp != null){
-						f = f_tmp;
-						f.class_object_expr = cs.this_field.get_Expr(cs);
-					}else{
-						throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
-					}
+					throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 				}
 
 			}else if(this.primary_expr.java_literal!=null){
@@ -301,27 +277,20 @@ public class postfix_expr implements Parser<String>{
 				ex = f.get_Expr(cs);
 			}else if(this.primary_expr.ident!=null){
 
+				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, null, cs);
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
 					ex = f.get_Expr(cs);
-				}else if(cs.search_field(primary_expr.ident, cs.this_field, null, cs)){
-					f = cs.get_field(primary_expr.ident, cs.this_field, null, cs);
+				}else if(searched_field != null){
+					f = searched_field;
 					f.class_object_expr = cs.this_field.get_Expr(cs);
 					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
+				}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
+					ident = this.primary_expr.ident;
+					f = cs.this_field;
+					ex = f.get_Expr(cs);
 				}else{
-					Field f_tmp = cs.add_field(primary_expr.ident, cs.this_field, null);
-					if(f_tmp != null){
-						f = f_tmp;
-						f.class_object_expr = cs.this_field.get_Expr(cs);
-						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), cs.this_field.get_Expr(cs));
-					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
-						ident = this.primary_expr.ident;
-						f = cs.this_field;
-						ex = f.get_Expr(cs);
-					}else{
-						throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
-					}
-					
+					throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 				}
 
 				
@@ -342,19 +311,13 @@ public class postfix_expr implements Parser<String>{
 					if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
 						ident = ps.ident;
 					}else{
-						if(cs.search_field(ps.ident, f, f_index, cs)){
-							f = cs.get_field(ps.ident, f, f_index, cs);
+						Field searched_field = cs.search_field(ps.ident, f, f_index, cs);
+						if(searched_field != null){
+							f = searched_field;
 							f.class_object_expr = ex;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
 						}else{
-							Field f_tmp = cs.add_field(ps.ident, f, f_index);
-							if(f_tmp != null){
-								f = f_tmp;
-								f.class_object_expr = ex;
-								ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-							}else{
-								throw new Exception(f.type + " don't have " + ps.ident);
-							}
+							throw new Exception(f.type + " don't have " + ps.ident);
 						}
 
 					}

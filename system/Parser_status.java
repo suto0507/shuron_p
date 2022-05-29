@@ -6,6 +6,7 @@ import java.util.List;
 public class Parser_status {
 	public boolean in_jml;
 	public boolean in_ensures;
+	public String class_type_name;
 	public List<Pair<String, String>> extends_pairs;
 	
 	public Parser_status(){

@@ -27,6 +27,7 @@ public class class_declaration implements Parser<String>{
 		}catch (Exception e){
 			s.revert(s_backup);
 		}
+		ps.class_type_name = class_name;
 		this.class_block = new class_block();
 		String content = class_block.parse(s,ps);
 		new newLines().parse(s,ps);

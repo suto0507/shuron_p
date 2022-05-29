@@ -8,6 +8,7 @@ public class variable_definition implements Parser<String>{
 	String st;
 	public modifiers modifiers;
 	public variable_decls variable_decls;
+	public String class_type_name;
 	
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -19,6 +20,8 @@ public class variable_definition implements Parser<String>{
 		this.st = this.st + variable_decls.parse(s, ps);
 		this.st = this.st + new spaces().parse(s, ps);
 		this.st = this.st + new string(";").parse(s, ps);
+		
+		this.class_type_name = ps.class_type_name;
 		
 		return st;
 	}

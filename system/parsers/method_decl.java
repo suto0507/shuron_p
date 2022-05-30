@@ -26,6 +26,8 @@ public class method_decl implements Parser<String>{
 	formals formals;
 	compound_statement compound_statement;
 	
+	public String class_type_name;
+	
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		this.st = "";
@@ -73,6 +75,8 @@ public class method_decl implements Parser<String>{
 		
 		this.compound_statement = new compound_statement();
 		this.st = this.st + this.compound_statement.parse(s, ps);
+		
+		this.class_type_name = ps.class_type_name;
 		
 		return st;
 	}
@@ -177,10 +181,12 @@ public class method_decl implements Parser<String>{
 			}
 			
 			
-			
+			String pre_class_type_name = cs.this_field.type;
+			cs.this_field.type = this.class_type_name;
 			//’†g
 			this.compound_statement.check(cs);
-
+			
+			cs.this_field.type = pre_class_type_name;
 			
 			//return‚Ìˆ—
 			if(cs.after_return==false && !(this.type_spec==null||this.type_spec.type.type.equals("void"))){

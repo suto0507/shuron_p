@@ -14,6 +14,7 @@ public class refinement_type implements Parser<String>{
 	type type;
 	String ident;
 	predicates predicates;
+	public String class_type_name;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st;
@@ -31,6 +32,8 @@ public class refinement_type implements Parser<String>{
 		st = st + this.predicates.parse(s,ps);
 		st = st + new spaces().parse(s,ps);
 		st = st + new string("}").parse(s,ps);
+
+		this.class_type_name = ps.class_type_name;
 		
 		return st;
 	}
@@ -40,7 +43,14 @@ public class refinement_type implements Parser<String>{
 		cs.refinement_type_value = ident;
 		cs.refined_Field = refined_Field;
 		cs.refined_Expr = refined_Expr;
+		
+		String pre_class_type_name = cs.refined_class_Field.type;
+		cs.refined_class_Field.type = this.class_type_name;
+		
 		BoolExpr expr = this.predicates.check(cs);
+		
+		cs.refined_class_Field.type = pre_class_type_name;
+		
 		cs.assert_constraint(expr);
 		cs.in_refinement_predicate = false;
 		if(this.type.type.equals("boolean")){
@@ -75,7 +85,14 @@ public class refinement_type implements Parser<String>{
 		cs.refinement_type_value = ident;
 		cs.refined_Field = refined_Field;
 		cs.refined_Expr = refined_Expr;
+		
+		String pre_class_type_name = cs.refined_class_Field.type;
+		cs.refined_class_Field.type = this.class_type_name;
+		
 		BoolExpr expr = this.predicates.check(cs);
+		
+		cs.refined_class_Field.type = pre_class_type_name;
+		
 		cs.add_constraint(expr);
 		cs.in_refinement_predicate = false;
 		if(this.type.type.equals("boolean")){

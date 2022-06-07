@@ -10,6 +10,8 @@ public class generic_spec_case implements Parser<String>{
 	spec_header spec_header;
 	simple_spec_body simple_spec_body;
 	
+	public String class_type_name;
+	
 	generic_spec_case(){
 		this.spec_header = null;
 		this.simple_spec_body = null;
@@ -39,6 +41,8 @@ public class generic_spec_case implements Parser<String>{
 			st =  st + ssb.parse(s, ps);
 			this.simple_spec_body = ssb;
 		}
+		
+		this.class_type_name = ps.class_type_name;
 		
 		return st;
 	}

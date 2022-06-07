@@ -3,7 +3,7 @@ package system.parsers;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.*;
 
 import system.*;
 
@@ -38,8 +38,19 @@ public class spec_case_seq implements Parser<String>  {
 	}
 	
 	public BoolExpr requires_expr(Check_status cs) throws Exception{
+		
 		BoolExpr expr = null;
 		for(generic_spec_case gsc : generic_spec_cases){
+			
+			String pre_class_type_name = null;
+			if(cs.in_method_call){
+				pre_class_type_name = cs.call_field.type;
+				cs.call_field.type = gsc.class_type_name;
+			}else{
+				pre_class_type_name = cs.this_field.type;
+				cs.this_field.type = gsc.class_type_name;
+			}
+			
 			List<requires_clause> rcs = gsc.get_requires();
 			if(rcs == null){
 				expr = cs.ctx.mkBool(true);
@@ -60,6 +71,12 @@ public class spec_case_seq implements Parser<String>  {
 					expr = cs.ctx.mkOr(expr, gsc_expr);
 				}
 			}
+			
+			if(cs.in_method_call){
+				cs.call_field.type = pre_class_type_name;
+			}else{
+				cs.this_field.type = pre_class_type_name;
+			}
 		}
 		
 		if(expr == null) expr = cs.ctx.mkBool(true);
@@ -70,6 +87,16 @@ public class spec_case_seq implements Parser<String>  {
 	public BoolExpr ensures_expr(Check_status cs) throws Exception{
 		BoolExpr expr = null;
 		for(generic_spec_case gsc : generic_spec_cases){
+			
+			String pre_class_type_name = null;
+			if(cs.in_method_call){
+				pre_class_type_name = cs.call_field.type;
+				cs.call_field.type = gsc.class_type_name;
+			}else{
+				pre_class_type_name = cs.this_field.type;
+				cs.this_field.type = gsc.class_type_name;
+			}
+			
 			List<ensures_clause> ecs = gsc.get_ensures();
 			if(ecs != null){
 				BoolExpr pre_expr = null;
@@ -104,6 +131,12 @@ public class spec_case_seq implements Parser<String>  {
 					expr = cs.ctx.mkAnd(expr, cs.ctx.mkImplies(pre_expr, post_expr));
 				}
 			}
+			
+			if(cs.in_method_call){
+				cs.call_field.type = pre_class_type_name;
+			}else{
+				cs.this_field.type = pre_class_type_name;
+			}
 		}
 		
 		if(expr == null) expr = cs.ctx.mkBool(true);
@@ -111,5 +144,125 @@ public class spec_case_seq implements Parser<String>  {
 		return expr;
 	}
 	
+	public List<Pair<Field, BoolExpr>> assignables(Check_status cs) throws Exception{
+		
+		List<Field> fields = new ArrayList<Field>();
+		List<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>> cnst_fields = new ArrayList<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>>();
+		List<BoolExpr> all_assign_exprs; //何でも代入していい事前条件
+		
+		for(generic_spec_case gsc : generic_spec_cases){
+			
+			String pre_class_type_name = null;
+			if(cs.in_method_call){
+				pre_class_type_name = cs.call_field.type;
+				cs.call_field.type = gsc.class_type_name;
+			}else{
+				pre_class_type_name = cs.this_field.type;
+				cs.this_field.type = gsc.class_type_name;
+			}
+			
+			List<assignable_clause> acs = gsc.get_assignable();
+			
+			
+			
+			//事前条件
+			BoolExpr pre_expr = null;
+			
+			List<requires_clause> rcs = gsc.get_requires();
+			if(rcs == null){
+				pre_expr = cs.ctx.mkBool(true);
+			}else{
+				for(requires_clause rc : rcs){
+					if(pre_expr == null){
+						pre_expr = (BoolExpr) rc.check(cs);
+					}else{
+						pre_expr = cs.ctx.mkAnd(pre_expr, (BoolExpr) rc.check(cs));
+					}
+				}
+			}
+			
+			
+			if(acs != null){
+				//assignable
+				
+				List<Field> assignable_clause_fields = new ArrayList<Field>();
+				List<Pair<Field, List<IntExpr>>> assignable_clause_field_arrays = new ArrayList<Pair<Field, List<IntExpr>>>();
+				
+				for(assignable_clause ac : acs){
+					for(store_ref_expression sre : ac.store_ref_list.store_ref_expressions){
+						Pair<Field, IntExpr> f_i = sre.check(cs);
+						
+						if(f_i.snd == null){
+							if(!assignable_clause_fields.contains(f_i)){
+								assignable_clause_fields.add(f_i.fst);
+							}
+						}else{
+							boolean add = false;
+							for(Pair<Field, List<IntExpr>> assignable_clause_field_array : assignable_clause_field_arrays){			
+								if(assignable_clause_field_array.fst.equals(f_i.fst)){
+									assignable_clause_field_array.snd.add(f_i.snd);
+									add = true;
+									break;
+								}
+							}
+							if(!add){
+								List<IntExpr> l = new ArrayList<IntExpr>();
+								l.add(f_i.snd);
+								assignable_clause_field_arrays.add(new Pair<Field, List<IntExpr>>(f_i.fst, l));
+							}
+						}
+						
+						if(!fields.contains(f_i.fst)){
+							fields.add(f_i.fst);
+						}
+					}
+				}
+				
+				
+				cnst_fields.add(new Pair(pre_expr, new Pair(assignable_clause_fields, assignable_clause_field_arrays)));
+				
+			}else{//何でも代入していい事前条件
+				all_assign_exprs.add(pre_expr);
+			}
+			
+			
+			List<Pair<Field, Pair<BoolExpr, Pair<BoolExpr,List<IntExpr>>>>> field_cnsts = new ArrayList<Pair<Field, Pair<BoolExpr, Pair<BoolExpr,List<IntExpr>>>>>();
+			for(Field f : fields){
+				BoolExpr has_f = cs.ctx.mkBool(false);
+				BoolExpr has_not_f = cs.ctx.mkBool(false);
+				BoolExpr has_f_array = cs.ctx.mkBool(false);これちがう
+				BoolExpr has_not_f_array = cs.ctx.mkBool(false);これちがう
+				for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
+					//フィールドへの代入
+					if(cnst_field.snd.fst.contains(f)){
+						cs.ctx.mkAnd(has_f, cnst_field.fst);
+					}else{
+						
+					}
+					//配列の要素への代入
+				}
+			}
+			
+			if(cs.in_method_call){
+				cs.call_field.type = pre_class_type_name;
+			}else{
+				cs.this_field.type = pre_class_type_name;
+			}
+		}
+		
+		return expr;
+	}
+
+	public class F_Assign{
+		Field field;//代入できるフィールド
+		BoolExpr cnst;//フィールドに代入する事前条件
+		Pair<BoolExpr,List<IntExpr>> cnst_array;//配列の要素に代入する条件とそのインデックス
+		
+		F_Assign(Field f, BoolExpr b, Pair<BoolExpr,List<IntExpr>> b_is){
+			field = f;
+			cnst = b;
+			cnst_array = b_is;
+		}
+	}
 }
 

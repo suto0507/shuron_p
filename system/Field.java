@@ -22,7 +22,7 @@ public class Field {
 	public Field class_object;
 	public IntExpr class_object_index;
 	public Expr class_object_expr;
-	public List<IntExpr> assinable_indexs;
+	public List<Pair<BoolExpr,List<IntExpr>>> assinable_indexs;
 	
 	public IntExpr index;
 	public Expr assign_now_array_Expr;

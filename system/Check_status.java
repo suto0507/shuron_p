@@ -46,7 +46,7 @@ public class Check_status {
 	public Check_status this_old_status;
 	
 	//assignable
-	public List<Field> assignables;
+	public List<Pair<Field, BoolExpr>> assignables;//nullだったら何でも代入していい、要素0は\nothing???
 	
 	//JML節の中の可視性の確認
 	public boolean ban_private_visibility;

@@ -16,9 +16,7 @@ import system.Variable;
 
 public class method_decl implements Parser<String>{
 	String st;
-	List<requires_clause> requires;
-	List<ensures_clause> ensures;
-	List<assignable_clause> assignables;
+	method_specification method_specification;
 	modifiers modifiers;
 	type_spec type_spec;
 	String ident;
@@ -31,13 +29,11 @@ public class method_decl implements Parser<String>{
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		this.st = "";
+		
 		Source s_backup = s.clone();
 		try{
-			generic_spec_case gsc = new generic_spec_case();
-			this.st = this.st + gsc.parse(s, ps);
-			this.requires = gsc.get_requires();
-			this.ensures = gsc.get_ensures();
-			this.assignables = gsc.get_assignable();
+			method_specification ms = new method_specification();
+			this.st = this.st + ms.parse(s, ps);
 			st = st + new spaces().parse(s, ps);
 		}catch (Exception e){
 			s.revert(s_backup);
@@ -144,20 +140,14 @@ public class method_decl implements Parser<String>{
 
 			System.out.println("precondition requires");
 			BoolExpr require_expr = null;
-			if(this.requires!=null&&this.requires.size()>0){
+			
+			if(this.method_specification != null){
 				if(this.modifiers.is_privte==false){
 					cs.ban_private_visibility = true;
 				}
-
-				for(requires_clause re : this.requires){
-					if(require_expr == null){
-						require_expr = (BoolExpr) re.check(cs);
-					}else{
-						require_expr = cs.ctx.mkAnd(require_expr, (BoolExpr)re.check(cs));
-					}
-				}
-				cs.add_constraint(require_expr);
-
+				
+				require_expr = this.method_specification.requires_expr(cs);
+				
 				cs.ban_private_visibility = false;
 			}
 			

@@ -1,8 +1,8 @@
 package system;
 
 public class Pair<T1, T2> {
-	T1 fst;
-	T2 snd;
+	public T1 fst;
+	public T2 snd;
 	
 	public Pair(T1 fst, T2 snd){
 		this.fst = fst;

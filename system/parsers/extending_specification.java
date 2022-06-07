@@ -1,5 +1,8 @@
 package system.parsers;
 
+import com.microsoft.z3.BoolExpr;
+
+import system.Check_status;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -17,5 +20,13 @@ public class extending_specification implements Parser<String>  {
 		st = scs.parse(s,ps);
 		this.spec_case_seq = scs;
 		return st;
+	}
+	
+	public BoolExpr requires_expr(Check_status cs) throws Exception{
+		return spec_case_seq.requires_expr(cs);
+	}
+	
+	public BoolExpr ensures_expr(Check_status cs) throws Exception{
+		return spec_case_seq.ensures_expr(cs);
 	}
 }

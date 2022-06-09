@@ -144,11 +144,13 @@ public class spec_case_seq implements Parser<String>  {
 		return expr;
 	}
 	
-	public List<Pair<Field, BoolExpr>> assignables(Check_status cs) throws Exception{
+	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
 		
 		List<Field> fields = new ArrayList<Field>();
 		List<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>> cnst_fields = new ArrayList<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>>();
 		List<BoolExpr> all_assign_exprs; //何でも代入していい事前条件
+		
+		List<F_Assign> f_assigns = new ArrayList<F_Assign>();
 		
 		for(generic_spec_case gsc : generic_spec_cases){
 			
@@ -162,7 +164,6 @@ public class spec_case_seq implements Parser<String>  {
 			}
 			
 			List<assignable_clause> acs = gsc.get_assignable();
-			
 			
 			
 			//事前条件
@@ -225,24 +226,6 @@ public class spec_case_seq implements Parser<String>  {
 				all_assign_exprs.add(pre_expr);
 			}
 			
-			
-			List<Pair<Field, Pair<BoolExpr, Pair<BoolExpr,List<IntExpr>>>>> field_cnsts = new ArrayList<Pair<Field, Pair<BoolExpr, Pair<BoolExpr,List<IntExpr>>>>>();
-			for(Field f : fields){
-				BoolExpr has_f = cs.ctx.mkBool(false);
-				BoolExpr has_not_f = cs.ctx.mkBool(false);
-				BoolExpr has_f_array = cs.ctx.mkBool(false);これちがう
-				BoolExpr has_not_f_array = cs.ctx.mkBool(false);これちがう
-				for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
-					//フィールドへの代入
-					if(cnst_field.snd.fst.contains(f)){
-						cs.ctx.mkAnd(has_f, cnst_field.fst);
-					}else{
-						
-					}
-					//配列の要素への代入
-				}
-			}
-			
 			if(cs.in_method_call){
 				cs.call_field.type = pre_class_type_name;
 			}else{
@@ -250,15 +233,57 @@ public class spec_case_seq implements Parser<String>  {
 			}
 		}
 		
-		return expr;
+		for(Field f : fields){
+			BoolExpr has_f = cs.ctx.mkBool(false);
+			BoolExpr has_not_f = cs.ctx.mkBool(false);
+			
+			List<Pair<BoolExpr,List<IntExpr>>> has_f_arrays = new ArrayList<Pair<BoolExpr,List<IntExpr>>>();
+			BoolExpr has_not_f_array = cs.ctx.mkBool(false);//そのフィールドの任意の配列への代入を行わない条件
+			
+			for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
+				//フィールドへの代入
+				if(cnst_field.snd.fst.contains(f)){
+					has_f = cs.ctx.mkAnd(has_f, cnst_field.fst);
+				}else{
+					has_not_f = cs.ctx.mkAnd(has_not_f, cnst_field.fst);
+				}
+				//配列の要素への代入
+				boolean assign_field = false;
+				for(Pair<Field, List<IntExpr>> field_index: cnst_field.snd.snd){
+					if(field_index.equals(f)){
+						has_f_arrays.add(new Pair<BoolExpr,List<IntExpr>>(cnst_field.fst, field_index.snd));
+					}
+				}
+				if(!assign_field){
+					has_not_f_array = cs.ctx.mkAnd(has_not_f_array, cnst_field.fst);
+				}
+			}
+			
+			for(Pair<BoolExpr,List<IntExpr>> field_index: has_f_arrays){
+				field_index.fst = cs.ctx.mkAnd(field_index.fst, cs.ctx.mkNot(has_not_f_array));
+			}
+			
+			f_assigns.add(new F_Assign(f, cs.ctx.mkAnd(has_f, cs.ctx.mkNot(has_not_f)), has_f_arrays));
+		}
+		
+		//何でも代入していい条件を作る
+		BoolExpr all_assign_expr = cs.ctx.mkBool(false);
+		for(BoolExpr aae : all_assign_exprs){
+			all_assign_expr = cs.ctx.mkOr(all_assign_expr, aae);
+		}
+		for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
+			all_assign_expr = cs.ctx.mkAnd(all_assign_expr, cs.ctx.mkNot(cnst_field.fst));
+		}
+		
+		return new Pair<List<F_Assign>, BoolExpr>(f_assigns, all_assign_expr);
 	}
 
 	public class F_Assign{
 		Field field;//代入できるフィールド
 		BoolExpr cnst;//フィールドに代入する事前条件
-		Pair<BoolExpr,List<IntExpr>> cnst_array;//配列の要素に代入する条件とそのインデックス
+		List<Pair<BoolExpr,List<IntExpr>>> cnst_array;//配列の要素に代入する条件とそのインデックス
 		
-		F_Assign(Field f, BoolExpr b, Pair<BoolExpr,List<IntExpr>> b_is){
+		F_Assign(Field f, BoolExpr b, List<Pair<BoolExpr,List<IntExpr>>> b_is){
 			field = f;
 			cnst = b;
 			cnst_array = b_is;

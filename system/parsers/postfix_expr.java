@@ -255,6 +255,7 @@ public class postfix_expr implements Parser<String>{
 				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, null ,cs);
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
+					f.class_object_expr = cs.this_field.get_Expr(cs);
 				}else if(searched_field != null){
 					f = searched_field;
 					f.class_object_expr = cs.this_field.get_Expr(cs);
@@ -280,6 +281,7 @@ public class postfix_expr implements Parser<String>{
 				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, null, cs);
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
+					f.class_object_expr = cs.this_field.get_Expr(cs);
 					ex = f.get_Expr(cs);
 				}else if(searched_field != null){
 					f = searched_field;

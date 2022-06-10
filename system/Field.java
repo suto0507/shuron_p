@@ -17,15 +17,13 @@ public class Field {
 	public int dims;
 	public refinement_type_clause refinement_type_clause;
 	public modifiers modifiers;
-	public Expr assign_Expr;//postfix_exprのcheck_assignで設定、assignの方でしか使わなくなるかも
 	
 	public Field class_object;
 	public IntExpr class_object_index;
 	public Expr class_object_expr;
 	public List<Pair<BoolExpr,List<IntExpr>>> assinable_indexs;
 	
-	public IntExpr index;
-	public Expr assign_now_array_Expr;
+	public IntExpr index; //代入するときの右辺値のindexを表してっるっぽい？メソッドには使えないので要確認
 	
 	//配列のlength
 	public IntExpr length;

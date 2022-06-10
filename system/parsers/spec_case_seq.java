@@ -148,7 +148,7 @@ public class spec_case_seq implements Parser<String>  {
 		
 		List<Field> fields = new ArrayList<Field>();
 		List<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>> cnst_fields = new ArrayList<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>>();
-		List<BoolExpr> all_assign_exprs; //‰½‚Å‚à‘ã“ü‚µ‚Ä‚¢‚¢–‘OğŒ
+		List<BoolExpr> all_assign_exprs = new ArrayList<BoolExpr>(); //‰½‚Å‚à‘ã“ü‚µ‚Ä‚¢‚¢–‘OğŒ
 		
 		List<F_Assign> f_assigns = new ArrayList<F_Assign>();
 		

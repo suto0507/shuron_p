@@ -11,15 +11,6 @@ import java.util.List;
 
 public class Variable extends Field{
 	/*
-	int id;
-	int temp_num;
-	String field_name;
-	String type;
-	int dims;
-	refinement_type_clause refinement_type_clause;
-	soturon.Parsers.modifiers modifiers;
-	Expr assign_Expr;
-	
 	
 	Field class_object; //Variableでは、篩型のスコープ関連で使ったりする
 	*/

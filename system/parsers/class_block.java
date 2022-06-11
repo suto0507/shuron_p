@@ -11,7 +11,6 @@ import system.Field;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
-import system.assign_info;
 
 public class class_block implements Parser<String>{
 	

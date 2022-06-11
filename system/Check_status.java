@@ -46,7 +46,7 @@ public class Check_status {
 	public Check_status this_old_status;
 	
 	//assignable
-	public List<Pair<Field, BoolExpr>> assignables;//nullだったら何でも代入していい、要素0は\nothing???
+	public BoolExpr assinable_cnst_all;//フィールドに代入できる条件
 	
 	//JML節の中の可視性の確認
 	public boolean ban_private_visibility;
@@ -302,7 +302,7 @@ public class Check_status {
 		cs.return_pathconditions = this.return_pathconditions;
 		cs.this_old_status = this.this_old_status;
 		
-		cs.assignables = this.assignables;
+		cs.assinable_cnst_all = this.assinable_cnst_all;
 		
 		cs.right_side_status = this.right_side_status;
 		

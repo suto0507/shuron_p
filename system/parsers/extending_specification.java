@@ -1,11 +1,15 @@
 package system.parsers;
 
+import java.util.List;
+
 import com.microsoft.z3.BoolExpr;
 
 import system.Check_status;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.parsers.spec_case_seq.F_Assign;
 
 public class extending_specification implements Parser<String>  {
 
@@ -28,5 +32,9 @@ public class extending_specification implements Parser<String>  {
 	
 	public BoolExpr ensures_expr(Check_status cs) throws Exception{
 		return spec_case_seq.ensures_expr(cs);
+	}
+	
+	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
+		return spec_case_seq.assignables(cs);
 	}
 }

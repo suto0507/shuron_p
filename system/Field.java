@@ -21,7 +21,9 @@ public class Field {
 	public Field class_object;
 	public IntExpr class_object_index;
 	public Expr class_object_expr;
-	public List<Pair<BoolExpr,List<IntExpr>>> assinable_indexs;
+	
+	public BoolExpr assinable_cnst;//フィールドに代入できる条件
+	public List<Pair<BoolExpr,List<IntExpr>>> assinable_cnst_indexs;//配列の要素に代入できる条件
 	
 	public IntExpr index; //代入するときの右辺値のindexを表してっるっぽい？メソッドには使えないので要確認
 	
@@ -45,7 +47,7 @@ public class Field {
 		if(this.dims>0 && this.refinement_type_clause!=null){
 			throw new Exception("Cannot use refinement type for array");
 		}
-		this.assinable_indexs = new ArrayList<IntExpr>();
+		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<IntExpr>>>();
 	}
 	
 	public Field(){}
@@ -54,8 +56,11 @@ public class Field {
 	public Field clone_e() throws Exception{
 		Field ret = new  Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, this.class_object_index);
 		ret.temp_num = this.temp_num;
-		ret.class_object_index = this.class_object_index;
-		ret.assinable_indexs = this.assinable_indexs;
+		ret.class_object_expr = this.class_object_expr;
+		ret.assinable_cnst = this.assinable_cnst;
+		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
+		ret.index = this.index;
+		ret.length = this.length;
 		ret.final_initialized = final_initialized;
 		return ret;
 	}
@@ -147,5 +152,22 @@ public class Field {
 	
 	public boolean is_this_field(){
 		return this.class_object.is_this_field();
+	}
+	
+	public BoolExpr assign_index_expr(IntExpr index_expr, Check_status cs){
+		BoolExpr equal_cnsts = cs.ctx.mkBool(false);
+		BoolExpr not_equal_cnsts = cs.ctx.mkBool(true);
+		for(Pair<BoolExpr,List<IntExpr>> assinable_cnst_index :assinable_cnst_indexs){
+			BoolExpr equal = cs.ctx.mkBool(false);
+			BoolExpr not_equal = cs.ctx.mkBool(true);
+			for(IntExpr index : assinable_cnst_index.snd){
+				equal = cs.ctx.mkOr(cs.ctx.mkEq(index_expr, index));
+				not_equal = cs.ctx.mkAnd(cs.ctx.mkNot(cs.ctx.mkEq(index_expr, index)));
+			}
+			equal_cnsts = cs.ctx.mkOr(equal_cnsts, cs.ctx.mkAnd(equal, assinable_cnst_index.fst));
+			not_equal_cnsts = cs.ctx.mkAnd(not_equal_cnsts, cs.ctx.mkImplies(not_equal, cs.ctx.mkNot(assinable_cnst_index.fst)));
+		}
+		
+		return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);
 	}
 }

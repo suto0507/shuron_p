@@ -9,10 +9,12 @@ import com.microsoft.z3.BoolExpr;
 
 import system.Check_status;
 import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.Variable;
+import system.parsers.spec_case_seq.F_Assign;
 
 public class method_decl implements Parser<String>{
 	String st;
@@ -147,6 +149,7 @@ public class method_decl implements Parser<String>{
 				}
 				
 				require_expr = this.method_specification.requires_expr(cs);
+				cs.add_constraint(require_expr);
 				
 				cs.ban_private_visibility = false;
 			}
@@ -157,17 +160,22 @@ public class method_decl implements Parser<String>{
 			cs.this_old_status = csc;
 		
 			
-			//assignableの処理
-			if(this.assignables!=null&&this.assignables.size()>0){
-				cs.assignables = new ArrayList<Field>();
-				for(assignable_clause ac : this.assignables){
-					for(store_ref_expression sre : ac.store_ref_list.store_ref_expressions){
-						System.out.println("add assinable " + sre.st);
-						cs.assignables.add(sre.check(cs));
-					}
+			
+			if(this.method_specification != null){
+				if(this.modifiers.is_privte==false){
+					cs.ban_private_visibility = true;
 				}
-			}else{
-				cs.assignables = null;
+				Pair<List<F_Assign>, BoolExpr> assign_cnsts = this.method_specification.assignables(cs);
+				//各フィールドの代入条件を各フィールドに持たせる
+				for(F_Assign fa : assign_cnsts.fst){
+					fa.field.assinable_cnst = fa.cnst;
+					fa.field.assinable_cnst_indexs = fa.cnst_array;
+				}
+				//どのフィールドにも代入できる条件
+				cs.assinable_cnst_all = assign_cnsts.snd;
+				
+				
+				cs.ban_private_visibility = false;
 			}
 			
 			
@@ -214,18 +222,14 @@ public class method_decl implements Parser<String>{
 			}
 			System.out.println("postcondition ensures");
 			BoolExpr ensures_expr = null;
-			if(this.ensures!=null&&this.ensures.size()>0){
+			if(this.method_specification!=null){
 				if(this.modifiers.is_privte==false){
 					cs.ban_private_visibility = true;
 				}
 				
-				for(ensures_clause ec : this.ensures){
-					if(ensures_expr == null){
-						ensures_expr = (BoolExpr) ec.check(cs);
-					}else{
-						ensures_expr = cs.ctx.mkAnd(ensures_expr, (BoolExpr)ec.check(cs));
-					}
-				}
+
+				ensures_expr = this.method_specification.ensures_expr(cs);
+
 				cs.assert_constraint(ensures_expr);
 				
 				cs.ban_private_visibility = false;

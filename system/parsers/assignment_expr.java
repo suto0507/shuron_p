@@ -45,61 +45,46 @@ public class assignment_expr implements Parser<String>{
 		Field v = null;
 		if(this.postfix_expr != null){
 			v = this.postfix_expr.check_assign(cs);
-			if(v.is_this_field()){
+			if(v.is_this_field()){//フィールかどうか？
 				//assignしていいか
-				if(cs.assignables!=null){
-					boolean can_assign = false;
-					for(Field assign_field : cs.assignables){
-						if(assign_field.equals(v, cs)){
-							if(v.index!=null){
-								BoolExpr ex = cs.ctx.mkFalse();
-								for(IntExpr assign_index : assign_field.assinable_indexs){
-									ex = cs.ctx.mkOr(ex, cs.ctx.mkEq(v.index, assign_index));
-								}
-								if(cs.pathcondition!=null){
-									ex = cs.ctx.mkAnd(cs.pathcondition, cs.ctx.mkNot(ex));
-								}else{
-									ex = cs.ctx.mkNot(ex);
-								}
-								cs.solver.push();
-								cs.solver.add(ex);
-								if(cs.solver.check() != Status.SATISFIABLE) {
-									can_assign = true;
-								}
-								cs.solver.pop();
-							}else{
-								can_assign = true;
-							}
-						}
-					}
-					if(cs.in_constructor&&v.class_object.equals(cs.this_field, cs)){
+				boolean can_assign = false;
+				
+				BoolExpr ex;
+				
+				if(v.index!=null){
+					ex = v.assign_index_expr(v.index, cs);
+				}else{
+					ex = v.assinable_cnst;
+				}
+				//何でも代入していい
+				ex = cs.ctx.mkOr(ex, cs.assinable_cnst_all);
+				
+				
+				cs.solver.push();
+				cs.solver.add(ex);
+				if(cs.solver.check() != Status.SATISFIABLE) {
+					can_assign = true;
+				}
+				cs.solver.pop();
+				
+				//コンストラクタ
+				if(cs.in_constructor&&v.class_object.equals(cs.this_field, cs)){
+					can_assign = true;
+				}
+				
+				//finalかどうか
+				if(v.modifiers!=null && v.modifiers.is_final){
+					if(cs.in_constructor&&v.class_object.equals(cs.this_field, cs)&&v.final_initialized==false){
 						can_assign = true;
-					}
-					if(v.modifiers!=null && v.modifiers.is_final){
-						if(cs.in_constructor&&v.class_object.equals(cs.this_field, cs)&&v.final_initialized==false){
-							can_assign = true;
-							v.final_initialized = true;
-						}else{
-							can_assign = false;
-						}
-					}
-					if(can_assign == false){
-						throw new Exception("Cannot be assigned to" + v.field_name);
-					}
-				}else{//assignableの制約が無くてもfinalの確認はする
-					boolean can_assign = true;
-					if(v.modifiers!=null && v.modifiers.is_final){
-						if(cs.in_constructor&&v.class_object.equals(cs.this_field, cs)&&v.final_initialized==false){
-							can_assign = true;
-							v.final_initialized = true;
-						}else{
-							can_assign = false;
-						}
-					}
-					if(can_assign == false){
-						throw new Exception("Cannot be assigned to" + v.field_name);
+						v.final_initialized = true;
+					}else{
+						can_assign = false;
 					}
 				}
+				if(can_assign == false){
+					throw new Exception("Cannot be assigned to" + v.field_name);
+				}
+				
 			}
 		}
 		Expr implies_tmp = this.implies_expr.check(cs);

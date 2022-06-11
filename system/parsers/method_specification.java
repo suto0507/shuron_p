@@ -5,9 +5,11 @@ import java.util.List;
 import com.microsoft.z3.BoolExpr;
 
 import system.Check_status;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.parsers.spec_case_seq.F_Assign;
 
 public class method_specification implements Parser<String> {
 	spec_case_seq spec_case_seq;
@@ -41,6 +43,14 @@ public class method_specification implements Parser<String> {
 			return spec_case_seq.ensures_expr(cs);
 		}else{
 			return extending_specification.ensures_expr(cs);
+		}
+	}
+	
+	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
+		if(spec_case_seq != null){
+			return spec_case_seq.assignables(cs);
+		}else{
+			return extending_specification.assignables(cs);
 		}
 	}
 }

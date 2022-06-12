@@ -1,6 +1,7 @@
 package system.parsers;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BoolExpr;
@@ -10,10 +11,12 @@ import com.microsoft.z3.Status;
 
 import system.Check_status;
 import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.Variable;
+import system.parsers.spec_case_seq.F_Assign;
 
 public class new_expr implements Parser<String>{
 	type type;
@@ -100,7 +103,7 @@ public class new_expr implements Parser<String>{
 				}
 			}
 			//事前条件
-			BoolExpr pre_invariant_expr = null;
+			//BoolExpr pre_invariant_expr = null;
 			/*これはいらん
 			if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0){
 				for(invariant inv : cd.class_block.invariants){
@@ -114,14 +117,9 @@ public class new_expr implements Parser<String>{
 			}
 			*/
 			BoolExpr require_expr = null;
-			if(md.requires!=null&&md.requires.size()>0){
-				for(requires_clause re : md.requires){
-					if(require_expr == null){
-						require_expr = (BoolExpr) re.check(cs);
-					}else{
-						require_expr = cs.ctx.mkAnd(require_expr, (BoolExpr)re.check(cs));
-					}
-				}
+
+			if(md.method_specification != null){
+				require_expr = md.method_specification.requires_expr(cs);
 				cs.assert_constraint(require_expr);
 			}
 			
@@ -131,70 +129,83 @@ public class new_expr implements Parser<String>{
 			cs.old_status = csc;
 			
 			//assign
-			if(md.assignables!=null&&md.assignables.size()>0){
-				for(assignable_clause assigns : md.assignables){
-					for(store_ref_expression sre : assigns.store_ref_list.store_ref_expressions){
-						Field f_tmp = sre.check(cs);
-						
-						//assignしていいか
-						if(f_tmp.is_this_field()){
-							if(cs.assignables!=null){
-								boolean can_assign = false;
-								for(Field assign_field : cs.assignables){
-									if(assign_field.equals(f_tmp, cs)){
-										if(f_tmp.index!=null){
-											BoolExpr ex_a = cs.ctx.mkFalse();
-											for(IntExpr assign_index : assign_field.assinable_indexs){
-												ex_a = cs.ctx.mkOr(ex_a, cs.ctx.mkEq(f_tmp.index, assign_index));
-											}
-											if(cs.pathcondition!=null){
-												ex_a = cs.ctx.mkAnd(cs.pathcondition, cs.ctx.mkNot(ex_a));
-											}else{
-												ex_a = cs.ctx.mkNot(ex_a);
-											}
-											cs.solver.push();
-											cs.solver.add(ex_a);
-											if(cs.solver.check() != Status.SATISFIABLE) {
-												can_assign = true;
-											}
-											cs.solver.pop();
-										}else{
-											can_assign = true;
-										}
-									}
-								}
-								if(can_assign == false){
-									throw new Exception("Cannot be assigned to" + f_tmp.field_name);
-								}
-							}
-						}
-						
-						System.out.println("assign " + f_tmp.field_name);
-						//↑nullだったりするのか？
-						if(f_tmp.index!=null){
-							Expr tmp_Expr;
-							if(f_tmp.type.equals("int")){
-								tmp_Expr = cs.ctx.mkIntConst("tmpInt" + cs.Check_status_share.tmp_num);
-							}else if(f_tmp.type.equals("boolean")){
-								tmp_Expr = cs.ctx.mkBoolConst("tmpBool" + cs.Check_status_share.tmp_num);
-							}else{
-								tmp_Expr = cs.ctx.mkConst("tmpRef" + cs.Check_status_share.tmp_num,  cs.ctx.mkUninterpretedSort("Ref"));
-							}
-							BoolExpr expr = cs.ctx.mkEq(f_tmp.assign_Expr, cs.ctx.mkStore((ArrayExpr) f_tmp.assign_now_array_Expr, f_tmp.index, tmp_Expr));
-							cs.add_constraint(expr);
-							f_tmp.temp_num++;
-							//初期化
-							f_tmp.index = null;
-						}else{
-							f_tmp.temp_num++;
-						}
+			if(md.method_specification != null){
+				boolean can_assign = false;
+				
+				Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
+				for(F_Assign fa : assign_cnsts.fst){
+					BoolExpr assign_expr;
+					//フィールドへの代入
+					if(fa.cnst!=null){
+						assign_expr = cs.ctx.mkImplies(fa.cnst, fa.field.assinable_cnst);
+					}else{
+						assign_expr = cs.ctx.mkBool(true);
 					}
+					//配列の要素に代入
+					if(fa.cnst_array.size()>0){
+						IntExpr index_expr = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num);
+						BoolExpr call_assign_expr = fa.assign_index_expr(index_expr, cs);
+						BoolExpr field_assign_expr = fa.field.assign_index_expr(index_expr, cs);
+						assign_expr = cs.ctx.mkAnd(assign_expr, cs.ctx.mkImplies(call_assign_expr, field_assign_expr));
+					}else{
+						assign_expr = cs.ctx.mkAnd(assign_expr, cs.ctx.mkBool(true));
+					}
+					//何でも代入していい
+					assign_expr = cs.ctx.mkOr(assign_expr, cs.assinable_cnst_all);
+					
+					
+					cs.solver.push();
+					cs.solver.add(assign_expr);
+					if(cs.solver.check() != Status.SATISFIABLE) {
+						can_assign = true;
+					}
+					
+					cs.solver.pop();if(can_assign == false){
+						throw new Exception("Cannot be assigned to" + fa.field.field_name);
+					}
+					
+					//実際に代入する制約を追加する
+					System.out.println("assign " + fa.field.field_name);
+					//フィールドへの代入
+					if(fa.cnst!=null){
+						Expr tmp_Expr;
+						if(fa.field.type.equals("int")){
+							tmp_Expr = cs.ctx.mkIntConst("tmpInt" + cs.Check_status_share.tmp_num);
+						}else if(fa.field.type.equals("boolean")){
+							tmp_Expr = cs.ctx.mkBoolConst("tmpBool" + cs.Check_status_share.tmp_num);
+						}else{
+							tmp_Expr = cs.ctx.mkConst("tmpRef" + cs.Check_status_share.tmp_num,  cs.ctx.mkUninterpretedSort("Ref"));
+						}
+						BoolExpr expr = cs.ctx.mkEq(cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr_assign(cs), fa.field.class_object_expr), 
+								cs.ctx.mkITE(cs.ctx.mkOr(fa.cnst, cs.assinable_cnst_all), tmp_Expr, cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr(cs), fa.field.class_object_expr)));
+						cs.add_constraint(expr);
+						fa.field.temp_num++;
+						
+					}
+					//配列の要素に代入
+					if(fa.cnst_array.size()>0){
+						Expr tmp_Expr;
+						if(fa.field.type.equals("int")){
+							tmp_Expr = cs.ctx.mkIntConst("tmpInt" + cs.Check_status_share.tmp_num);
+						}else if(fa.field.type.equals("boolean")){
+							tmp_Expr = cs.ctx.mkBoolConst("tmpBool" + cs.Check_status_share.tmp_num);
+						}else{
+							tmp_Expr = cs.ctx.mkConst("tmpRef" + cs.Check_status_share.tmp_num,  cs.ctx.mkUninterpretedSort("Ref"));
+						}
+						
+						IntExpr index_expr = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num);
+						Expr old_element = cs.ctx.mkSelect((ArrayExpr) cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr(cs), fa.field.class_object_expr), index_expr);
+						Expr new_element = cs.ctx.mkSelect((ArrayExpr) cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr_assign(cs), fa.field.class_object_expr), index_expr);
+						BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
+						cs.add_constraint(expr);
+						fa.field.temp_num++;
+						
+					}
+					
+					
 				}
 			}else{
-				//assignが書かれていない関数
-				for(Variable v_a : cs.variables){
-					v_a.temp_num++;
-				}
+				//assignableを含めた任意の仕様が書かれていない関数
 				for(Field f_a : cs.fields){
 					f_a.temp_num++;
 				}
@@ -209,21 +220,15 @@ public class new_expr implements Parser<String>{
 					if(post_invariant_expr == null){
 						post_invariant_expr = (BoolExpr) inv.check(cs);
 					}else{
-						post_invariant_expr = cs.ctx.mkAnd(pre_invariant_expr, (BoolExpr)inv.check(cs));
+						post_invariant_expr = cs.ctx.mkAnd(post_invariant_expr, (BoolExpr)inv.check(cs));
 					}
 				}
 				cs.add_constraint(post_invariant_expr);
 			}
 			BoolExpr ensures_expr = null;
-			if(md.ensures!=null&&md.ensures.size()>0){
-				for(ensures_clause ec : md.ensures){
-					if(ensures_expr == null){
-						ensures_expr = (BoolExpr) ec.check(cs);
-					}else{
-						ensures_expr = cs.ctx.mkAnd(ensures_expr, (BoolExpr)ec.check(cs));
-					}
-				}
-				cs.add_constraint(ensures_expr);
+			if(md.method_specification != null){
+				ensures_expr = md.method_specification.ensures_expr(cs);
+				cs.assert_constraint(ensures_expr);
 			}
 			cs.in_method_call = false;
 			

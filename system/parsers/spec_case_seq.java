@@ -288,6 +288,23 @@ public class spec_case_seq implements Parser<String>  {
 			cnst = b;
 			cnst_array = b_is;
 		}
+		
+		public BoolExpr assign_index_expr(IntExpr index_expr, Check_status cs){
+			BoolExpr equal_cnsts = cs.ctx.mkBool(false);
+			BoolExpr not_equal_cnsts = cs.ctx.mkBool(true);
+			for(Pair<BoolExpr,List<IntExpr>> assinable_cnst_index :cnst_array){
+				BoolExpr equal = cs.ctx.mkBool(false);
+				BoolExpr not_equal = cs.ctx.mkBool(true);
+				for(IntExpr index : assinable_cnst_index.snd){
+					equal = cs.ctx.mkOr(cs.ctx.mkEq(index_expr, index));
+					not_equal = cs.ctx.mkAnd(cs.ctx.mkNot(cs.ctx.mkEq(index_expr, index)));
+				}
+				equal_cnsts = cs.ctx.mkOr(equal_cnsts, cs.ctx.mkAnd(equal, assinable_cnst_index.fst));
+				not_equal_cnsts = cs.ctx.mkAnd(not_equal_cnsts, cs.ctx.mkImplies(not_equal, cs.ctx.mkNot(assinable_cnst_index.fst)));
+			}
+			
+			return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);
+		}
 	}
 }
 

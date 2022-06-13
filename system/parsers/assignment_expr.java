@@ -47,7 +47,6 @@ public class assignment_expr implements Parser<String>{
 			v = this.postfix_expr.check_assign(cs);
 			if(v.is_this_field()){//フィールかどうか？
 				//assignしていいか
-				boolean can_assign = false;
 				
 				BoolExpr ex;
 				
@@ -56,33 +55,24 @@ public class assignment_expr implements Parser<String>{
 				}else{
 					ex = v.assinable_cnst;
 				}
+				
+				
 				//何でも代入していい
 				ex = cs.ctx.mkOr(ex, cs.assinable_cnst_all);
 				
-				
-				cs.solver.push();
-				cs.solver.add(ex);
-				if(cs.solver.check() != Status.SATISFIABLE) {
-					can_assign = true;
-				}
-				cs.solver.pop();
-				
 				//コンストラクタ
-				if(cs.in_constructor&&v.class_object.equals(cs.this_field, cs)){
-					can_assign = true;
+				if(!(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
+					System.out.println("check assign");
+					cs.assert_constraint(ex);
 				}
 				
 				//finalかどうか
 				if(v.modifiers!=null && v.modifiers.is_final){
 					if(cs.in_constructor&&v.class_object.equals(cs.this_field, cs)&&v.final_initialized==false){
-						can_assign = true;
 						v.final_initialized = true;
 					}else{
-						can_assign = false;
+						throw new Exception("Cannot be assigned to " + v.field_name);
 					}
-				}
-				if(can_assign == false){
-					throw new Exception("Cannot be assigned to" + v.field_name);
 				}
 				
 			}

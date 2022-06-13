@@ -433,7 +433,6 @@ public class postfix_expr implements Parser<String>{
 		
 		//assign
 		if(md.method_specification != null){
-			boolean can_assign = false;
 			
 			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 			for(F_Assign fa : assign_cnsts.fst){
@@ -456,16 +455,8 @@ public class postfix_expr implements Parser<String>{
 				//‰½‚Å‚à‘ã“ü‚µ‚Ä‚¢‚¢
 				assign_expr = cs.ctx.mkOr(assign_expr, cs.assinable_cnst_all);
 				
-				
-				cs.solver.push();
-				cs.solver.add(assign_expr);
-				if(cs.solver.check() != Status.SATISFIABLE) {
-					can_assign = true;
-				}
-				
-				cs.solver.pop();if(can_assign == false){
-					throw new Exception("Cannot be assigned to" + fa.field.field_name);
-				}
+				System.out.println("check assign");
+				cs.assert_constraint(assign_expr);
 				
 				//ÀÛ‚É‘ã“ü‚·‚é§–ñ‚ğ’Ç‰Á‚·‚é
 				System.out.println("assign " + fa.field.field_name);

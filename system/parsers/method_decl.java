@@ -37,6 +37,7 @@ public class method_decl implements Parser<String>{
 			method_specification ms = new method_specification();
 			this.st = this.st + ms.parse(s, ps);
 			st = st + new spaces().parse(s, ps);
+			this.method_specification = ms;
 		}catch (Exception e){
 			s.revert(s_backup);
 		}	
@@ -160,7 +161,7 @@ public class method_decl implements Parser<String>{
 			cs.this_old_status = csc;
 		
 			
-			
+
 			if(this.method_specification != null){
 				if(this.modifiers.is_privte==false){
 					cs.ban_private_visibility = true;
@@ -176,6 +177,8 @@ public class method_decl implements Parser<String>{
 				
 				
 				cs.ban_private_visibility = false;
+			}else{//‰½‚Å‚à‘ã“ü‚µ‚Ä‚¢‚¢
+				cs.assinable_cnst_all = cs.ctx.mkBool(true);
 			}
 			
 			

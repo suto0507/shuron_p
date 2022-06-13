@@ -1,5 +1,6 @@
 package system.parsers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import system.Parser;
@@ -62,9 +63,16 @@ public class generic_spec_case implements Parser<String>{
 			return null;
 		}
 	}
-
+	
+	//—v‘f”0 -> nothing      null -> assignable‚ª‚È‚¢(‰½‚Å‚à‘ã“ü‚µ‚Ä‚¢‚¢)
 	List<assignable_clause> get_assignable(){
 		if(this.simple_spec_body!=null){
+			if(this.simple_spec_body.assignable_nothing){
+				return new ArrayList<assignable_clause>();
+			}
+			if(this.simple_spec_body.assignables.size()==0){//assignable‚ª‚È‚¢(‰½‚Å‚à‘ã“ü‚µ‚Ä‚¢‚¢)
+				return null;
+			}
 			return this.simple_spec_body.assignables;
 		}else{
 			return null;

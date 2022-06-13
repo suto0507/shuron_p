@@ -221,6 +221,7 @@ import system.Variable;
 							}
 						}
 					}else{
+						System.out.println(f.class_object);
 						Field f_then = cs_then.search_field(f.field_name, f.class_object, f.class_object_index, cs);
 						Field f_else = cs_else.search_field(f.field_name, f.class_object, f.class_object_index, cs);
 						if(f.temp_num!=f_then.temp_num || f.temp_num!=f_else.temp_num){

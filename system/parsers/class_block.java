@@ -86,36 +86,7 @@ public class class_block implements Parser<String>{
 			Check_status csc =  cs.clone();
 			csc.clone_list();
 			csc.solver = csc.ctx.mkSolver();
-			/*
-			for(variable_definition vd : this.variable_definitions){
-				Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
-						, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, null);
-				csc.fields.add(f);
-			}*/
-			//for(Field f : csc.fields){//‚øå^ÇÃämîF
-			/*óvÇÁÇ»Ç≠Ç»Ç¡ÇΩÇÕÇ∏Ç»ÇÃÇ≈è¡Ç∑
-			for(int i = 0; i < csc.fields.size(); i++){
-				Field f = csc.fields.get(i);
-				System.out.println("fooooooooooooo" + f.field_name);
-				if(f.refinement_type_clause!=null){
-					if(f.modifiers.is_privte==false){//privateÇ≈Ç»Ç¢‚øå^Ç…privateÇ»ïœêîÇÕë∂ç›Ç≈Ç´Ç»Ç¢
-						csc.ban_private_visibility=true;
-					}
-					Expr expr = csc.ctx.mkSelect((ArrayExpr)f.get_Expr(csc), csc.this_field.get_Expr(csc));
-					if(f.refinement_type_clause.refinement_type!=null){
-						f.refinement_type_clause.refinement_type.add_refinement_constraint(csc, f, expr);
-					}else{
-						Refinement_type rt = csc.get_refinement_type(f.refinement_type_clause.ident);
-						if(rt!=null){
-							rt.add_refinement_constraint(csc, f, expr);
-						}else{
-							throw new Exception("cant find refinement type " + f.refinement_type_clause.ident);
-						}
-					}
-					csc.ban_private_visibility=false;
-				}
-			}
-			*/
+			
 			csc.return_exprs = new ArrayList<Expr>();
 			csc.return_pathconditions = new ArrayList<BoolExpr>();
 			method.check(csc);

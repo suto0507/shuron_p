@@ -122,6 +122,7 @@ public class Check_status {
 		}
 		
 		Field f = new Field(this.Check_status_share.get_tmp_num(),field_name , vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, class_object_index);
+		f.assinable_cnst = cs.ctx.mkBool(false);//新しく追加したフィールドはassinable節で触れられていない
 		this.fields.add(f);
 		return f;
 	}
@@ -248,19 +249,6 @@ public class Check_status {
 		return v;
 	}
 	
-	/*
-	public Field add_field(String field_name, Field class_object, IntExpr class_object_index) throws Exception{
-		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, field_name);
-		if(vd != null){
-			Field f = new Field(this.Check_status_share.get_tmp_num(),field_name , vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, class_object_index);
-			this.fields.add(f);
-			return f;
-		}else{
-			//System.out.println(class_object + "dont have" + field_name);
-			return null;
-		}
-	}
-	*/
 
 	
 	public Check_status clone(){

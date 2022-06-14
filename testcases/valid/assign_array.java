@@ -11,14 +11,14 @@ class test2 {
 	/*@ assignable ar[2];*/
 	int method1(int x){
 		if(x == 1){
-			hoge = 1;
+			method2(x);
 		}
 		return x;
 	}
 	
-	//@ requires 1 <= x && x < 10;
+	//@ requires 1 == x;
 	//@ assignable ar[x];
 	void method2(int x){
-		arr[x] = 771;
+		ar[x] = 771;
 	}
 }

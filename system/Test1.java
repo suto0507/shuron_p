@@ -29,6 +29,9 @@ public class Test1 {
 		}
 		
 		System.out.println(st + "is file");
+		
+		st = new Comment_analysis().comment_analysis(st);
+		
 		compilation_unit cu = new compilation_unit();
 		try{
 			Parser_status ps = new Parser_status();

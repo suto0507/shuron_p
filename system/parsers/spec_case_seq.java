@@ -243,9 +243,9 @@ public class spec_case_seq implements Parser<String>  {
 			for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
 				//フィールドへの代入
 				if(cnst_field.snd.fst.contains(f)){
-					has_f = cs.ctx.mkAnd(has_f, cnst_field.fst);
+					has_f = cs.ctx.mkOr(has_f, cnst_field.fst);
 				}else{
-					has_not_f = cs.ctx.mkAnd(has_not_f, cnst_field.fst);
+					has_not_f = cs.ctx.mkOr(has_not_f, cnst_field.fst);
 				}
 				//配列の要素への代入
 				boolean assign_field = false;
@@ -255,7 +255,7 @@ public class spec_case_seq implements Parser<String>  {
 					}
 				}
 				if(!assign_field){
-					has_not_f_array = cs.ctx.mkAnd(has_not_f_array, cnst_field.fst);
+					has_not_f_array = cs.ctx.mkOr(has_not_f_array, cnst_field.fst);
 				}
 			}
 			

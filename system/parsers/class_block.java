@@ -11,6 +11,7 @@ import system.Field;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Summery;
 
 public class class_block implements Parser<String>{
 	
@@ -78,7 +79,7 @@ public class class_block implements Parser<String>{
 		return ret;
 	}
 	
-	public void check(Check_status cs) throws Exception{
+	public void check(Check_status cs, Summery summery) throws Exception{
 		//invariantとフィールドについて書く
 		cs.invariants = this.invariants;
 		
@@ -89,7 +90,7 @@ public class class_block implements Parser<String>{
 			
 			csc.return_exprs = new ArrayList<Expr>();
 			csc.return_pathconditions = new ArrayList<BoolExpr>();
-			method.check(csc);
+			method.check(csc, summery);
 		}
 	}
 	

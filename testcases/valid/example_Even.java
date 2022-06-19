@@ -1,4 +1,4 @@
-class Even {
+class example_Even {
 	/*`@def_type Nat = {int x | x >= 0};*/
 	/*`@def_type NatEven = {Nat x | x % 2 == 0};*/
 	int /*`@refinement_type NatEven */ evennum;

@@ -1,5 +1,5 @@
-class A{
-    A[] a_array;
+class array_field{
+    array_field[] a_array;
     int[] int_array;
 
     void test(){

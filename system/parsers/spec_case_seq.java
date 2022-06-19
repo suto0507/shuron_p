@@ -22,9 +22,10 @@ public class spec_case_seq implements Parser<String>  {
 			while(true){
 				String st2 = "";
 				s_backup = s.clone();
-				st2 = st2 + new spaces().parse(s, ps);
+				st2 = st2 + new newLines().parse(s, ps);
+				st2 = st2 + new spaces().parse(s,ps);
 				st2 = st2 + new string("also").parse(s, ps);
-				st2 = st2 + new spaces().parse(s, ps);
+				st2 = st2 + new newLines().parse(s, ps);
 				gsc = new generic_spec_case();
 				st2 = st2 + gsc.parse(s, ps);
 				st = st + st2;
@@ -52,7 +53,7 @@ public class spec_case_seq implements Parser<String>  {
 			}
 			
 			List<requires_clause> rcs = gsc.get_requires();
-			if(rcs == null){
+			if(rcs == null || rcs.size()==0){
 				expr = cs.ctx.mkBool(true);
 				break;
 			}else{
@@ -98,13 +99,13 @@ public class spec_case_seq implements Parser<String>  {
 			}
 			
 			List<ensures_clause> ecs = gsc.get_ensures();
-			if(ecs != null){
+			if(ecs != null && ecs.size() > 0){
 				BoolExpr pre_expr = null;
 				BoolExpr post_expr = null;
 				
 				//事前条件
 				List<requires_clause> rcs = gsc.get_requires();
-				if(rcs == null){
+				if(rcs == null || rcs.size()==0){
 					pre_expr = cs.ctx.mkBool(true);
 				}else{
 					for(requires_clause rc : rcs){
@@ -117,13 +118,18 @@ public class spec_case_seq implements Parser<String>  {
 				}
 				
 				//事後条件
-				for(ensures_clause ec : ecs){
-					if(post_expr == null){
-						post_expr = (BoolExpr) ec.check(cs);
-					}else{
-						post_expr = cs.ctx.mkAnd(post_expr, (BoolExpr) ec.check(cs));
+				if(ecs == null || ecs.size()==0){
+					post_expr = cs.ctx.mkBool(true);
+				}else{
+					for(ensures_clause ec : ecs){
+						if(post_expr == null){
+							post_expr = (BoolExpr) ec.check(cs);
+						}else{
+							post_expr = cs.ctx.mkAnd(post_expr, (BoolExpr) ec.check(cs));
+						}
 					}
 				}
+				
 				
 				if(expr == null){
 					expr = cs.ctx.mkImplies(pre_expr, post_expr);
@@ -170,7 +176,7 @@ public class spec_case_seq implements Parser<String>  {
 			BoolExpr pre_expr = null;
 			
 			List<requires_clause> rcs = gsc.get_requires();
-			if(rcs == null){
+			if(rcs == null  || rcs.size()==0){
 				pre_expr = cs.ctx.mkBool(true);
 			}else{
 				for(requires_clause rc : rcs){
@@ -233,31 +239,49 @@ public class spec_case_seq implements Parser<String>  {
 			}
 		}
 		
+		
+		
 		for(Field f : fields){
-			BoolExpr has_f = cs.ctx.mkBool(false);
-			BoolExpr has_not_f = cs.ctx.mkBool(false);
+			BoolExpr has_f = null;
+			BoolExpr has_not_f = null;
 			
 			List<Pair<BoolExpr,List<IntExpr>>> has_f_arrays = new ArrayList<Pair<BoolExpr,List<IntExpr>>>();
-			BoolExpr has_not_f_array = cs.ctx.mkBool(false);//そのフィールドの任意の配列への代入を行わない条件
+			BoolExpr has_not_f_array = null;//そのフィールドの任意の配列への代入を行わない条件
 			
 			for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
 				//フィールドへの代入
 				if(cnst_field.snd.fst.contains(f)){
-					has_f = cs.ctx.mkOr(has_f, cnst_field.fst);
+					if(has_f == null){
+						has_f = cnst_field.fst;
+					}else{
+						has_f = cs.ctx.mkOr(has_f, cnst_field.fst);
+					}
 				}else{
-					has_not_f = cs.ctx.mkOr(has_not_f, cnst_field.fst);
+					if(has_not_f == null){
+						has_not_f = cnst_field.fst;
+					}else{
+						has_not_f = cs.ctx.mkOr(has_not_f, cnst_field.fst);
+					}
 				}
 				//配列の要素への代入
 				boolean assign_field = false;
 				for(Pair<Field, List<IntExpr>> field_index: cnst_field.snd.snd){
-					if(field_index.equals(f)){
+					if(field_index.fst.equals(f)){
 						has_f_arrays.add(new Pair<BoolExpr,List<IntExpr>>(cnst_field.fst, field_index.snd));
+						assign_field = true;
 					}
 				}
 				if(!assign_field){
-					has_not_f_array = cs.ctx.mkOr(has_not_f_array, cnst_field.fst);
+					if(has_not_f_array == null){
+						has_not_f_array = cnst_field.fst;
+					}else{
+						has_not_f_array = cs.ctx.mkOr(has_not_f_array, cnst_field.fst);
+					}
 				}
 			}
+			if(has_f == null)           has_f = cs.ctx.mkBool(false);
+			if(has_not_f == null)       has_not_f = cs.ctx.mkBool(false);
+			if(has_not_f_array == null) has_not_f_array = cs.ctx.mkBool(false);//そのフィールドの任意の配列への代入を行わない条件
 			
 			for(Pair<BoolExpr,List<IntExpr>> field_index: has_f_arrays){
 				field_index.fst = cs.ctx.mkAnd(field_index.fst, cs.ctx.mkNot(has_not_f_array));
@@ -267,13 +291,23 @@ public class spec_case_seq implements Parser<String>  {
 		}
 		
 		//何でも代入していい条件を作る
-		BoolExpr all_assign_expr = cs.ctx.mkBool(false);
+		BoolExpr all_assign_expr = null;
 		for(BoolExpr aae : all_assign_exprs){
+			if(all_assign_expr == null){
+				all_assign_expr = aae;
+			}else{
 			all_assign_expr = cs.ctx.mkOr(all_assign_expr, aae);
+			}
 		}
-		for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
-			all_assign_expr = cs.ctx.mkAnd(all_assign_expr, cs.ctx.mkNot(cnst_field.fst));
+		if(all_assign_expr == null){
+			all_assign_expr = cs.ctx.mkBool(false);
+		}else{//false && hoge をしてもしょうがないので
+			for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
+				all_assign_expr = cs.ctx.mkAnd(all_assign_expr, cs.ctx.mkNot(cnst_field.fst));
+			}
 		}
+		
+		
 		
 		return new Pair<List<F_Assign>, BoolExpr>(f_assigns, all_assign_expr);
 	}
@@ -296,8 +330,8 @@ public class spec_case_seq implements Parser<String>  {
 				BoolExpr equal = cs.ctx.mkBool(false);
 				BoolExpr not_equal = cs.ctx.mkBool(true);
 				for(IntExpr index : assinable_cnst_index.snd){
-					equal = cs.ctx.mkOr(cs.ctx.mkEq(index_expr, index));
-					not_equal = cs.ctx.mkAnd(cs.ctx.mkNot(cs.ctx.mkEq(index_expr, index)));
+					equal = cs.ctx.mkOr(equal, cs.ctx.mkEq(index_expr, index));
+					not_equal = cs.ctx.mkAnd(not_equal, cs.ctx.mkNot(cs.ctx.mkEq(index_expr, index)));
 				}
 				equal_cnsts = cs.ctx.mkOr(equal_cnsts, cs.ctx.mkAnd(equal, assinable_cnst_index.fst));
 				not_equal_cnsts = cs.ctx.mkAnd(not_equal_cnsts, cs.ctx.mkImplies(not_equal, cs.ctx.mkNot(assinable_cnst_index.fst)));

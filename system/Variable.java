@@ -66,6 +66,11 @@ public class Variable extends Field{
 		}
 		throw new Exception("unexpect variable");
 	}
+	
+	public Expr get_full_Expr(Check_status cs) throws Exception{
+		return this.get_Expr(cs);
+	}
+	
 	@Override
 	public Expr get_Expr_assign(Check_status cs) throws Exception{
 		this.temp_num++;

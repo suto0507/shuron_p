@@ -33,8 +33,11 @@ public class Field {
 	//コンストラクタのfinalの初期化状態
 	public boolean final_initialized;
 	
+	//宣言されたクラスの名前
+	public String class_type_name;
 	
-	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, IntExpr class_object_index) throws Exception{
+	
+	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, IntExpr class_object_index, String class_type_name) throws Exception{
 		this.id = id;
 		this.temp_num = 0;
 		this.field_name = field_name;
@@ -48,13 +51,14 @@ public class Field {
 			throw new Exception("Cannot use refinement type for array");
 		}
 		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<IntExpr>>>();
+		this.class_type_name = class_type_name;
 	}
 	
 	public Field(){}
 	
 	
 	public Field clone_e() throws Exception{
-		Field ret = new  Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, this.class_object_index);
+		Field ret = new Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, this.class_object_index, class_type_name);
 		ret.temp_num = this.temp_num;
 		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst = this.assinable_cnst;
@@ -93,11 +97,61 @@ public class Field {
 		throw new Exception("unexpect variable");
 	}
 	
+	public Expr get_full_Expr(Check_status cs) throws Exception{
+		Expr ex = this.get_Expr(cs);
+		Expr class_ex = this.class_object.get_Expr(cs);
+		Expr full_ex;
+		if(this.class_object_index!=null){
+			class_ex = cs.ctx.mkSelect((ArrayExpr) class_ex, this.class_object_index);
+		}
+		full_ex = cs.ctx.mkSelect((ArrayExpr)ex, class_ex);
+		return full_ex;
+	}
+	
 	public Expr get_Expr_assign(Check_status cs) throws Exception{
 		this.temp_num++;
 		Expr ex =  this.get_Expr(cs);
 		this.temp_num--;
 		return ex;
+	}
+	
+	public Expr get_full_Expr_assign(Check_status cs) throws Exception{
+		Expr ex = this.get_Expr_assign(cs);
+		Expr class_ex = this.class_object.get_Expr(cs);
+		Expr full_ex;
+		if(this.class_object_index!=null){
+			class_ex = cs.ctx.mkSelect((ArrayExpr) class_ex, this.class_object_index);
+		}
+		full_ex = cs.ctx.mkSelect((ArrayExpr)ex, class_ex);
+		return full_ex;
+	}
+	
+	//自分と同じ型のフレッシュなExprを返す
+	public Expr get_Expr_tmp(Check_status cs) throws Exception{
+		if(this.type.equals("int")&&this.dims==0){
+			String ret = "tmpInt" + cs.Check_status_share.tmp_num;
+			return cs.ctx.mkIntConst(ret);
+		}else if(this.type.equals("boolean")&&this.dims==0){
+			String ret = "tmpBool" + cs.Check_status_share.tmp_num;
+			return cs.ctx.mkBoolConst(ret);
+		}else if(this.type.equals("void")){
+			//throw new Exception("void variable ?");
+			return null;
+		}else if(this.dims==0){
+			//クラス
+			String ret = "tmpRef" + cs.Check_status_share.tmp_num;;
+			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("Ref"));
+		}else if(this.type.equals("int")&&this.dims==1){ //配列
+			String ret = "tmpIntArray" + cs.Check_status_share.tmp_num;
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkIntSort());
+		}else if(this.type.equals("boolean")&&this.dims==1){
+			String ret = "tmpBoolArray" + cs.Check_status_share.tmp_num;
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkBoolSort());
+		}else if(this.dims==1){
+			String ret = "tmpRefArray" + cs.Check_status_share.tmp_num;;
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkUninterpretedSort("Ref"));
+		}
+		throw new Exception("unexpect variable");
 	}
 	
 	
@@ -161,8 +215,8 @@ public class Field {
 			BoolExpr equal = cs.ctx.mkBool(false);
 			BoolExpr not_equal = cs.ctx.mkBool(true);
 			for(IntExpr index : assinable_cnst_index.snd){
-				equal = cs.ctx.mkOr(cs.ctx.mkEq(index_expr, index));
-				not_equal = cs.ctx.mkAnd(cs.ctx.mkNot(cs.ctx.mkEq(index_expr, index)));
+				equal = cs.ctx.mkOr(equal, cs.ctx.mkEq(index_expr, index));
+				not_equal = cs.ctx.mkAnd(not_equal, cs.ctx.mkNot(cs.ctx.mkEq(index_expr, index)));
 			}
 			equal_cnsts = cs.ctx.mkOr(equal_cnsts, cs.ctx.mkAnd(equal, assinable_cnst_index.fst));
 			not_equal_cnsts = cs.ctx.mkAnd(not_equal_cnsts, cs.ctx.mkImplies(not_equal, cs.ctx.mkNot(assinable_cnst_index.fst)));

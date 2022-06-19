@@ -16,7 +16,7 @@ public class Comment_analysis {
 		String new_str = "";
 		int end = 0;
 		while (match.find()) {
-		    new_str += str.substring(end, match.start()-1) + match.group(1);
+		    new_str += str.substring(end, match.start()) + match.group(1);
 		    end = match.end();
 		}
 		new_str += str.substring(end);
@@ -27,14 +27,17 @@ public class Comment_analysis {
 		new_str = "";
 		end = 0;
 		while (match.find()) {
-		    new_str += str.substring(end, match.start()-1);
+			new_str += str.substring(end, match.start()) + " ";
+		    end = match.start(1);
 		    String match_str = match.group(1);
 		    Pattern match_ptn = Pattern.compile("(^\\s*)@(.*\\n?)");
-		    Matcher match_match = match_ptn.matcher(str);
+		    Matcher match_match = match_ptn.matcher(match_str);
 		    while (match_match.find()) {
-		        new_str += match.group(1);
+		        new_str += str.substring(end, match.start()) + match.group(1);
 		        new_str += match.group(2);
+		        end = match_match.end();
 		    }
+		    new_str += str.substring(end, match.end(1)) + " ";
 		    end = match.end();
 		}
 		new_str += str.substring(end);
@@ -47,7 +50,7 @@ public class Comment_analysis {
 		String new_str = "";
 		int end = 0;
 		while (match.find()) {
-		    new_str += str.substring(end, match.start()-1) + match.group(1);
+		    new_str += str.substring(end, match.start()) + match.group(1);
 		    end = match.end();
 		}
 		new_str += str.substring(end);
@@ -58,14 +61,17 @@ public class Comment_analysis {
 		new_str = "";
 		end = 0;
 		while (match.find()) {
-		    new_str += str.substring(end, match.start()-1);
+		    new_str += str.substring(end, match.start()) + " ";
+		    end = match.start(1);
 		    String match_str = match.group(1);
 		    Pattern match_ptn = Pattern.compile("(^\\s*)@(.*\\n?)");
-		    Matcher match_match = match_ptn.matcher(str);
+		    Matcher match_match = match_ptn.matcher(match_str);
 		    while (match_match.find()) {
-		        new_str += match.group(1);
+		        new_str += str.substring(end, match.start()) + match.group(1);
 		        new_str += match.group(2);
+		        end = match_match.end();
 		    }
+		    new_str += str.substring(end, match.end(1)) + " ";
 		    end = match.end();
 		}
 		new_str += str.substring(end);
@@ -78,7 +84,7 @@ public class Comment_analysis {
 		String new_str = "";
 		int end = 0;
 		while (match.find()) {
-		    new_str += str.substring(end, match.start()-1) + match.group(1);
+		    new_str += str.substring(end, match.start()) + match.group(1);
 		    end = match.end();
 		}
 		new_str += str.substring(end);
@@ -89,7 +95,7 @@ public class Comment_analysis {
 		new_str = "";
 		end = 0;
 		while (match.find()) {
-		    new_str += str.substring(end, match.start()-1);
+		    new_str += str.substring(end, match.start());
 		    end = match.end();
 		}
 		new_str += str.substring(end);

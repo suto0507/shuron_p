@@ -9,6 +9,7 @@ import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Summery;
 
 public class compilation_unit implements Parser<String>{
 	List<class_declaration> classes;
@@ -64,12 +65,12 @@ public class compilation_unit implements Parser<String>{
 		}
 	}
 	
-	public void check(int deep_limit) throws Exception{
+	public void check(int deep_limit, Summery summery) throws Exception{
 		for(class_declaration class_decl :classes){
 			try{
 				Check_status cs = new Check_status(this);
 				cs.refinement_deep_limmit = deep_limit;
-				class_decl.check(cs);
+				class_decl.check(cs, summery);
 			}catch(Exception e){
 				System.out.println(e);
 				System.out.println("class " + class_decl.class_name + " is wrong");

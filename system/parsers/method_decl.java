@@ -13,6 +13,7 @@ import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Summery;
 import system.Variable;
 import system.parsers.spec_case_seq.F_Assign;
 
@@ -80,7 +81,7 @@ public class method_decl implements Parser<String>{
 		return st;
 	}
 	
-	public void check(Check_status cs){
+	public void check(Check_status cs, Summery summery){
 		
 		System.out.println("Verify method " + this.ident);
 		
@@ -88,10 +89,6 @@ public class method_decl implements Parser<String>{
 		
 		//FX‚Ìˆ—‚ğŒã‚Å’Ç‰Á
 		try{//return‚Ì€”õ
-			
-			
-			
-			
 			if(this.type_spec!=null){
 				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field);
 			}else{
@@ -273,9 +270,11 @@ public class method_decl implements Parser<String>{
 			
 			
 			System.out.println("method \"" + this.ident + "\" is valid\n\n");
+			summery.valids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + summery.file.toString());
 		}catch(Exception e){
 			System.out.println(e);
 			System.out.println("!!!!!!!!!! method \"" + this.ident + "\" is invalid !!!!!!!!!!\n\n");
+			summery.invalids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + summery.file.toString());
 		}
 		
 		

@@ -160,34 +160,20 @@ public class new_expr implements Parser<String>{
 					System.out.println("assign " + fa.field.field_name);
 					//フィールドへの代入
 					if(fa.cnst!=null){
-						Expr tmp_Expr;
-						if(fa.field.type.equals("int")){
-							tmp_Expr = cs.ctx.mkIntConst("tmpInt" + cs.Check_status_share.tmp_num);
-						}else if(fa.field.type.equals("boolean")){
-							tmp_Expr = cs.ctx.mkBoolConst("tmpBool" + cs.Check_status_share.tmp_num);
-						}else{
-							tmp_Expr = cs.ctx.mkConst("tmpRef" + cs.Check_status_share.tmp_num,  cs.ctx.mkUninterpretedSort("Ref"));
-						}
-						BoolExpr expr = cs.ctx.mkEq(cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr_assign(cs), fa.field.class_object_expr), 
-								cs.ctx.mkITE(cs.ctx.mkOr(fa.cnst, cs.assinable_cnst_all), tmp_Expr, cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr(cs), fa.field.class_object_expr)));
+						Expr tmp_Expr = fa.field.get_Expr_tmp(cs);
+						BoolExpr expr = cs.ctx.mkEq(fa.field.get_full_Expr_assign(cs), 
+								cs.ctx.mkITE(cs.ctx.mkOr(fa.cnst, cs.assinable_cnst_all), tmp_Expr, fa.field.get_full_Expr(cs)));
 						cs.add_constraint(expr);
 						fa.field.temp_num++;
 						
 					}
 					//配列の要素に代入
 					if(fa.cnst_array.size()>0){
-						Expr tmp_Expr;
-						if(fa.field.type.equals("int")){
-							tmp_Expr = cs.ctx.mkIntConst("tmpInt" + cs.Check_status_share.tmp_num);
-						}else if(fa.field.type.equals("boolean")){
-							tmp_Expr = cs.ctx.mkBoolConst("tmpBool" + cs.Check_status_share.tmp_num);
-						}else{
-							tmp_Expr = cs.ctx.mkConst("tmpRef" + cs.Check_status_share.tmp_num,  cs.ctx.mkUninterpretedSort("Ref"));
-						}
+						Expr tmp_Expr = fa.field.get_Expr_tmp(cs);
 						
 						IntExpr index_expr = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num);
-						Expr old_element = cs.ctx.mkSelect((ArrayExpr) cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr(cs), fa.field.class_object_expr), index_expr);
-						Expr new_element = cs.ctx.mkSelect((ArrayExpr) cs.ctx.mkSelect((ArrayExpr)fa.field.get_Expr_assign(cs), fa.field.class_object_expr), index_expr);
+						Expr old_element = cs.ctx.mkSelect((ArrayExpr) fa.field.get_full_Expr(cs), index_expr);
+						Expr new_element = cs.ctx.mkSelect((ArrayExpr) fa.field.get_full_Expr_assign(cs), index_expr);
 						BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
 						cs.add_constraint(expr);
 						fa.field.temp_num++;

@@ -6,6 +6,7 @@ import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Summery;
 import system.Variable;
 
 public class class_declaration implements Parser<String>{
@@ -35,7 +36,7 @@ public class class_declaration implements Parser<String>{
 		return "class " + class_name + " " + extends_clause + content;
 	}
 	
-	public void check(Check_status cs) throws Exception{
+	public void check(Check_status cs, Summery summery) throws Exception{
 		System.out.println("Verify class " + this.class_name);
 		Check_status csc =  cs.clone();
 		csc.clone_list();
@@ -50,7 +51,7 @@ public class class_declaration implements Parser<String>{
 		csc.refined_class_Field = this_field;
 		csc.refined_class_Field_index = null;
 		
-		this.class_block.check(csc);
+		this.class_block.check(csc, summery);
 	}
 	
 }

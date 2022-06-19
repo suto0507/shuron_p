@@ -206,9 +206,21 @@ import system.Variable;
 						}
 					}
 				}
+				
+				//cs.fields‚ÉŠÜ‚Ü‚ê‚È‚¢‚à‚Ì‚ª‚ ‚ê‚Î’Ç‰Á‚·‚é
+				for(Field f : cs_then.fields){
+					cs.search_field(f.field_name, f.class_object, f.class_object_index, cs);
+				}
+				if(cs_else != null){
+					for(Field f : cs_else.fields){
+						cs.search_field(f.field_name, f.class_object, f.class_object_index, cs);
+					}
+				}
+				
+				
 				for(Field f : cs.fields){
 					if(cs_else==null){
-						Field f_then = cs_then.search_field(f.field_name,f.class_object, f.class_object_index, cs);
+						Field f_then = cs_then.search_field(f.field_name, f.class_object, f.class_object_index, cs);
 						if(f.temp_num!=f_then.temp_num){
 							Expr e1 = f.get_Expr(cs);
 							Expr e2 = f_then.get_Expr(cs_then);

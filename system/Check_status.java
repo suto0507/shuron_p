@@ -85,6 +85,7 @@ public class Check_status {
 		return ret;
 	}
 	
+	//identはxとかで検索
 	public Field search_field(String ident, Field class_object, IntExpr class_object_index, Check_status cs) throws Exception{
 		
 		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident);
@@ -96,7 +97,7 @@ public class Check_status {
 		String field_name = ident + "_" + vd.class_type_name;
 		
 		for(Field v :fields){
-			if(field_name.equals(v.field_name)&&v.class_object.equals(class_object)){
+			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_object.equals(class_object)){
 				if(v.class_object_index==null && class_object_index==null){
 					return v;
 				}else if(v.class_object_index!=null && class_object_index!=null){//どちらかがnullは一致しないもの
@@ -121,7 +122,7 @@ public class Check_status {
 			}
 		}
 		
-		Field f = new Field(this.Check_status_share.get_tmp_num(),field_name , vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, class_object_index);
+		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, class_object_index, vd.class_type_name);
 		f.assinable_cnst = cs.ctx.mkBool(false);//新しく追加したフィールドはassinable節で触れられていない
 		this.fields.add(f);
 		return f;

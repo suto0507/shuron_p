@@ -1,5 +1,6 @@
 package system.parsers;
 
+import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 
 import system.Check_status;
@@ -9,6 +10,7 @@ import system.Source;
 
 public class requires_clause implements Parser<String>{
 	predicates predicates;
+	BoolExpr expr; //メソッドの中身を実行する前の述語を保持する必要がある
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st = "";
 		st = st + new string("requires").parse(s, ps);

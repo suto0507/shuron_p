@@ -22,7 +22,7 @@ public class Comment_analysis {
 		new_str += str.substring(end);
 		str = new_str;
 
-		ptn = Pattern.compile("/\\*`@(.*)\\*/");
+		ptn = Pattern.compile("/\\*`@(.*?)\\*/", Pattern.DOTALL);
 		match = ptn.matcher(str);
 		new_str = "";
 		end = 0;
@@ -30,12 +30,13 @@ public class Comment_analysis {
 			new_str += str.substring(end, match.start()) + " ";
 		    end = match.start(1);
 		    String match_str = match.group(1);
-		    Pattern match_ptn = Pattern.compile("(^\\s*)@(.*\\n?)");
+		    Pattern match_ptn = Pattern.compile("([\\s| ]*)@(.*)");
 		    Matcher match_match = match_ptn.matcher(match_str);
+		    int match_str_start = match.start(1);
 		    while (match_match.find()) {
-		        new_str += str.substring(end, match.start()) + match.group(1);
-		        new_str += match.group(2);
-		        end = match_match.end();
+		        new_str += str.substring(end, match_str_start + match_match.start()) + match_match.group(1);
+		        new_str += match_match.group(2);
+		        end = match_str_start + match_match.end();
 		    }
 		    new_str += str.substring(end, match.end(1)) + " ";
 		    end = match.end();
@@ -56,20 +57,21 @@ public class Comment_analysis {
 		new_str += str.substring(end);
 		str = new_str;
 
-		ptn = Pattern.compile("/\\*@(.*)\\*/");
+		ptn = Pattern.compile("/\\*@(.*?)\\*/", Pattern.DOTALL);
 		match = ptn.matcher(str);
 		new_str = "";
 		end = 0;
 		while (match.find()) {
-		    new_str += str.substring(end, match.start()) + " ";
+			new_str += str.substring(end, match.start()) + " ";
 		    end = match.start(1);
 		    String match_str = match.group(1);
-		    Pattern match_ptn = Pattern.compile("(^\\s*)@(.*\\n?)");
+		    Pattern match_ptn = Pattern.compile("([\\s| ]*)@(.*)");
 		    Matcher match_match = match_ptn.matcher(match_str);
+		    int match_str_start = match.start(1);
 		    while (match_match.find()) {
-		        new_str += str.substring(end, match.start()) + match.group(1);
-		        new_str += match.group(2);
-		        end = match_match.end();
+		        new_str += str.substring(end, match_str_start + match_match.start()) + match_match.group(1);
+		        new_str += match_match.group(2);
+		        end = match_str_start + match_match.end();
 		    }
 		    new_str += str.substring(end, match.end(1)) + " ";
 		    end = match.end();

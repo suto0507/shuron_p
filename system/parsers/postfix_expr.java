@@ -510,6 +510,7 @@ public class postfix_expr implements Parser<String>{
 			}
 		}
 		
+		
 		//Ž–ŒãðŒ
 		BoolExpr post_invariant_expr = null;
 		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0){
@@ -523,11 +524,12 @@ public class postfix_expr implements Parser<String>{
 			cs.add_constraint(post_invariant_expr);
 		}
 		BoolExpr ensures_expr = null;
-
+		
 		if(md.method_specification != null){
 			ensures_expr = md.method_specification.ensures_expr(cs);
 			cs.assert_constraint(ensures_expr);
 		}
+		
 		
 		
 		return result;

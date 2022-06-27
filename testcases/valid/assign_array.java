@@ -4,7 +4,7 @@ class assign_array {
 	/*@ requires x<=1;*/
 	/*@ assignable ar[1];*/
 	/*@also*/
-	/*@ requires x>(0-1);*/
+	/*@ requires x>0;*/
 	/*@ assignable ar[1], ar[2];*/
     /*@also*/
 	/*@ requires x==3;*/

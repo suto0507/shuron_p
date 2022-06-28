@@ -206,7 +206,7 @@ public class new_expr implements Parser<String>{
 			BoolExpr ensures_expr = null;
 			if(md.method_specification != null){
 				ensures_expr = md.method_specification.ensures_expr(cs);
-				cs.assert_constraint(ensures_expr);
+				cs.add_constraint(ensures_expr);
 			}
 			cs.in_method_call = false;
 			

@@ -527,7 +527,7 @@ public class postfix_expr implements Parser<String>{
 		
 		if(md.method_specification != null){
 			ensures_expr = md.method_specification.ensures_expr(cs);
-			cs.assert_constraint(ensures_expr);
+			cs.add_constraint(ensures_expr);
 		}
 		
 		

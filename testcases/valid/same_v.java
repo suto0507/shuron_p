@@ -5,7 +5,7 @@ class A{
 
 
 	//@ ensures \result > 0 && x > 0;
-	void method1(int x){
+	int method1(){
 		return x;
 	}
 
@@ -15,7 +15,7 @@ class B extends A{
     int/*`@ refinement_type {int x | x % 2 == 0}*/ x;
 
 	//@ ensures \result % 2 == 0 && x % 2 == 0;
-	void method2(int x){
+	int method2(){
 		return x;
 	}
 }

@@ -48,6 +48,58 @@ public class compilation_unit implements Parser<String>{
 			}
 		}
 		
+		//並び替え
+		List<class_declaration> sorted_classes = new ArrayList<class_declaration>();
+		while(classes.size()!=0){
+			for(class_declaration class_decl :classes){
+				if(class_decl.super_class==null || sorted_classes.contains(class_decl)){
+					sorted_classes.add(class_decl);
+					classes.remove(class_decl);
+				}
+			}
+		}
+		
+		//メソッドの継承
+				for(class_declaration class_decl :classes){
+					if(class_decl.super_class != null){
+						//メソッド
+						for(method_decl super_md : class_decl.super_class.class_block.method_decls){//スーパークラスの各メソッドに関して、オーバーライドされているかによって処理を行う
+							method_decl override_md = null;
+							for(method_decl md : class_decl.class_block.method_decls){
+								if(super_md.ident.equals(md.ident)){
+									override_md = md;
+									break;
+								}
+							}
+							
+							if(override_md == null){//同じメソッドでもサブクラスで検証は行う
+								class_decl.class_block.method_decls.add(super_md);
+							}else{//事前条件、事後条件などの継承
+								if(super_md.method_specification!=null){
+									if(override_md.method_specification.spec_case_seq!=null){
+										throw new Exception("need also");
+									}else if(override_md.method_specification.extending_specification!=null){
+										override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases = new ArrayList<generic_spec_case>();
+										for(generic_spec_case gsc : super_md.method_specification.spec_case_seq.generic_spec_cases){//スーパークラスは既にspec_case_seqで確定しているはず
+											override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases.add(gsc);
+										}
+										for(generic_spec_case gsc : super_md.method_specification.spec_case_seq.generic_spec_cases){
+											override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases.add(gsc);
+										}
+									}else{//なんも書いてない場合
+										override_md.method_specification = super_md.method_specification;
+									}
+								}else{//スーパークラスのメソッドに仕様はない場合
+									if(override_md.method_specification.extending_specification!=null){
+										throw new Exception("super method don't have specification.");
+									}
+								}
+							}
+						}
+					}
+					
+				}
+		
 		//篩型の継承に関する処理をする
 		for(class_declaration class_decl :classes){
 			if(class_decl.super_class != null){
@@ -63,6 +115,8 @@ public class compilation_unit implements Parser<String>{
 			}
 			
 		}
+		
+		
 	}
 	
 	public void check(int deep_limit, Summery summery) throws Exception{

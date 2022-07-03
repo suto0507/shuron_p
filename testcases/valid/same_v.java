@@ -3,7 +3,6 @@ class A{
 
     int/*`@ refinement_type Nat*/ x;
 
-
 	//@ ensures \result > 0 && x > 0;
 	int method1(){
 		return x;

@@ -30,27 +30,14 @@ public class method_specification implements Parser<String> {
 	}
 	
 	public BoolExpr requires_expr(Check_status cs) throws Exception{
-		if(spec_case_seq != null){
-			return spec_case_seq.requires_expr(cs);
-		}else{
-			return extending_specification.requires_expr(cs);
-		}
-		
+		return spec_case_seq.requires_expr(cs);
 	}
 	
 	public BoolExpr ensures_expr(Check_status cs) throws Exception{
-		if(spec_case_seq != null){
-			return spec_case_seq.ensures_expr(cs);
-		}else{
-			return extending_specification.ensures_expr(cs);
-		}
+		return spec_case_seq.ensures_expr(cs);
 	}
 	
 	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
-		if(spec_case_seq != null){
-			return spec_case_seq.assignables(cs);
-		}else{
-			return extending_specification.assignables(cs);
-		}
+		return spec_case_seq.assignables(cs);
 	}
 }

@@ -28,16 +28,5 @@ public class extending_specification implements Parser<String>  {
 		return st;
 	}
 	
-	/*
-	public BoolExpr requires_expr(Check_status cs) throws Exception{
-		return spec_case_seq.requires_expr(cs);
-	}
 	
-	public BoolExpr ensures_expr(Check_status cs) throws Exception{
-		return spec_case_seq.ensures_expr(cs);
-	}
-	
-	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
-		return spec_case_seq.assignables(cs);
-	}*/
 }

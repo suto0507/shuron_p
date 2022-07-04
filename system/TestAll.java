@@ -51,7 +51,7 @@ public class TestAll {
 				Parser_status ps = new Parser_status();
 				String parsed = cu.parse(new Source(st), ps);
 				System.out.println(parsed + "is parsed");
-				cu.link_inheritance(ps.extends_pairs);
+				cu.link_inheritance(ps.extends_pairs, summery);
 				cu.check(10, summery);
 			}catch (Exception e){
 				System.out.println(e);

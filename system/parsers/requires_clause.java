@@ -11,6 +11,7 @@ import system.Source;
 public class requires_clause implements Parser<String>{
 	predicates predicates;
 	BoolExpr expr; //メソッドの中身を実行する前の述語を保持する必要がある
+	BoolExpr call_expr; //↑のメソッド呼び出し用
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st = "";
 		st = st + new string("requires").parse(s, ps);
@@ -24,6 +25,22 @@ public class requires_clause implements Parser<String>{
 	
 	public Expr check(Check_status cs) throws Exception{
 		return this.predicates.check(cs);
+	}
+	
+	public void set_expr(BoolExpr ex, Check_status cs){
+		if(cs.in_method_call){
+			call_expr = ex;
+		}else{
+			expr = ex;
+		}
+	}
+	
+	public BoolExpr get_expr(Check_status cs){
+		if(cs.in_method_call){
+			return call_expr;
+		}else{
+			return expr;
+		}
 	}
 
 }

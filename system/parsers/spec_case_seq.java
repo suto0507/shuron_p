@@ -59,11 +59,11 @@ public class spec_case_seq implements Parser<String>  {
 			}else{
 				BoolExpr gsc_expr = null;
 				for(requires_clause rc : rcs){
-					rc.expr = (BoolExpr) rc.check(cs);
+					rc.set_expr((BoolExpr) rc.check(cs), cs);
 					if(gsc_expr == null){
-						gsc_expr = rc.expr;
+						gsc_expr = rc.get_expr(cs);
 					}else{
-						gsc_expr = cs.ctx.mkAnd(gsc_expr, rc.expr);
+						gsc_expr = cs.ctx.mkAnd(gsc_expr, rc.get_expr(cs));
 					}
 				}
 				
@@ -111,9 +111,9 @@ public class spec_case_seq implements Parser<String>  {
 				}else{
 					for(requires_clause rc : rcs){
 						if(pre_expr == null){
-							pre_expr = rc.expr;
+							pre_expr = rc.get_expr(cs);
 						}else{
-							pre_expr = cs.ctx.mkAnd(pre_expr, rc.expr);
+							pre_expr = cs.ctx.mkAnd(pre_expr, rc.get_expr(cs));
 						}
 					}
 				}
@@ -183,9 +183,9 @@ public class spec_case_seq implements Parser<String>  {
 			}else{
 				for(requires_clause rc : rcs){
 					if(pre_expr == null){
-						pre_expr = rc.expr;
+						pre_expr = rc.get_expr(cs);
 					}else{
-						pre_expr = cs.ctx.mkAnd(pre_expr, rc.expr);
+						pre_expr = cs.ctx.mkAnd(pre_expr, rc.get_expr(cs));
 					}
 				}
 			}

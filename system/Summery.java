@@ -8,14 +8,22 @@ public class Summery {
 	public Path file;
 	public List<String> valids;
 	public List<String> invalids;
+	public List<String> inheritance_faileds;
 	
 	Summery(){
 		valids = new ArrayList<String>();
 		invalids = new ArrayList<String>();
+		inheritance_faileds = new ArrayList<String>();
 	}
 	
 	public void print_summery(){
 		System.out.println("///////////// Summery //////////////");
+		
+		System.out.println("inheritance fail list");
+		for(String inheritance_fail : inheritance_faileds){
+			System.out.println(" - " + inheritance_fail);
+		}
+		
 		System.out.println("valid method list");
 		for(String valid : valids){
 			System.out.println(" - " + valid);
@@ -26,6 +34,7 @@ public class Summery {
 			System.out.println(" - " + invalid);
 		}
 		
+		System.out.println("number of inheritance fail " + inheritance_faileds.size());
 		System.out.println("number of valid methods id " + valids.size() + "/" + (valids.size() + invalids.size()));
 		
 	}

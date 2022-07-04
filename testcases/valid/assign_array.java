@@ -10,7 +10,7 @@ class assign_array {
 		if(x == 1){
 			method2(x);
 		}else if(x == 3){
-			ar[2] = 27;//2には代入できない
+			ar[1] = 27;//2には代入できない
 		}
 		return x;
 	}

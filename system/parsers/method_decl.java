@@ -305,7 +305,10 @@ public class method_decl implements Parser<String>{
 					super_class = super_class.super_class;
 				}
 			}else if(this.type_spec.refinement_type_clause!=null){//篩型を持つ親クラスが見つかった場合、かつ篩型を持っている場合
-				if(super_md.type_spec.refinement_type_clause.ident!=null){//親がident
+				if(this.type_spec.refinement_type_clause == super_md.type_spec.refinement_type_clause){//スーパークラスのrefinement_type_clauseと同じインスタンスだったら何もしない
+					//何もしない
+					break;
+				}else if(super_md.type_spec.refinement_type_clause.ident!=null){//親がident
 					String rt_name;
 					if(this.type_spec.refinement_type_clause.ident!=null){//identの場合は、親が篩型を持っていない、または親もidentかつBaseタイプと同名
 						rt_name = this.type_spec.refinement_type_clause.ident;

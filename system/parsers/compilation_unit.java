@@ -120,7 +120,7 @@ public class compilation_unit implements Parser<String>{
 				
 			}
 		}catch(Exception e){
-			
+			System.out.println(e);
 			summery.inheritance_faileds.add("Inheritance failed : "  + summery.file.toString());
 		}
 		

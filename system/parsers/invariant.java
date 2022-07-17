@@ -1,5 +1,6 @@
 package system.parsers;
 
+import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 
 import system.Check_status;
@@ -12,6 +13,8 @@ public class invariant implements Parser<String>{
 	boolean is_private;
 	predicates predicates;
 	
+	public String class_type_name;
+	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		this.st = "";
 		st = st + new string("invariant").parse(s,ps);
@@ -21,6 +24,8 @@ public class invariant implements Parser<String>{
 		st = st + new spaces().parse(s,ps);
 		st = st + new string(";").parse(s,ps);
 		
+		this.class_type_name = ps.class_type_name;
+		
 		return st;
 	}
 	
@@ -29,7 +34,14 @@ public class invariant implements Parser<String>{
 	}
 	
 	public Expr check(Check_status cs) throws Exception{
-		return this.predicates.check(cs);
+		String pre_class_type_name = cs.this_field.type;
+		cs.this_field.type = this.class_type_name;
+		
+		BoolExpr ret_val =  this.predicates.check(cs);
+		
+		cs.this_field.type = pre_class_type_name;
+		
+		return ret_val;
 	}
 
 }

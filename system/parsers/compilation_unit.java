@@ -84,12 +84,12 @@ public class compilation_unit implements Parser<String>{
 								if(override_md.method_specification!=null && override_md.method_specification.spec_case_seq!=null){
 									throw new Exception("need also");
 								}else if(override_md.method_specification!=null && override_md.method_specification.extending_specification!=null){
-									override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases = new ArrayList<generic_spec_case>();
+									override_md.method_specification.spec_case_seq.generic_spec_cases = new ArrayList<generic_spec_case>();
 									for(generic_spec_case gsc : super_md.method_specification.spec_case_seq.generic_spec_cases){//スーパークラスは既にspec_case_seqで確定しているはず
-										override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases.add(gsc);
+										override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
 									}
-									for(generic_spec_case gsc : super_md.method_specification.spec_case_seq.generic_spec_cases){
-										override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases.add(gsc);
+									for(generic_spec_case gsc : super_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases){
+										override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
 									}
 								}else{//なんも書いてない場合
 									override_md.method_specification = super_md.method_specification;
@@ -104,6 +104,14 @@ public class compilation_unit implements Parser<String>{
 				}
 			}
 			
+			//不変条件の継承
+			for(class_declaration class_decl :classes){
+				if(class_decl.super_class != null){
+					for(invariant inv : class_decl.super_class.class_block.invariants){
+						class_decl.class_block.invariants.add(inv);
+					}
+				}
+			}
 			//篩型の継承に関する処理をする
 			for(class_declaration class_decl :classes){
 				if(class_decl.super_class != null){

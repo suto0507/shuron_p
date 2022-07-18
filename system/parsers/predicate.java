@@ -7,7 +7,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Source;
 
-public class predicates implements Parser<String>{
+public class predicate implements Parser<String>{
 	spec_expression spec_expression;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -21,3 +21,4 @@ public class predicates implements Parser<String>{
 	
 
 }
+

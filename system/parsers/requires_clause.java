@@ -9,22 +9,22 @@ import system.Parser_status;
 import system.Source;
 
 public class requires_clause implements Parser<String>{
-	predicates predicates;
+	predicate predicate;
 	BoolExpr expr; //メソッドの中身を実行する前の述語を保持する必要がある
 	BoolExpr call_expr; //↑のメソッド呼び出し用
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st = "";
 		st = st + new string("requires").parse(s, ps);
 		st = st + new spaces().parse(s, ps);
-		this.predicates = new predicates();
-		st = st + this.predicates.parse(s, ps);
+		this.predicate = new predicate();
+		st = st + this.predicate.parse(s, ps);
 		st = st + new spaces().parse(s, ps);
 		st = st + new string(";").parse(s, ps);
 		return st;
 	}
 	
 	public Expr check(Check_status cs) throws Exception{
-		return this.predicates.check(cs);
+		return this.predicate.check(cs);
 	}
 	
 	public void set_expr(BoolExpr ex, Check_status cs){

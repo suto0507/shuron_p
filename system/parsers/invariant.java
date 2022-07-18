@@ -11,7 +11,7 @@ import system.Source;
 public class invariant implements Parser<String>{
 	String st;
 	boolean is_private;
-	predicates predicates;
+	predicate predicate;
 	
 	public String class_type_name;
 	
@@ -19,8 +19,8 @@ public class invariant implements Parser<String>{
 		this.st = "";
 		st = st + new string("invariant").parse(s,ps);
 		st = st + new spaces().parse(s,ps);
-		this.predicates = new predicates();
-		st = st + predicates.parse(s,ps);
+		this.predicate = new predicate();
+		st = st + predicate.parse(s,ps);
 		st = st + new spaces().parse(s,ps);
 		st = st + new string(";").parse(s,ps);
 		
@@ -37,7 +37,7 @@ public class invariant implements Parser<String>{
 		String pre_class_type_name = cs.this_field.type;
 		cs.this_field.type = this.class_type_name;
 		
-		BoolExpr ret_val =  this.predicates.check(cs);
+		BoolExpr ret_val =  this.predicate.check(cs);
 		
 		cs.this_field.type = pre_class_type_name;
 		

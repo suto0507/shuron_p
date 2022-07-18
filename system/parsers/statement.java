@@ -287,7 +287,7 @@ import system.Variable;
 				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
 				
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr ex = li.predicates.check(cs_loop);
+					BoolExpr ex = li.predicate.check(cs_loop);
 					cs_loop.assert_constraint(ex);
 				}
 				//中身ように変数を一新
@@ -303,7 +303,7 @@ import system.Variable;
 				System.out.println("a loop pre condition");
 				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr ex = li.predicates.check(cs_loop);
+					BoolExpr ex = li.predicate.check(cs_loop);
 					cs_loop.add_constraint(ex);
 				}
 				
@@ -315,7 +315,7 @@ import system.Variable;
 				//中身の事後条件
 				System.out.println("a loop post condition");
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr ex = li.predicates.check(cs_loop);
+					BoolExpr ex = li.predicate.check(cs_loop);
 					cs_loop.assert_constraint(ex);
 				}
 				
@@ -360,7 +360,7 @@ import system.Variable;
 				//ループ出た後の条件
 				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					post_loop = cs.ctx.mkAnd(post_loop, li.predicates.check(cs_loop));
+					post_loop = cs.ctx.mkAnd(post_loop, li.predicate.check(cs_loop));
 				}
 				cs.add_constraint(cs.ctx.mkImplies(enter_loop_condition, post_loop));
 				

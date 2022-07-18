@@ -13,7 +13,7 @@ import system.Variable;
 public class refinement_type implements Parser<String>{
 	type type;
 	String ident;
-	predicates predicates;
+	predicate predicate;
 	public String class_type_name;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -28,8 +28,8 @@ public class refinement_type implements Parser<String>{
 		st = st + new spaces().parse(s,ps);
 		st = st + new string("|").parse(s,ps);
 		st = st + new spaces().parse(s,ps);
-		predicates = new predicates();
-		st = st + this.predicates.parse(s,ps);
+		predicate = new predicate();
+		st = st + this.predicate.parse(s,ps);
 		st = st + new spaces().parse(s,ps);
 		st = st + new string("}").parse(s,ps);
 
@@ -47,7 +47,7 @@ public class refinement_type implements Parser<String>{
 		String pre_class_type_name = cs.refined_class_Field.type;
 		cs.refined_class_Field.type = this.class_type_name;
 		
-		BoolExpr expr = this.predicates.check(cs);
+		BoolExpr expr = this.predicate.check(cs);
 		
 		cs.refined_class_Field.type = pre_class_type_name;
 		
@@ -89,7 +89,7 @@ public class refinement_type implements Parser<String>{
 		String pre_class_type_name = cs.refined_class_Field.type;
 		cs.refined_class_Field.type = this.class_type_name;
 		
-		BoolExpr expr = this.predicates.check(cs);
+		BoolExpr expr = this.predicate.check(cs);
 		
 		cs.refined_class_Field.type = pre_class_type_name;
 		

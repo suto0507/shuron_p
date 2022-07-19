@@ -20,8 +20,8 @@ public class Check_status_share {
 	}
 	
 	public String new_temp(){
-		String st = "_JML_tmp_" + tmp_num;
 		tmp_num++;
+		String st = "_JML_tmp_" + tmp_num;
 		return st;
 	}
 

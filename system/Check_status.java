@@ -58,6 +58,8 @@ public class Check_status {
 	
 	public boolean in_constructor;
 	
+	public List<Pair<String, Expr>> quantifiers;
+	
 	public Check_status(compilation_unit cu){
 		variables = new ArrayList<Variable>();
 		this.Check_status_share = new Check_status_share(cu);
@@ -69,6 +71,7 @@ public class Check_status {
 		this.return_pathconditions = new ArrayList<BoolExpr>();
 		//this.assignables = new ArrayList<Field>();
 		this.right_side_status = new Right_side_status();
+		quantifiers = new ArrayList<Pair<String, Expr>>();
 	}
 	
 	Check_status(){
@@ -83,6 +86,15 @@ public class Check_status {
 			}
 		}
 		return ret;
+	}
+	
+	public Quantifier_Variable search_quantifier(String ident, Check_status cs){
+		for(Pair<String, Expr> quantifier : quantifiers){
+			if(quantifier.fst.equals(ident)){
+				return new Quantifier_Variable(ident, quantifier.snd);
+			}
+		}
+		return null;
 	}
 	
 	//identÇÕxÇ∆Ç©Ç≈åüçı
@@ -138,7 +150,6 @@ public class Check_status {
 		return ret;
 	}
 	
-	
 	public Variable get_variable(String ident) throws Exception{
 		for(Variable v :variables){
 			if(ident.equals(v.field_name)){
@@ -149,39 +160,6 @@ public class Check_status {
 		//return null;
 	}
 	
-	/*
-	public Field get_field(String ident, Field class_object, IntExpr class_object_index, Check_status cs) throws Exception{
-		for(Field v :fields){
-			if(ident.equals(v.field_name)&&( (v.class_object==null && class_object==null) ||v.class_object.equals(class_object))){
-				if(v.class_object_index==null && class_object_index==null){
-					return v;
-				}else if(v.class_object_index!=null && class_object_index!=null){
-				
-					BoolExpr expr;
-					BoolExpr arg_expr = cs.ctx.mkEq(v.class_object_index, class_object_index);
-					if(cs.pathcondition!=null){
-						expr = cs.ctx.mkAnd(cs.pathcondition, cs.ctx.mkNot(arg_expr));
-					}else{
-						expr = cs.ctx.mkNot(arg_expr);
-					}
-
-					cs.solver.push();
-					cs.solver.add(expr);
-					if(cs.solver.check() != Status.SATISFIABLE) {
-						cs.solver.pop();
-						return v;
-					}else{
-						cs.solver.pop();
-					}
-
-				}
-			}
-		}
-		throw new Exception("can't find " + ident + "\n");
-		//return null;
-	}
-	*/
-	
 	public Variable get_called_method_arg(String ident) throws Exception{
 		for(Variable v :called_method_args){
 			if(ident.equals(v.field_name)){
@@ -191,7 +169,6 @@ public class Check_status {
 		throw new Exception("can't find " + ident + "\n");
 		//return null;
 	}
-
 
 	
 	public String new_temp(){
@@ -302,6 +279,8 @@ public class Check_status {
 		cs.refined_class_Field_index = this.refined_class_Field_index;
 		cs.refined_class_Expr = this.refined_class_Expr;
 		cs.in_constructor = this.in_constructor;
+		
+		cs.quantifiers = this.quantifiers;//ì¡Ç…ä÷åWÇÕÇ»Ç¢ÇÕÇ∏
 		
 		return cs;
 	}

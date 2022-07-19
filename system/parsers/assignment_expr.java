@@ -45,7 +45,7 @@ public class assignment_expr implements Parser<String>{
 		Field v = null;
 		if(this.postfix_expr != null){
 			v = this.postfix_expr.check_assign(cs);
-			if(v.is_this_field()){//フィールかどうか？
+			if(v.is_this_field()){//フィールドかどうか？
 				//assignしていいか
 				
 				BoolExpr ex;

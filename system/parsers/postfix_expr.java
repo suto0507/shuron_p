@@ -14,6 +14,7 @@ import system.Field;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
+import system.Quantifier_Variable;
 import system.Source;
 import system.Variable;
 import system.parsers.spec_case_seq.F_Assign;
@@ -63,7 +64,12 @@ public class postfix_expr implements Parser<String>{
 				ex = cs.refined_class_Expr;
 			}
 		}else if(this.primary_expr.ident!=null){
-			if(cs.in_refinement_predicate==true && this.primary_expr.ident.equals(cs.refinement_type_value)){
+			
+			Quantifier_Variable quantifier = cs.search_quantifier(this.primary_expr.ident, cs);
+			if(quantifier != null){//ó âªéqÇ∆ÇµÇƒë©îõÇ≥ÇÍÇƒÇ¢ÇÈÇ©
+				f = quantifier;
+				ex = f.get_Expr(cs);
+			}else if(cs.in_refinement_predicate==true && this.primary_expr.ident.equals(cs.refinement_type_value)){
 				f = cs.refined_Field;
 				ex = cs.refined_Expr;
 				is_refine_value = true;
@@ -145,7 +151,7 @@ public class postfix_expr implements Parser<String>{
 			if(this.primary_suffixs.size() == 0){
 				ex = this.primary_expr.java_literal.check(cs);
 			}else{
-				throw new Exception("literal dont have suffix");
+				throw new Exception("literal don't have suffix");
 				
 			}
 		}else if(this.primary_expr.jml_primary!=null){
@@ -153,18 +159,24 @@ public class postfix_expr implements Parser<String>{
 				if(this.primary_expr.jml_primary.is_result){
 					f = cs.result;
 					ex = f.get_Expr(cs);
-				}else{
+				}else if(this.primary_expr.jml_primary.old_expression!=null){
 					//Ç±ÇÍÇ‡Ç©Ç¡Ç±Ç∆ìØÇ∂óùóRÇ≈åµÇµÇ¢
 					ex = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.old_status);
+				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
+					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
+					if(this.primary_suffixs.size() != 0) throw new Exception("quantifier don't have suffix");
 				}
 			}else{
 				if(this.primary_expr.jml_primary.is_result){
 					f = cs.return_v;
 					ex = cs.return_expr;
 					//return ex;
-				}else{
+				}else if(this.primary_expr.jml_primary.old_expression!=null){
 					//Ç±ÇÍÇ‡Ç©Ç¡Ç±Ç∆ìØÇ∂óùóRÇ≈åµÇµÇ¢
 					ex = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.this_old_status);
+				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
+					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
+					if(this.primary_suffixs.size() != 0) throw new Exception("quantifier don't have suffix");
 				}
 			}
 		}else if(this.primary_expr.new_expr!=null){

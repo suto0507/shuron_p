@@ -13,11 +13,7 @@ public class Parser_status {
 		this.extends_pairs = new ArrayList<Pair<String, String>>();
 	}
 	
-	public Parser_status jml(){
-		Parser_status ps = (Parser_status) this.clone();
-		ps.in_jml = true;
-		return ps;
-	}
+	
 	
 	public Parser_status ensures(){
 		Parser_status ps = (Parser_status) this.clone();

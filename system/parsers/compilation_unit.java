@@ -84,11 +84,12 @@ public class compilation_unit implements Parser<String>{
 								if(override_md.method_specification!=null && override_md.method_specification.spec_case_seq!=null){
 									throw new Exception("need also");
 								}else if(override_md.method_specification!=null && override_md.method_specification.extending_specification!=null){
+									override_md.method_specification.spec_case_seq = new spec_case_seq();
 									override_md.method_specification.spec_case_seq.generic_spec_cases = new ArrayList<generic_spec_case>();
 									for(generic_spec_case gsc : super_md.method_specification.spec_case_seq.generic_spec_cases){//スーパークラスは既にspec_case_seqで確定しているはず
 										override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
 									}
-									for(generic_spec_case gsc : super_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases){
+									for(generic_spec_case gsc : override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases){//このクラスのもともとあったもの
 										override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
 									}
 								}else{//なんも書いてない場合

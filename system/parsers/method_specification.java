@@ -22,6 +22,7 @@ public class method_specification implements Parser<String> {
 			st = scs.parse(s,ps);
 			this.spec_case_seq = scs;
 		}catch (Exception e){
+			s.revert(s_backup);
 			extending_specification es = new extending_specification();
 			st = es.parse(s,ps);
 			this.extending_specification = es;

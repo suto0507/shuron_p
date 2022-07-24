@@ -155,7 +155,7 @@ public class spec_case_seq implements Parser<String>  {
 	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
 		
 		List<Field> fields = new ArrayList<Field>();
-		List<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>> cnst_fields = new ArrayList<Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>>>();
+		List<Pair<BoolExpr, List<Pair<Field, List<List<IntExpr>>>>>> cnst_fields = new ArrayList<Pair<BoolExpr, List<Pair<Field, List<List<IntExpr>>>>>>();
 		List<BoolExpr> all_assign_exprs = new ArrayList<BoolExpr>(); //何でも代入していい事前条件
 		
 		List<F_Assign> f_assigns = new ArrayList<F_Assign>();
@@ -194,32 +194,27 @@ public class spec_case_seq implements Parser<String>  {
 			if(acs != null){
 				//assignable
 				
-				List<Field> assignable_clause_fields = new ArrayList<Field>();
-				List<Pair<Field, List<IntExpr>>> assignable_clause_field_arrays = new ArrayList<Pair<Field, List<IntExpr>>>();
+				List<Pair<Field, List<List<IntExpr>>>> assignable_clause_field_arrays = new ArrayList<Pair<Field, List<List<IntExpr>>>>();
 				
 				for(assignable_clause ac : acs){
 					for(store_ref_expression sre : ac.store_ref_list.store_ref_expressions){
-						Pair<Field, IntExpr> f_i = sre.check(cs);
+						Pair<Field, List<IntExpr>> f_i = sre.check(cs);
 						
-						if(f_i.snd == null){
-							if(!assignable_clause_fields.contains(f_i)){
-								assignable_clause_fields.add(f_i.fst);
-							}
-						}else{
-							boolean add = false;
-							for(Pair<Field, List<IntExpr>> assignable_clause_field_array : assignable_clause_field_arrays){			
-								if(assignable_clause_field_array.fst.equals(f_i.fst)){
-									assignable_clause_field_array.snd.add(f_i.snd);
-									add = true;
-									break;
-								}
-							}
-							if(!add){
-								List<IntExpr> l = new ArrayList<IntExpr>();
-								l.add(f_i.snd);
-								assignable_clause_field_arrays.add(new Pair<Field, List<IntExpr>>(f_i.fst, l));
+						
+						boolean add = false;
+						for(Pair<Field, List<List<IntExpr>>> assignable_clause_field_array : assignable_clause_field_arrays){			
+							if(assignable_clause_field_array.fst.equals(f_i.fst)){
+								assignable_clause_field_array.snd.add(f_i.snd);
+								add = true;
+								break;
 							}
 						}
+						if(!add){
+							List<List<IntExpr>> l = new ArrayList<List<IntExpr>>();
+							l.add(f_i.snd);
+							assignable_clause_field_arrays.add(new Pair<Field, List<List<IntExpr>>>(f_i.fst, l));
+						}
+						
 						
 						if(!fields.contains(f_i.fst)){
 							fields.add(f_i.fst);
@@ -228,7 +223,7 @@ public class spec_case_seq implements Parser<String>  {
 				}
 				
 				
-				cnst_fields.add(new Pair(pre_expr, new Pair(assignable_clause_fields, assignable_clause_field_arrays)));
+				cnst_fields.add(new Pair(pre_expr, assignable_clause_field_arrays));
 				
 			}else{//何でも代入していい事前条件
 				all_assign_exprs.add(pre_expr);
@@ -244,32 +239,16 @@ public class spec_case_seq implements Parser<String>  {
 		
 		
 		for(Field f : fields){
-			BoolExpr has_f = null;
-			BoolExpr has_not_f = null;
 			
-			List<Pair<BoolExpr,List<IntExpr>>> has_f_arrays = new ArrayList<Pair<BoolExpr,List<IntExpr>>>();
+			List<Pair<BoolExpr,List<List<IntExpr>>>> has_f_arrays = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
 			BoolExpr has_not_f_array = null;//そのフィールドの任意の配列への代入を行わない条件
 			
-			for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
-				//フィールドへの代入
-				if(cnst_field.snd.fst.contains(f)){
-					if(has_f == null){
-						has_f = cnst_field.fst;
-					}else{
-						has_f = cs.ctx.mkOr(has_f, cnst_field.fst);
-					}
-				}else{
-					if(has_not_f == null){
-						has_not_f = cnst_field.fst;
-					}else{
-						has_not_f = cs.ctx.mkOr(has_not_f, cnst_field.fst);
-					}
-				}
+			for(Pair<BoolExpr, List<Pair<Field, List<List<IntExpr>>>>> cnst_field : cnst_fields){
 				//配列の要素への代入
 				boolean assign_field = false;
-				for(Pair<Field, List<IntExpr>> field_index: cnst_field.snd.snd){
+				for(Pair<Field, List<List<IntExpr>>> field_index: cnst_field.snd){
 					if(field_index.fst.equals(f)){
-						has_f_arrays.add(new Pair<BoolExpr,List<IntExpr>>(cnst_field.fst, field_index.snd));
+						has_f_arrays.add(new Pair<BoolExpr,List<List<IntExpr>>>(cnst_field.fst, field_index.snd));
 						assign_field = true;
 					}
 				}
@@ -281,15 +260,14 @@ public class spec_case_seq implements Parser<String>  {
 					}
 				}
 			}
-			if(has_f == null)           has_f = cs.ctx.mkBool(false);
-			if(has_not_f == null)       has_not_f = cs.ctx.mkBool(false);
+			
 			if(has_not_f_array == null) has_not_f_array = cs.ctx.mkBool(false);//そのフィールドの任意の配列への代入を行わない条件
 			
-			for(Pair<BoolExpr,List<IntExpr>> field_index: has_f_arrays){
+			for(Pair<BoolExpr,List<List<IntExpr>>> field_index: has_f_arrays){
 				field_index.fst = cs.ctx.mkAnd(field_index.fst, cs.ctx.mkNot(has_not_f_array));
 			}
 			
-			f_assigns.add(new F_Assign(f, cs.ctx.mkAnd(has_f, cs.ctx.mkNot(has_not_f)), has_f_arrays));
+			f_assigns.add(new F_Assign(f, has_f_arrays));
 		}
 		
 		//何でも代入していい条件を作る
@@ -304,7 +282,7 @@ public class spec_case_seq implements Parser<String>  {
 		if(all_assign_expr == null){
 			all_assign_expr = cs.ctx.mkBool(false);
 		}else{//false && hoge をしてもしょうがないので
-			for(Pair<BoolExpr, Pair<List<Field>, List<Pair<Field, List<IntExpr>>>>> cnst_field : cnst_fields){
+			for(Pair<BoolExpr, List<Pair<Field, List<List<IntExpr>>>>> cnst_field : cnst_fields){
 				all_assign_expr = cs.ctx.mkAnd(all_assign_expr, cs.ctx.mkNot(cnst_field.fst));
 			}
 		}
@@ -316,27 +294,43 @@ public class spec_case_seq implements Parser<String>  {
 
 	public class F_Assign{
 		Field field;//代入できるフィールド
-		BoolExpr cnst;//フィールドに代入する事前条件
-		List<Pair<BoolExpr,List<IntExpr>>> cnst_array;//配列の要素に代入する条件とそのインデックス
+		List<Pair<BoolExpr,List<List<IntExpr>>>> cnst_array;//配列の要素に代入する条件とそのインデックス
 		
-		F_Assign(Field f, BoolExpr b, List<Pair<BoolExpr,List<IntExpr>>> b_is){
+		F_Assign(Field f, List<Pair<BoolExpr,List<List<IntExpr>>>> b_is){
 			field = f;
-			cnst = b;
 			cnst_array = b_is;
 		}
 		
-		public BoolExpr assign_index_expr(IntExpr index_expr, Check_status cs){
+		public BoolExpr assign_index_expr(List<IntExpr> index_expr, Check_status cs){
 			BoolExpr equal_cnsts = cs.ctx.mkBool(false);
 			BoolExpr not_equal_cnsts = cs.ctx.mkBool(true);
-			for(Pair<BoolExpr,List<IntExpr>> assinable_cnst_index :cnst_array){
-				BoolExpr equal = cs.ctx.mkBool(false);
-				BoolExpr not_equal = cs.ctx.mkBool(true);
-				for(IntExpr index : assinable_cnst_index.snd){
-					equal = cs.ctx.mkOr(equal, cs.ctx.mkEq(index_expr, index));
-					not_equal = cs.ctx.mkAnd(not_equal, cs.ctx.mkNot(cs.ctx.mkEq(index_expr, index)));
+			for(Pair<BoolExpr,List<List<IntExpr>>> assinable_cnst_index :cnst_array){
+				if(index_expr.size() == 0){
+					for(List<IntExpr> index : assinable_cnst_index.snd){
+						if(index.size()==0){//配列へのインデックスの参照がない場合
+							equal_cnsts = cs.ctx.mkOr(assinable_cnst_index.fst);
+							not_equal_cnsts = cs.ctx.mkAnd(cs.ctx.mkNot(assinable_cnst_index.fst));
+						}
+					}
+				}else{
+					BoolExpr equal = cs.ctx.mkBool(false);
+					for(List<IntExpr> index : assinable_cnst_index.snd){
+						if(index.size()>0 && index.size() == index_expr.size()){//同じ次元への代入だけ考える
+							BoolExpr index_equal = null;
+							for(int i = 0; i<index.size(); i++){
+								if(index_equal == null){
+									index_equal = cs.ctx.mkEq(index_expr.get(i), index.get(i));
+								}else{
+									index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), index.get(i)));
+								}
+							}
+							equal = cs.ctx.mkOr(equal, index_equal);
+						}
+					}
+					BoolExpr not_equal = cs.ctx.mkNot(equal);
+					equal_cnsts = cs.ctx.mkOr(equal_cnsts, cs.ctx.mkAnd(equal, assinable_cnst_index.fst));
+					not_equal_cnsts = cs.ctx.mkAnd(not_equal_cnsts, cs.ctx.mkImplies(not_equal, cs.ctx.mkNot(assinable_cnst_index.fst)));
 				}
-				equal_cnsts = cs.ctx.mkOr(equal_cnsts, cs.ctx.mkAnd(equal, assinable_cnst_index.fst));
-				not_equal_cnsts = cs.ctx.mkAnd(not_equal_cnsts, cs.ctx.mkImplies(not_equal, cs.ctx.mkNot(assinable_cnst_index.fst)));
 			}
 			
 			return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);

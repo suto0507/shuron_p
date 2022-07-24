@@ -25,13 +25,11 @@ public class Check_status {
 	public String refinement_type_value;
 	//篩型を持つフィールドを持つクラス
 	public Field refined_class_Field;
-	public IntExpr refined_class_Field_index;
 	public Expr refined_class_Expr;
 	
 	public boolean in_method_call;
 	public Expr call_expr;
 	public Field call_field;
-	public IntExpr call_field_index;
 	public List<Variable> called_method_args;
 	public Check_status old_status;
 	public Variable result;
@@ -98,7 +96,7 @@ public class Check_status {
 	}
 	
 	//identはxとかで検索
-	public Field search_field(String ident, Field class_object, IntExpr class_object_index, Check_status cs) throws Exception{
+	public Field search_field(String ident, Field class_object, Check_status cs) throws Exception{
 		
 		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident);
 		

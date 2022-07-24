@@ -37,16 +37,16 @@ public class store_ref_expression implements Parser<String>{
 		return st;
 	}
 	
-	public Pair<Field, IntExpr> check(Check_status cs) throws Exception{
+	public Pair<Field, List<IntExpr>> check(Check_status cs) throws Exception{
 		Expr ex = null;
 		Field f = null;
-		IntExpr index = null;
+		List<IntExpr> indexs = new ArrayList<IntExpr>();
 		if(this.store_ref_name_suffix.size() == 0){
 			if(this.store_ref_name.is_this){
 				throw new Exception("Cannot be assigned to \"this\"");
 			}else if(this.store_ref_name.ident!=null){
 				if(cs.in_method_call){//ä÷êîåƒÇ—èoÇµ
-					Field searched_field = cs.search_field(this.store_ref_name.ident, cs.call_field, cs.call_field_index, cs);
+					Field searched_field = cs.search_field(this.store_ref_name.ident, cs.call_field, cs);
 					if(cs.search_called_method_arg(this.store_ref_name.ident)){
 						f = cs.get_called_method_arg(this.store_ref_name.ident);
 						ex = f.get_Expr(cs);
@@ -59,7 +59,7 @@ public class store_ref_expression implements Parser<String>{
 						throw new Exception(cs.call_field.type + " don't have " + this.store_ref_name.ident);
 					}
 				}else{
-					Field searched_field = cs.search_field(this.store_ref_name.ident, cs.this_field, null, cs);
+					Field searched_field = cs.search_field(this.store_ref_name.ident, null, cs);
 					if(cs.search_variable(this.store_ref_name.ident)){
 						f = cs.get_variable(this.store_ref_name.ident);
 						ex = f.get_Expr(cs);
@@ -85,7 +85,7 @@ public class store_ref_expression implements Parser<String>{
 			}else if(this.store_ref_name.ident!=null){
 				
 				if(cs.in_method_call){//ä÷êîåƒÇ—èoÇµ
-					Field searched_field = cs.search_field(store_ref_name.ident, cs.call_field, cs.call_field_index, cs);
+					Field searched_field = cs.search_field(store_ref_name.ident, cs.call_field, cs);
 					if(cs.search_called_method_arg(store_ref_name.ident)){//Ç±ÇÍÇ¢ÇÁÇ»Ç¢ÅH
 						f = cs.get_called_method_arg(store_ref_name.ident);
 						ex = f.get_Expr(cs);
@@ -96,7 +96,7 @@ public class store_ref_expression implements Parser<String>{
 						throw new Exception(cs.this_field.type + " don't have " + this.store_ref_name.ident);
 					}
 				}else{
-					Field searched_field = cs.search_field(store_ref_name.ident, cs.this_field, null, cs);
+					Field searched_field = cs.search_field(store_ref_name.ident, cs.this_field, cs);
 					if(cs.search_variable(store_ref_name.ident)){
 						f = cs.get_variable(store_ref_name.ident);
 						ex = f.get_Expr(cs);
@@ -110,12 +110,11 @@ public class store_ref_expression implements Parser<String>{
 				
 			}
 			//suffixÇ…Ç¬Ç¢Çƒ
-			IntExpr f_index = null;
 			for(int i = 0; i < this.store_ref_name_suffix.size(); i++){
 				store_ref_name_suffix ps = this.store_ref_name_suffix.get(i);
 				if(ps.is_field){
 					if(ps.ident!=null){
-						Field searched_field = cs.search_field(ps.ident, f, f_index, cs);
+						Field searched_field = cs.search_field(ps.ident, f, cs);
 						if(searched_field != null){
 							f = searched_field;
 							f.class_object_expr = ex;
@@ -124,21 +123,18 @@ public class store_ref_expression implements Parser<String>{
 							throw new Exception(ps.ident + " dont exist");
 						}
 					}
-					f_index = null;
 					
 				}else if(ps.is_index){
-					f_index = (IntExpr) ps.spec_array_ref_expr.spec_expression.check(cs);
-					ex = cs.ctx.mkSelect((ArrayExpr) ex, f_index);
-					if(i == this.store_ref_name_suffix.size()-1){
-						index = f_index;
-					}
+					IntExpr index = (IntExpr) ps.spec_array_ref_expr.spec_expression.check(cs);
+					ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
+					indexs.add(index);
 				}
 			}
 			
 
 		}
 		
-		return new Pair<Field, IntExpr>(f, index);
+		return new Pair<Field, List<IntExpr>>(f, indexs);
 	}
 
 }

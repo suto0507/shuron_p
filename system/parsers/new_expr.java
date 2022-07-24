@@ -77,7 +77,6 @@ public class new_expr implements Parser<String>{
 
 			cs.call_expr = result.get_Expr(cs);
 			cs.call_field = result;
-			cs.call_field_index = null;
 			
 			for(int j = 0; j < md.formals.param_declarations.size(); j++){
 				param_declaration pd = md.formals.param_declarations.get(j);
@@ -133,53 +132,65 @@ public class new_expr implements Parser<String>{
 				
 				Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 				for(F_Assign fa : assign_cnsts.fst){
-					BoolExpr assign_expr;
-					//フィールドへの代入
-					if(fa.cnst!=null){
-						assign_expr = cs.ctx.mkImplies(fa.cnst, fa.field.assinable_cnst);
+					BoolExpr assign_expr = null;
+					//配列の要素に代入できる制約
+					if(fa.cnst_array.size()>0){
+						for(int i = 1; i <= fa.field.dims; i++){//各次元に関して
+							List<IntExpr> index_expr = new ArrayList<IntExpr>();
+							for(int j = 0; j < i; j++){
+								index_expr.add(cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num));
+							}
+							BoolExpr call_assign_expr = fa.assign_index_expr(index_expr, cs);
+							BoolExpr field_assign_expr = fa.field.assign_index_expr(index_expr, cs);
+							if(assign_expr == null){
+								assign_expr = cs.ctx.mkImplies(call_assign_expr, field_assign_expr);
+							}else{
+								assign_expr = cs.ctx.mkAnd(assign_expr, cs.ctx.mkImplies(call_assign_expr, field_assign_expr));
+							}
+						}
 					}else{
 						assign_expr = cs.ctx.mkBool(true);
 					}
-					//配列の要素に代入
-					if(fa.cnst_array.size()>0){
-						IntExpr index_expr = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num);
-						BoolExpr call_assign_expr = fa.assign_index_expr(index_expr, cs);
-						BoolExpr field_assign_expr = fa.field.assign_index_expr(index_expr, cs);
-						assign_expr = cs.ctx.mkAnd(assign_expr, cs.ctx.mkImplies(call_assign_expr, field_assign_expr));
-					}else{
-						assign_expr = cs.ctx.mkAnd(assign_expr, cs.ctx.mkBool(true));
-					}
 					//何でも代入していい
 					assign_expr = cs.ctx.mkOr(assign_expr, cs.assinable_cnst_all);
-					
 					
 					System.out.println("check assign");
 					cs.assert_constraint(assign_expr);
 					
 					//実際に代入する制約を追加する
 					System.out.println("assign " + fa.field.field_name);
-					//フィールドへの代入
-					if(fa.cnst!=null){
-						Expr tmp_Expr = fa.field.get_Expr_tmp(cs);
-						BoolExpr expr = cs.ctx.mkEq(fa.field.get_full_Expr_assign(cs), 
-								cs.ctx.mkITE(cs.ctx.mkOr(fa.cnst, cs.assinable_cnst_all), tmp_Expr, fa.field.get_full_Expr(cs)));
-						cs.add_constraint(expr);
-						fa.field.temp_num++;
-						
-					}
-					//配列の要素に代入
-					if(fa.cnst_array.size()>0){
-						Expr tmp_Expr = fa.field.get_Expr_tmp(cs);
-						
-						IntExpr index_expr = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num);
-						Expr old_element = cs.ctx.mkSelect((ArrayExpr) fa.field.get_full_Expr(cs), index_expr);
-						Expr new_element = cs.ctx.mkSelect((ArrayExpr) fa.field.get_full_Expr_assign(cs), index_expr);
-						BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
-						cs.add_constraint(expr);
-						fa.field.temp_num++;
-						
-					}
 					
+					
+					//配列の要素に代入
+					//そのフィールドにたどり着くまでに配列アクセスをしていた場合も
+					if(fa.cnst_array.size()>0){
+						for(int i = 0; i <= fa.field.dims; i++){//各次元に関して
+							ArrayList<IntExpr> index_expr = new ArrayList<IntExpr>();
+							for(int j = 0; j < fa.field.class_object_dims_sum(); j++){//そのフィールドまでの配列のindex
+								index_expr.add(cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num()));
+							}
+							Expr old_element = fa.field.get_full_Expr((ArrayList)index_expr.clone(), cs);
+							Expr new_element = fa.field.get_full_Expr_assign((ArrayList)index_expr.clone(), cs);
+							for(int j = 0; j < i; j++){
+								IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
+								index_expr.add(index);
+								old_element = cs.ctx.mkSelect((ArrayExpr) old_element, index);
+								new_element = cs.ctx.mkSelect((ArrayExpr) new_element, index);
+							}
+							
+							
+							
+							Expr[] index_exprs_array = new Expr[index_expr.size()];
+							for(int j = 0; j < index_expr.size(); j++){
+								index_exprs_array[i] = index_expr.get(j);
+							}
+							
+							BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
+							cs.add_constraint(cs.ctx.mkForall(index_exprs_array, expr, 1, null, null, null, null));
+							fa.field.temp_num++;
+						}
+						
+					}
 					
 				}
 			}else{

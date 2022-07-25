@@ -108,27 +108,7 @@ public class Check_status {
 		
 		for(Field v :fields){
 			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_object.equals(class_object)){
-				if(v.class_object_index==null && class_object_index==null){
-					return v;
-				}else if(v.class_object_index!=null && class_object_index!=null){//‚Ç‚¿‚ç‚©‚ªnull‚Íˆê’v‚µ‚È‚¢‚à‚Ì
-				
-					BoolExpr expr;
-					BoolExpr arg_expr = cs.ctx.mkEq(v.class_object_index, class_object_index);
-					if(cs.pathcondition!=null){
-						expr = cs.ctx.mkAnd(cs.pathcondition, cs.ctx.mkNot(arg_expr));
-					}else{
-						expr = cs.ctx.mkNot(arg_expr);
-					}
-
-					cs.solver.push();
-					cs.solver.add(expr);
-					if(cs.solver.check() != Status.SATISFIABLE) {
-						cs.solver.pop();
-						return v;
-					}else{
-						cs.solver.pop();
-					}
-				}
+				return v;
 			}
 		}
 		

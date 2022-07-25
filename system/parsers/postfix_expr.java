@@ -107,7 +107,7 @@ public class postfix_expr implements Parser<String>{
 					}
 					
 				}else{
-					Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, null ,cs);
+					Field searched_field = cs.search_field(primary_expr.ident, cs.this_field ,cs);
 					if(cs.search_variable(primary_expr.ident)){
 						f = cs.get_variable(primary_expr.ident);
 						ex = f.get_Expr(cs);
@@ -187,7 +187,7 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false){//篩型
-			add_refinement_constraint(cs, f, ex, cs.in_method_call, cs.call_expr, cs.call_field, cs.call_field_index);
+			add_refinement_constraint(cs, f, ex, cs.in_method_call, cs.call_expr, cs.call_field);
 		}
 		
 		
@@ -204,7 +204,7 @@ public class postfix_expr implements Parser<String>{
 					Expr pre_ex = ex;
 					IntExpr pre_f_index = f_index;
 					
-					Field searched_field = cs.search_field(ps.ident, f, f_index, cs);
+					Field searched_field = cs.search_field(ps.ident, f, cs);
 					if(searched_field != null){
 						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
@@ -213,7 +213,7 @@ public class postfix_expr implements Parser<String>{
 					}
 					
 					if(f.refinement_type_clause!=null){//篩型
-						add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f, pre_f_index);
+						add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f);
 					}
 					
 					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
@@ -246,7 +246,7 @@ public class postfix_expr implements Parser<String>{
 				
 			}else if(ps.is_method){
 				//関数の呼び出し
-				f = method(cs, ident,f, ex, ps, f_index);
+				f = method(cs, ident,f, ex, ps);
 				ex = f.get_Expr(cs);
 				cs.in_method_call = false;
 				ident = null;
@@ -293,7 +293,7 @@ public class postfix_expr implements Parser<String>{
 				ex = f.get_Expr(cs);
 			}else if(this.primary_expr.ident!=null){
 
-				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, null, cs);
+				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field, cs);
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
 					f.class_object_expr = cs.this_field.get_Expr(cs);
@@ -328,7 +328,7 @@ public class postfix_expr implements Parser<String>{
 					if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
 						ident = ps.ident;
 					}else{
-						Field searched_field = cs.search_field(ps.ident, f, f_index, cs);
+						Field searched_field = cs.search_field(ps.ident, f, cs);
 						if(searched_field != null){
 							f = searched_field;
 							f.class_object_expr = ex;
@@ -342,7 +342,7 @@ public class postfix_expr implements Parser<String>{
 					indexs = new ArrayList<IntExpr>();
 					
 				}else if(ps.is_index){
-					InrExpr index = (IntExpr)ps.expression.check(cs);
+					IntExpr index = (IntExpr)ps.expression.check(cs);
 					
 					BoolExpr index_bound = cs.ctx.mkGe(f_index, cs.ctx.mkInt(0));
 					if(f.length!=null){
@@ -351,17 +351,16 @@ public class postfix_expr implements Parser<String>{
 					System.out.println("check index out of bounds");
 					cs.assert_constraint(index_bound);
 					
-					f.index = f_index;
-					if(i != this.primary_suffixs.size()-1){
-						ex = cs.ctx.mkSelect((ArrayExpr) ex, f_index);
-					}
+					f.index.add(index);
+					
+					ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
 					ident = null;
 				}else if(ps.is_method){
 					//関数の呼び出し
 					if(i == this.primary_suffixs.size()-1){
 						throw new Exception("The left-hand side of an assignment must be a variable");
 					}
-					f = method(cs, ident, f, ex, ps, f_index);
+					f = method(cs, ident, f, ex, ps);
 					ex = f.get_Expr(cs);
 					cs.in_method_call = false;
 					ident = null;
@@ -372,7 +371,7 @@ public class postfix_expr implements Parser<String>{
 		}
 	}
 
-	public Field method(Check_status cs, String ident, Field f, Expr ex, primary_suffix ps , IntExpr f_index)throws Exception{
+	public Field method(Check_status cs, String ident, Field f, Expr ex, primary_suffix ps)throws Exception{
 		
 		//コンストラクタでの自インスタンスの関数呼び出し
 		if(cs.in_constructor && f.equals(cs.this_field, cs)){
@@ -405,7 +404,6 @@ public class postfix_expr implements Parser<String>{
 		
 		cs.call_expr = ex;
 		cs.call_field = f;
-		cs.call_field_index = f_index;
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
@@ -560,7 +558,7 @@ public class postfix_expr implements Parser<String>{
 		return result;
 	}
 
-	void add_refinement_constraint(Check_status cs,Field f, Expr ex, boolean refined_class_condition, Expr class_Expr, Field class_Field, IntExpr class_Field_index) throws Exception{
+	void add_refinement_constraint(Check_status cs,Field f, Expr ex, boolean refined_class_condition, Expr class_Expr, Field class_Field) throws Exception{
 	    System.out.println(f.field_name + " has refinement type");
 
 	    //バックアップ

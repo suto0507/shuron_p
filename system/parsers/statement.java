@@ -209,18 +209,18 @@ import system.Variable;
 				
 				//cs.fieldsに含まれないものがあれば追加する
 				for(Field f : cs_then.fields){
-					cs.search_field(f.field_name, f.class_object, f.class_object_index, cs);
+					cs.search_field(f.field_name, f.class_object, cs);
 				}
 				if(cs_else != null){
 					for(Field f : cs_else.fields){
-						cs.search_field(f.field_name, f.class_object, f.class_object_index, cs);
+						cs.search_field(f.field_name, f.class_object, cs);
 					}
 				}
 				
 				
 				for(Field f : cs.fields){
 					if(cs_else==null){
-						Field f_then = cs_then.search_field(f.field_name, f.class_object, f.class_object_index, cs);
+						Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
 						if(f.temp_num!=f_then.temp_num){
 							Expr e1 = f.get_Expr(cs);
 							Expr e2 = f_then.get_Expr(cs_then);
@@ -234,8 +234,8 @@ import system.Variable;
 						}
 					}else{
 						System.out.println(f.class_object);
-						Field f_then = cs_then.search_field(f.field_name, f.class_object, f.class_object_index, cs);
-						Field f_else = cs_else.search_field(f.field_name, f.class_object, f.class_object_index, cs);
+						Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
+						Field f_else = cs_else.search_field(f.field_name, f.class_object, cs);
 						if(f.temp_num!=f_then.temp_num || f.temp_num!=f_else.temp_num){
 							Expr e1 = f_else.get_Expr(cs);
 							Expr e2 = f_then.get_Expr(cs_then);
@@ -338,7 +338,7 @@ import system.Variable;
 					}
 				}
 				for(Field f : cs.fields){
-					Field f_loop = cs_loop.search_field(f.field_name,f.class_object, f.class_object_index, cs);
+					Field f_loop = cs_loop.search_field(f.field_name,f.class_object, cs);
 					if(f.temp_num!=f_loop.temp_num-1){
 						if(cs.in_constructor && f.modifiers!=null && f.modifiers.is_final){//コンストラクタのfinalの初期化はloopのなかではできない
 							if(f.final_initialized==false&&f_loop.final_initialized==true){

@@ -133,7 +133,12 @@ public class Check_status {
 		}
 		
 		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, class_object_index, vd.class_type_name);
-		f.assinable_cnst = cs.ctx.mkBool(false);//新しく追加したフィールドはassinable節で触れられていない
+		
+		//新しく追加したフィールドはassinable節で触れられていない
+		List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
+		indexs.add(new ArrayList<IntExpr>());
+		f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkBool(false), indexs));
+		
 		this.fields.add(f);
 		return f;
 	}

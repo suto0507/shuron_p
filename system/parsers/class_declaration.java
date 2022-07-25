@@ -49,7 +49,6 @@ public class class_declaration implements Parser<String>{
 		//‰Šú‰»
 		csc.refined_class_Expr = this_field.get_Expr(csc);
 		csc.refined_class_Field = this_field;
-		csc.refined_class_Field_index = null;
 		
 		this.class_block.check(csc, summery);
 	}

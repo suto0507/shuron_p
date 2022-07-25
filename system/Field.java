@@ -21,7 +21,7 @@ public class Field {
 	public Field class_object;
 	public Expr class_object_expr;
 	
-	public BoolExpr assinable_cnst;//フィールドに代入できる条件
+	
 	public List<Pair<BoolExpr,List<List<IntExpr>>>> assinable_cnst_indexs;//配列の要素に代入できる条件
 	
 	public List<IntExpr> index; //代入するときの右辺値のindexを表してっるっぽい？メソッドには使えないので要確認
@@ -59,7 +59,6 @@ public class Field {
 		Field ret = new Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name);
 		ret.temp_num = this.temp_num;
 		ret.class_object_expr = this.class_object_expr;
-		ret.assinable_cnst = this.assinable_cnst;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		ret.index = this.index;
 		ret.length = this.length;
@@ -225,4 +224,6 @@ public class Field {
 		
 		return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);
 	}
+	
+
 }

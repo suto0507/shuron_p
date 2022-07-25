@@ -166,7 +166,6 @@ public class method_decl implements Parser<String>{
 				Pair<List<F_Assign>, BoolExpr> assign_cnsts = this.method_specification.assignables(cs);
 				//各フィールドの代入条件を各フィールドに持たせる
 				for(F_Assign fa : assign_cnsts.fst){
-					fa.field.assinable_cnst = fa.cnst;
 					fa.field.assinable_cnst_indexs = fa.cnst_array;
 				}
 				//どのフィールドにも代入できる条件
@@ -364,7 +363,6 @@ public class method_decl implements Parser<String>{
 		//初期化
 		cs.refined_class_Expr = this_field.get_Expr(cs);
 		cs.refined_class_Field = this_field;
-		cs.refined_class_Field_index = null;
 		
 		//各引数のチェック
 		for(int i = 0; i < this.formals.param_declarations.size(); i++){

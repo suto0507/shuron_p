@@ -7,6 +7,7 @@ import system.parsers.refinement_type_clause;
 import system.parsers.type;
 import system.parsers.modifiers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Variable extends Field{
@@ -56,21 +57,47 @@ public class Variable extends Field{
 			//クラス
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("Ref"));
-		}else if(this.type.equals("int")&&this.dims==1){ //配列
+		}else if(this.type.equals("int")&&this.dims>1){ //配列
 			String ret = field_name + "_temp_" + this.id + "_" + this.temp_num;
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkIntSort());
-		}else if(this.type.equals("boolean")&&this.dims==1){
+			Sort arraysort = cs.ctx.mkIntSort();
+			for(int i = 0; i < this.dims-1; i++){
+				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
+			}
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
+		}else if(this.type.equals("boolean")&&this.dims>1){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkBoolSort());
-		}else if(this.dims==1){
+			Sort arraysort = cs.ctx.mkBoolSort();
+			for(int i = 0; i < this.dims-1; i++){
+				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
+			}
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
+		}else if(this.dims>1){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkUninterpretedSort("Ref"));
+			Sort arraysort = cs.ctx.mkUninterpretedSort("Ref");
+			for(int i = 0; i < this.dims-1; i++){
+				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
+			}
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
 		}
 		throw new Exception("unexpect variable");
 	}
 	
-	public Expr get_full_Expr(Check_status cs) throws Exception{
-		return this.get_Expr(cs);
+	public Expr get_full_Expr(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
+		Expr ex = this.get_Expr(cs);
+		for(int i=0; i<this.dims&&indexs.size()>0; i++){
+			ex = cs.ctx.mkSelect((ArrayExpr) ex, indexs.get(0));
+			indexs.remove(0);
+		}
+		return ex;
+	}
+	
+	public Expr get_full_Expr_assign(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
+		Expr ex = this.get_Expr_assign(cs);
+		for(int i=0; i<this.dims&&indexs.size()>0; i++){
+			ex = cs.ctx.mkSelect((ArrayExpr) ex, indexs.get(0));
+			indexs.remove(0);
+		}
+		return ex;
 	}
 	
 	@Override

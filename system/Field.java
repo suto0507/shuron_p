@@ -24,10 +24,9 @@ public class Field {
 	
 	public List<Pair<BoolExpr,List<List<IntExpr>>>> assinable_cnst_indexs;//配列の要素に代入できる条件
 	
-	public List<IntExpr> index; //代入するときの右辺値のindexを表してっるっぽい？メソッドには使えないので要確認
+	public ArrayList<IntExpr> index; //代入するときの右辺値のindexを表してっるっぽい？メソッドには使えないので要確認
 	
-	//配列のlength
-	public List<Pair<List<IntExpr>, IntExpr>> length;
+	
 	
 	//コンストラクタのfinalの初期化状態
 	public boolean final_initialized;
@@ -61,7 +60,7 @@ public class Field {
 		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		ret.index = this.index;
-		ret.length = this.length;
+		
 		ret.final_initialized = final_initialized;
 		return ret;
 	}
@@ -81,15 +80,27 @@ public class Field {
 			//クラス
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkUninterpretedSort("Ref"));
-		}else if(this.type.equals("int")&&this.dims==1){ //配列
+		}else if(this.type.equals("int")&&this.dims>0){ //配列
 			String ret = field_name + "_temp_" + this.id + "_" + this.temp_num;
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkIntSort()));
-		}else if(this.type.equals("boolean")&&this.dims==1){
+			Sort arraysort = cs.ctx.mkIntSort();
+			for(int i = 0; i < this.dims; i++){
+				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
+			}
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
+		}else if(this.type.equals("boolean")&&this.dims>1){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkBoolSort()));
-		}else if(this.dims==1){
+			Sort arraysort = cs.ctx.mkBoolSort();
+			for(int i = 0; i < this.dims; i++){
+				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
+			}
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
+		}else if(this.dims>1){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkUninterpretedSort("Ref")));
+			Sort arraysort = cs.ctx.mkUninterpretedSort("Ref");
+			for(int i = 0; i < this.dims; i++){
+				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
+			}
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
 		}
 		throw new Exception("unexpect variable");
 	}
@@ -104,7 +115,7 @@ public class Field {
 		return ex;
 	}
 	
-	//メソッド呼び出しの時に使う。indexsは、a[x].array[2]だったら{x,2}になるようなもの
+	//indexsは、a[x].array[2]だったら{x,2}になるようなもの
 	//indexsは変更されるので、必要であればcloneしたものを渡す
 	public Expr get_full_Expr(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
 		Expr ex = this.get_Expr(cs);

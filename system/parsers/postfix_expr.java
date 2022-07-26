@@ -192,7 +192,7 @@ public class postfix_expr implements Parser<String>{
 		
 		
 		//suffixについて
-		IntExpr f_index = null;
+		List<IntExpr> indexs = new ArrayList<IntExpr>();
 		
 		for(int i = 0; i < this.primary_suffixs.size(); i++){
 			primary_suffix ps = this.primary_suffixs.get(i);
@@ -202,7 +202,6 @@ public class postfix_expr implements Parser<String>{
 				}else{
 					Field pre_f = f;
 					Expr pre_ex = ex;
-					IntExpr pre_f_index = f_index;
 					
 					Field searched_field = cs.search_field(ps.ident, f, cs);
 					if(searched_field != null){
@@ -235,10 +234,30 @@ public class postfix_expr implements Parser<String>{
 					}
 				}
 				
-				f_index = null;
 			}else if(ps.is_index){
-				f_index = (IntExpr) ps.expression.check(cs);
-				ex = cs.ctx.mkSelect((ArrayExpr) ex, f_index);
+				IntExpr index =  (IntExpr) ps.expression.check(cs);
+				
+				//配列のbound check
+				int array_dim = f.dims_sum() - indexs.size();
+				String array_type;
+				if(f.type.equals("int")){
+					array_type = "int";
+				}else if(f.type.equals("boolean")){
+					array_type = "boolean";
+				}else{
+					array_type = "ref";
+				}
+				IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
+				
+				BoolExpr index_bound = cs.ctx.mkGe(index, cs.ctx.mkInt(0));
+				
+				index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, index));
+				
+				System.out.println("check index out of bounds");
+				cs.assert_constraint(index_bound);
+				
+				
+				ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
 				ident = null;
 				if(cs.in_refinement_predicate==true){//篩型の中では配列は使えない
 					throw new Exception("can not use array in refinement type");
@@ -250,7 +269,6 @@ public class postfix_expr implements Parser<String>{
 				ex = f.get_Expr(cs);
 				cs.in_method_call = false;
 				ident = null;
-				f_index = null;
 			}
 		}
 
@@ -321,7 +339,7 @@ public class postfix_expr implements Parser<String>{
 				return null;
 			}
 			//suffixについて
-			List<IntExpr> indexs = new ArrayList<IntExpr>();
+			ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 			for(int i = 0; i < this.primary_suffixs.size(); i++){
 				primary_suffix ps = this.primary_suffixs.get(i);
 				if(ps.is_field){
@@ -344,14 +362,30 @@ public class postfix_expr implements Parser<String>{
 				}else if(ps.is_index){
 					IntExpr index = (IntExpr)ps.expression.check(cs);
 					
-					BoolExpr index_bound = cs.ctx.mkGe(f_index, cs.ctx.mkInt(0));
-					if(f.length!=null){
-						index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(f.length, f_index));
+					//配列のbound check
+					int array_dim = f.dims_sum() - indexs.size();
+					String array_type;
+					if(f.type.equals("int")){
+						array_type = "int";
+					}else if(f.type.equals("boolean")){
+						array_type = "boolean";
+					}else{
+						array_type = "ref";
 					}
+					IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
+					
+					BoolExpr index_bound = cs.ctx.mkGe(index, cs.ctx.mkInt(0));
+					
+					index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, index));
+					
 					System.out.println("check index out of bounds");
 					cs.assert_constraint(index_bound);
 					
-					f.index.add(index);
+					
+					
+					
+					indexs.add(index);
+					f.index = indexs;
 					
 					ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
 					ident = null;
@@ -371,6 +405,8 @@ public class postfix_expr implements Parser<String>{
 		}
 	}
 
+	
+	
 	public Field method(Check_status cs, String ident, Field f, Expr ex, primary_suffix ps)throws Exception{
 		
 		//コンストラクタでの自インスタンスの関数呼び出し

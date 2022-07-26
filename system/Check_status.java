@@ -112,7 +112,7 @@ public class Check_status {
 			}
 		}
 		
-		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, class_object_index, vd.class_type_name);
+		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name);
 		
 		//新しく追加したフィールドはassinable節で触れられていない
 		List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
@@ -242,7 +242,6 @@ public class Check_status {
 		cs.result = this.result;
 		cs.call_expr = this.call_expr;
 		cs.call_field = this.call_field;
-		cs.call_field_index = this.call_field_index;
 		
 		cs.return_v = this.return_v;
 		cs.return_expr = this.return_expr;
@@ -259,7 +258,6 @@ public class Check_status {
 		cs.refinement_deep_limmit = this.refinement_deep_limmit;
 		
 		cs.refined_class_Field = this.refined_class_Field;
-		cs.refined_class_Field_index = this.refined_class_Field_index;
 		cs.refined_class_Expr = this.refined_class_Expr;
 		cs.in_constructor = this.in_constructor;
 		

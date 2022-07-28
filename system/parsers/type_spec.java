@@ -14,8 +14,9 @@ public class type_spec implements Parser<String>{
 		st = st + type.parse(s, ps);
 		Source s_backup = s.clone();
 		try{
-			dims = new dims().parse(s, ps);
-			st = st + "[]";
+			dims d = new dims();
+			st = st + d.parse(s, ps);
+			dims = d.dims;
 		}catch (Exception e){
 			s.revert(s_backup);
 		}	

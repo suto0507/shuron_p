@@ -18,8 +18,9 @@ public class type_or_refinement_type {
 			this.type = t;
 			Source s_backup2 = s.clone();
 			try{
-				dims = new dims().parse(s, ps);
-				st = st + "[]";
+				dims d = new dims();
+				st = st + d.parse(s, ps);
+				dims = d.dims;
 			}catch (Exception e2){
 				s.revert(s_backup2);
 			}

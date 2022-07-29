@@ -7,7 +7,7 @@ import system.Source;
 public class new_suffix implements Parser<String>{
 	boolean is_index,is_constructor;
 	expression_list expression_list;
-	expression expression;
+	array_decl array_decl;
 	new_suffix(){
 		this.is_index = false;
 		this.is_constructor = false;
@@ -17,13 +17,8 @@ public class new_suffix implements Parser<String>{
 		Source s_backup = s.clone();
 
 		try{
-			st = new string("[").parse(s, ps);
-			st = st + new spaces().parse(s, ps);
-			expression ex = new expression();
-			st = st + ex.parse(s, ps);
-			st = st + new spaces().parse(s, ps);
-			st = st + new string("]").parse(s, ps);
-			this.expression = ex;
+			array_decl array_decl = new array_decl();
+			this.array_decl = array_decl;
 			this.is_index = true;
 		}catch (Exception e2){
 			s.revert(s_backup);

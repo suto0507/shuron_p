@@ -48,26 +48,6 @@ public class local_declaration implements Parser<String>{
 				cs.get_variable(this.variable_decls.ident).temp_num++;
 				
 				
-				//îzóÒÇÃlengthÇ…ä÷Ç∑ÇÈêßñÒÇí«â¡
-				int array_dim = v.dims;
-				String array_type;
-				if(v.type.equals("int")){
-					array_type = "int";
-				}else if(v.type.equals("boolean")){
-					array_type = "boolean";
-				}else{
-					array_type = "ref";
-				}
-				for(Pair<ArrayList<IntExpr>,IntExpr> index_length : cs.right_side_status.length ){
-					Expr ex = v.get_full_Expr((ArrayList)index_length.fst.clone(), cs);
-					IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + (array_dim - index_length.fst.size()) + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
-					
-					BoolExpr length_cnst = cs.ctx.mkEq(length, index_length.snd);
-					cs.assert_constraint(length_cnst);
-				}
-				cs.right_side_status.reflesh();
-				
-				
 			}
 			
 			if(v.refinement_type_clause!=null){

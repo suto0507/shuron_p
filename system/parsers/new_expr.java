@@ -37,14 +37,63 @@ public class new_expr implements Parser<String>{
 	}
 	
 	public Variable check(Check_status cs) throws Exception{
-		if(this.new_suffix.expression!=null){
-			IntExpr length = (IntExpr) this.new_suffix.expression.check(cs);
+		if(this.new_suffix.is_index){
 			Variable ret = null;
-			cs.right_side_status.length = length;
-			
-			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, 1, null, new modifiers(), cs.this_field);
-
+			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, this.new_suffix.array_decl.dims, null, new modifiers(), cs.this_field);
 			ret.temp_num++;
+			
+			
+			
+			List<IntExpr> lengths = this.new_suffix.array_decl.check(cs);
+			
+			IntExpr[] tmps = new IntExpr[lengths.size()];
+			ArrayList<IntExpr> tmp_list = new ArrayList<IntExpr>();
+			BoolExpr guard = null;
+			BoolExpr length_cnst = null;
+			
+			Expr ex = ret.get_Expr(cs);
+			
+			
+			for(int i = 0; i < lengths.size(); i++){
+				
+				//lengthに関する制約
+				int array_dim = this.new_suffix.array_decl.dims - (i);
+				String array_type;
+				if(ret.type.equals("int")){
+					array_type = "int";
+				}else if(ret.type.equals("boolean")){
+					array_type = "boolean";
+				}else{
+					array_type = "ref";
+				}
+				IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
+				if(length_cnst == null){
+					length_cnst = cs.ctx.mkEq(length, lengths.get(i));
+				}else{
+					length_cnst = cs.ctx.mkAnd(length_cnst, cs.ctx.mkEq(length, lengths.get(i)));
+				}
+				
+				if(i == lengths.size() - 1){//最後は次のループがないのでいらない
+					IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
+					tmps[i] = index;
+					tmp_list.add(index);
+					//インデックスの範囲のガード 
+					if(guard == null){
+						guard = cs.ctx.mkAnd(cs.ctx.mkGe(index, cs.ctx.mkInt(0)), cs.ctx.mkGt(lengths.get(i), index));
+					}else{
+						guard = cs.ctx.mkAnd(guard, cs.ctx.mkAnd(cs.ctx.mkGe(index, cs.ctx.mkInt(0)), cs.ctx.mkGt(lengths.get(i), index)));
+					}
+					
+					//次のex
+					ex = ret.get_full_Expr((ArrayList<IntExpr>) tmp_list.clone(), cs);
+				}
+			}
+			
+			BoolExpr expr = cs.ctx.mkImplies(guard, length_cnst);
+			cs.add_constraint(cs.ctx.mkForall(tmps, expr, 1, null, null, null, null));
+			
+			
+
 			return ret;
 		}else if(this.new_suffix.expression_list!=null){
 			//String ident = 

@@ -57,21 +57,21 @@ public class Variable extends Field{
 			//クラス
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("Ref"));
-		}else if(this.type.equals("int")&&this.dims>1){ //配列
+		}else if(this.type.equals("int")&&this.dims>0){ //配列
 			String ret = field_name + "_temp_" + this.id + "_" + this.temp_num;
 			Sort arraysort = cs.ctx.mkIntSort();
 			for(int i = 0; i < this.dims-1; i++){
 				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
 			}
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
-		}else if(this.type.equals("boolean")&&this.dims>1){
+		}else if(this.type.equals("boolean")&&this.dims>0){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			Sort arraysort = cs.ctx.mkBoolSort();
 			for(int i = 0; i < this.dims-1; i++){
 				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
 			}
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
-		}else if(this.dims>1){
+		}else if(this.dims>0){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			Sort arraysort = cs.ctx.mkUninterpretedSort("Ref");
 			for(int i = 0; i < this.dims-1; i++){
@@ -98,6 +98,14 @@ public class Variable extends Field{
 			indexs.remove(0);
 		}
 		return ex;
+	}
+	
+	public int class_object_dims_sum(){
+		return 0;
+	}
+	
+	public int dims_sum(){
+		return this.dims;
 	}
 	
 	@Override

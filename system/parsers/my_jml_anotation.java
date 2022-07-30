@@ -11,8 +11,13 @@ public class my_jml_anotation implements Parser<String>{
 	}
 	public String parse(Source s,Parser_status ps)throws Exception{
 		ps.in_jml = true;
-		String st =  "" + p.parse(s,ps);
-		ps.in_jml = false;
-		return st;
+		try{
+			String st =  "" + p.parse(s,ps);
+			ps.in_jml = false;
+			return st;
+		}catch(Exception e){
+			ps.in_jml = false;
+			throw new Exception(e);
+		}
 	}
 }

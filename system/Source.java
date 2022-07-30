@@ -4,6 +4,7 @@ public class Source {
 	private String s;
 	private int position,line,count;
 	private int deepestline,deepestcount;
+	public int parsed_length;
 	
 	public Source(String s){
 		this.s = s;
@@ -35,6 +36,8 @@ public class Source {
 			this.count++;
 		}
 		
+		
+		
 		this.position++;
 	}
 	
@@ -63,5 +66,12 @@ public class Source {
 		s.deepestcount = this.deepestcount;
 		s.deepestline = this.deepestline;
 		return s;
+	}
+	
+	//¬Œ÷Šm”F
+	public void is_parsed(Summery summery){
+		if(s.length() != position){
+			summery.parse_faileds.add("parse failed : "  + summery.file.toString());
+		}
 	}
 }

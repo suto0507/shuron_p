@@ -49,8 +49,10 @@ public class TestAll {
 			compilation_unit cu = new compilation_unit();
 			try{
 				Parser_status ps = new Parser_status();
-				String parsed = cu.parse(new Source(st), ps);
+				Source s = new Source(st);
+				String parsed = cu.parse(s, ps);
 				System.out.println(parsed + "is parsed");
+				s.is_parsed(summery);
 				cu.link_inheritance(ps.extends_pairs, summery);
 				cu.check(10, summery);
 			}catch (Exception e){

@@ -87,14 +87,14 @@ public class Field {
 				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
 			}
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
-		}else if(this.type.equals("boolean")&&this.dims>1){
+		}else if(this.type.equals("boolean")&&this.dims>0){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			Sort arraysort = cs.ctx.mkBoolSort();
 			for(int i = 0; i < this.dims; i++){
 				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
 			}
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
-		}else if(this.dims>1){
+		}else if(this.dims>0){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			Sort arraysort = cs.ctx.mkUninterpretedSort("Ref");
 			for(int i = 0; i < this.dims; i++){

@@ -86,7 +86,53 @@ public class assignment_expr implements Parser<String>{
 				ArrayList<IntExpr> tmp_list = new ArrayList<IntExpr>();
 				BoolExpr index_cnst_expr = null;
 				for(int i = 0; i < v.index.size(); i++){
-					IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
+					//’·‚³‚ÉŠÖ‚·‚é§–ñ
+					if(v.index.size() > v.class_object_dims_sum() && v.class_object_dims_sum() <= i){//”z—ñ‚Ì—v‘f‚É‘ã“ü‚·‚é‚Æ‚«AŽŸŒ³‚Ìˆá‚¤‚Æ‚±‚ë‚Í’·‚³‚ª•Ï‚í‚ç‚È‚¢
+						
+						int array_dim = v.dims_sum() - i;
+						String array_type;
+						if(v.type.equals("int")){
+							array_type = "int";
+						}else if(v.type.equals("boolean")){
+							array_type = "boolean";
+						}else{
+							array_type = "ref";
+						}
+						if(i == v.class_object_dims_sum()){
+							Expr ex = null;
+							Expr ex_assign = null;
+							if(i == 0){
+								ex = v.get_full_Expr(new ArrayList<IntExpr>(), cs);
+								ex_assign = v.get_full_Expr_assign(new ArrayList<IntExpr>(), cs);
+							}else{
+								ex = v.get_full_Expr((ArrayList<IntExpr>) v.index.subList(0, i), cs);
+								ex_assign = v.get_full_Expr_assign((ArrayList<IntExpr>) v.index.subList(0, i), cs);
+							}
+							IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
+							IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex_assign.getSort(), cs.ctx.mkIntSort()), ex_assign);
+							
+							cs.add_constraint(cs.ctx.mkEq(length, length_assign));
+						}else{
+							ArrayList<IntExpr> index_tmp_list = new ArrayList<IntExpr>();
+							index_tmp_list.addAll(v.index.subList(0, v.class_object_dims_sum()));
+							IntExpr[] index_tmps = new IntExpr[i - v.class_object_dims_sum()];
+							for(int j = 0; j < tmp_list.subList(v.class_object_dims_sum(), i).size(); j++){
+								IntExpr tmp = tmp_list.subList(v.class_object_dims_sum(), i).get(j);
+								index_tmp_list.add(tmp);
+								index_tmps[j] = tmp;
+							}
+							Expr ex = v.get_full_Expr((ArrayList<IntExpr>) index_tmp_list.clone(), cs);
+							Expr ex_assign = v.get_full_Expr_assign((ArrayList<IntExpr>) index_tmp_list.clone(), cs);
+							
+							IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
+							IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex_assign.getSort(), cs.ctx.mkIntSort()), ex_assign);
+							
+							cs.add_constraint(cs.ctx.mkForall(index_tmps, cs.ctx.mkEq(length, length_assign), 1, null, null, null, null));
+						}	
+					}
+					
+					
+					IntExpr index = cs.ctx.mkIntConst("tmpIndex" + cs.Check_status_share.get_tmp_num());
 					tmp_list.add(index);
 					tmps[i] = index;
 					if(index_cnst_expr == null){
@@ -94,6 +140,9 @@ public class assignment_expr implements Parser<String>{
 					}else{
 						index_cnst_expr = cs.ctx.mkAnd(index_cnst_expr, cs.ctx.mkEq(v.index.get(i), index));
 					}
+					
+					
+					
 				}
 				
 				Expr tmp_expr = v.get_full_Expr((ArrayList<IntExpr>) tmp_list.clone(), cs);

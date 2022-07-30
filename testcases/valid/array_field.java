@@ -2,6 +2,10 @@ class array_field{
     array_field[] a_array;
     int[] int_array;
 
+    //@ requires int_array.length == 2;
+    //@ requires a_array.length == 10;
+    //@ requires (\forall int i ; 0 <= i && i < 10 ; a_array[i].int_array.length == 2);
+    // requires a_array.length == 10 && (\forall int i ; 0 <= i && i < 10 ; a_array[i].int_array.length == 2);
     void test(){
         int x = 0;
         int x1 = int_array[0];

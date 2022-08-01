@@ -268,6 +268,7 @@ public class postfix_expr implements Parser<String>{
 				System.out.println("check index out of bounds");
 				cs.assert_constraint(index_bound);
 				
+				indexs.add(index);
 				
 				ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
 				ident = null;
@@ -291,6 +292,7 @@ public class postfix_expr implements Parser<String>{
 	public Field check_assign(Check_status cs) throws Exception{
 		Expr ex = null;
 		Field f = null;
+		ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 		if(this.primary_suffixs.size() == 0){
 			if(this.primary_expr.is_this){
 				//‚±‚ê‚ÍƒAƒEƒg
@@ -313,6 +315,7 @@ public class postfix_expr implements Parser<String>{
 			}else{
 				throw new Exception("can't write in lef side");
 			}
+			f.index = indexs;
 			return f;
 
 		}else{
@@ -351,7 +354,6 @@ public class postfix_expr implements Parser<String>{
 				return null;
 			}
 			//suffix‚É‚Â‚¢‚Ä
-			ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 			for(int i = 0; i < this.primary_suffixs.size(); i++){
 				primary_suffix ps = this.primary_suffixs.get(i);
 				if(ps.is_field){
@@ -369,7 +371,6 @@ public class postfix_expr implements Parser<String>{
 
 					}
 					
-					indexs = new ArrayList<IntExpr>();
 					
 				}else if(ps.is_index){
 					IntExpr index = (IntExpr)ps.expression.check(cs);
@@ -397,7 +398,6 @@ public class postfix_expr implements Parser<String>{
 					
 					
 					indexs.add(index);
-					f.index = indexs;
 					
 					ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
 					ident = null;
@@ -410,9 +410,9 @@ public class postfix_expr implements Parser<String>{
 					ex = f.get_Expr(cs);
 					cs.in_method_call = false;
 					ident = null;
-					indexs = new ArrayList<IntExpr>();
 				}
 			}
+			f.index = indexs;
 			return f;
 		}
 	}

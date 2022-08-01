@@ -80,7 +80,6 @@ public class assignment_expr implements Parser<String>{
 			
 			//左辺のExpr
 			assign_expr = v.get_full_Expr_assign((ArrayList<IntExpr>)v.index.clone(), cs);
-			
 			if(v.index.size() > 0){//配列の要素にアクセスする場合、関係ない部分は変わっていないことの制約
 				IntExpr[] tmps = new IntExpr[v.index.size()];
 				ArrayList<IntExpr> tmp_list = new ArrayList<IntExpr>();
@@ -101,13 +100,10 @@ public class assignment_expr implements Parser<String>{
 						if(i == v.class_object_dims_sum()){
 							Expr ex = null;
 							Expr ex_assign = null;
-							if(i == 0){
-								ex = v.get_full_Expr(new ArrayList<IntExpr>(), cs);
-								ex_assign = v.get_full_Expr_assign(new ArrayList<IntExpr>(), cs);
-							}else{
-								ex = v.get_full_Expr((ArrayList<IntExpr>) v.index.subList(0, i), cs);
-								ex_assign = v.get_full_Expr_assign((ArrayList<IntExpr>) v.index.subList(0, i), cs);
-							}
+							
+							ex = v.get_full_Expr(new ArrayList<IntExpr>(v.index.subList(0, i)), cs);
+							ex_assign = v.get_full_Expr_assign(new ArrayList<IntExpr>(v.index.subList(0, i)), cs);
+							
 							IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
 							IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex_assign.getSort(), cs.ctx.mkIntSort()), ex_assign);
 							
@@ -131,7 +127,6 @@ public class assignment_expr implements Parser<String>{
 						}	
 					}
 					
-					
 					IntExpr index = cs.ctx.mkIntConst("tmpIndex" + cs.Check_status_share.get_tmp_num());
 					tmp_list.add(index);
 					tmps[i] = index;
@@ -144,7 +139,6 @@ public class assignment_expr implements Parser<String>{
 					
 					
 				}
-				
 				Expr tmp_expr = v.get_full_Expr((ArrayList<IntExpr>) tmp_list.clone(), cs);
 				Expr tmp_expr_assign = v.get_full_Expr_assign((ArrayList<IntExpr>) tmp_list.clone(), cs);
 				

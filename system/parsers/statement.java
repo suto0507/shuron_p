@@ -358,10 +358,18 @@ import system.Variable;
 				}
 				
 				//ループ出た後の条件
-				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
+				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs));
+				
+				BoolExpr pre_pathcondition = cs.pathcondition;
+				
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					post_loop = cs.ctx.mkAnd(post_loop, li.predicate.check(cs_loop));
+					BoolExpr li_expr = li.predicate.check(cs);
+					post_loop = cs.ctx.mkAnd(post_loop, li_expr);
+					cs.add_path_condition(li_expr);
 				}
+				
+				cs.pathcondition = pre_pathcondition;
+				
 				cs.add_constraint(cs.ctx.mkImplies(enter_loop_condition, post_loop));
 				
 				//v_localは中身での変数なので消す

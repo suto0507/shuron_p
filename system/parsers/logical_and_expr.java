@@ -42,10 +42,18 @@ public class logical_and_expr implements Parser<String>{
 		if(this.equality_exprs.size()==0){
 			return this.equality_expr.check(cs);
 		}else{
+			BoolExpr pre_pathcondition = cs.pathcondition;
+			
 			BoolExpr expr = (BoolExpr)equality_expr.check(cs);
+			cs.add_path_condition(expr);
+			
 			for(equality_expr ee : equality_exprs){
 				expr = cs.ctx.mkAnd(expr,(BoolExpr)ee.check(cs));
+				cs.add_path_condition(expr);
 			}
+			
+			cs.pathcondition = pre_pathcondition;
+			
 			return expr;
 		}
 	}

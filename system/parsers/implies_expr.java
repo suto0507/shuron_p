@@ -38,7 +38,15 @@ public class implies_expr implements Parser<String>{
 		if(this.implies_expr==null){
 			return this.logical_or_expr.check(cs);
 		}else{
-			Expr expr = cs.ctx.mkImplies((BoolExpr)this.logical_or_expr.check(cs),(BoolExpr)this.implies_expr.check(cs));
+			BoolExpr pre_pathcondition = cs.pathcondition;
+			
+			BoolExpr guard = (BoolExpr)this.logical_or_expr.check(cs);
+			cs.add_path_condition(guard);
+			
+			Expr expr = cs.ctx.mkImplies(guard,(BoolExpr)this.implies_expr.check(cs));
+			
+			cs.pathcondition = pre_pathcondition;
+			
 			return expr;
 		}
 	}

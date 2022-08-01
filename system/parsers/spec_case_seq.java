@@ -57,14 +57,18 @@ public class spec_case_seq implements Parser<String>  {
 				expr = cs.ctx.mkBool(true);
 				break;
 			}else{
+				BoolExpr pre_pathcondition = cs.pathcondition;
+				
 				BoolExpr gsc_expr = null;
 				for(requires_clause rc : rcs){
 					rc.set_expr((BoolExpr) rc.check(cs), cs);
+					BoolExpr rc_expr = rc.get_expr(cs);
 					if(gsc_expr == null){
-						gsc_expr = rc.get_expr(cs);
+						gsc_expr = rc_expr;
 					}else{
-						gsc_expr = cs.ctx.mkAnd(gsc_expr, rc.get_expr(cs));
+						gsc_expr = cs.ctx.mkAnd(gsc_expr, rc_expr);
 					}
+					cs.add_path_condition(rc_expr);
 				}
 				
 				if(expr == null){
@@ -72,6 +76,8 @@ public class spec_case_seq implements Parser<String>  {
 				}else{
 					expr = cs.ctx.mkOr(expr, gsc_expr);
 				}
+				
+				cs.pathcondition = pre_pathcondition;
 			}
 			
 			if(cs.in_method_call){
@@ -104,17 +110,21 @@ public class spec_case_seq implements Parser<String>  {
 				BoolExpr pre_expr = null;
 				BoolExpr post_expr = null;
 				
+				BoolExpr pre_pathcondition = cs.pathcondition;
+				
 				//éñëOèåè
 				List<requires_clause> rcs = gsc.get_requires();
 				if(rcs == null || rcs.size()==0){
 					pre_expr = cs.ctx.mkBool(true);
 				}else{
 					for(requires_clause rc : rcs){
+						BoolExpr rc_expr = rc.get_expr(cs);
 						if(pre_expr == null){
-							pre_expr = rc.get_expr(cs);
+							pre_expr = rc_expr;
 						}else{
-							pre_expr = cs.ctx.mkAnd(pre_expr, rc.get_expr(cs));
+							pre_expr = cs.ctx.mkAnd(pre_expr, rc_expr);
 						}
+						cs.add_path_condition(rc_expr);
 					}
 				}
 				
@@ -131,7 +141,7 @@ public class spec_case_seq implements Parser<String>  {
 					}
 				}
 				
-				
+				cs.pathcondition = pre_pathcondition;
 				
 				if(expr == null){
 					expr = cs.ctx.mkImplies(pre_expr, post_expr);

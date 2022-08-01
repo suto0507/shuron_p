@@ -572,15 +572,20 @@ public class postfix_expr implements Parser<String>{
 							new_element = cs.ctx.mkSelect((ArrayExpr) new_element, index);
 						}
 						
-						
-						Expr[] index_exprs_array = new Expr[index_expr.size()];
-						for(int j = 0; j < index_expr.size(); j++){
-							index_exprs_array[j] = index_expr.get(j);
-						}
-						
 						BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
-						cs.add_constraint(cs.ctx.mkForall(index_exprs_array, expr, 1, null, null, null, null));
-						fa.field.temp_num++;
+						
+						if(index_expr.size()>0){
+							Expr[] index_exprs_array = new Expr[index_expr.size()];
+							for(int j = 0; j < index_expr.size(); j++){
+								index_exprs_array[j] = index_expr.get(j);
+							}
+							
+							
+							cs.add_constraint(cs.ctx.mkForall(index_exprs_array, expr, 1, null, null, null, null));
+							fa.field.temp_num++;
+						}else{
+							cs.add_constraint(expr);
+						}
 					}
 					
 				}

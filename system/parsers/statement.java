@@ -358,12 +358,12 @@ import system.Variable;
 				}
 				
 				//ÉãÅ[ÉvèoÇΩå„ÇÃèåè
-				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs));
+				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
 				
 				BoolExpr pre_pathcondition = cs.pathcondition;
 				
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr li_expr = li.predicate.check(cs);
+					BoolExpr li_expr = li.predicate.check(cs_loop);
 					post_loop = cs.ctx.mkAnd(post_loop, li_expr);
 					cs.add_path_condition(li_expr);
 				}

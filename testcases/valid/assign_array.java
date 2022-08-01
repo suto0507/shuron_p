@@ -1,4 +1,5 @@
 class assign_array {
+	//@invariant ar.length == 3;
 	int[] ar;
 	
 	/*@ requires x>0;*/

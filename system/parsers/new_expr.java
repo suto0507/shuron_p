@@ -220,7 +220,38 @@ public class new_expr implements Parser<String>{
 							}
 							Expr old_element = fa.field.get_full_Expr((ArrayList)index_expr.clone(), cs);
 							Expr new_element = fa.field.get_full_Expr_assign((ArrayList)index_expr.clone(), cs);
-							for(int j = 0; j < i; j++){
+							for(int j = 0; j < i; j++){//‚»‚Ì”z—ñ‚É‘Î‚·‚éindex
+								
+								//’·‚³‚ÉŠÖ‚·‚é§–ñ
+								int array_dim = fa.field.dims - j;
+								String array_type;
+								if(fa.field.type.equals("int")){
+									array_type = "int";
+								}else if(fa.field.type.equals("boolean")){
+									array_type = "boolean";
+								}else{
+									array_type = "ref";
+								}
+								if(j == 0 && fa.field.class_object_dims_sum()==0){
+									IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, old_element.getSort(), cs.ctx.mkIntSort()), old_element);
+									IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, new_element.getSort(), cs.ctx.mkIntSort()), new_element);
+									
+									cs.add_constraint(cs.ctx.mkEq(length, length_assign));
+								}else{
+									IntExpr[] index_tmps = new IntExpr[index_expr.size()];
+									for(int k = 0; k < index_expr.size(); k++){
+										index_tmps[k] = index_expr.get(k);
+									}
+									
+									IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, old_element.getSort(), cs.ctx.mkIntSort()), old_element);
+									IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, new_element.getSort(), cs.ctx.mkIntSort()), new_element);
+									
+									cs.add_constraint(cs.ctx.mkForall(index_tmps, cs.ctx.mkEq(length, length_assign), 1, null, null, null, null));
+								}	
+
+								
+								
+								
 								IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
 								index_expr.add(index);
 								old_element = cs.ctx.mkSelect((ArrayExpr) old_element, index);
@@ -229,14 +260,20 @@ public class new_expr implements Parser<String>{
 							
 							
 							
-							Expr[] index_exprs_array = new Expr[index_expr.size()];
-							for(int j = 0; j < index_expr.size(); j++){
-								index_exprs_array[i] = index_expr.get(j);
-							}
-							
 							BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
-							cs.add_constraint(cs.ctx.mkForall(index_exprs_array, expr, 1, null, null, null, null));
-							fa.field.temp_num++;
+							
+							if(index_expr.size()>0){
+								Expr[] index_exprs_array = new Expr[index_expr.size()];
+								for(int j = 0; j < index_expr.size(); j++){
+									index_exprs_array[j] = index_expr.get(j);
+								}
+								
+								
+								cs.add_constraint(cs.ctx.mkForall(index_exprs_array, expr, 1, null, null, null, null));
+								fa.field.temp_num++;
+							}else{
+								cs.add_constraint(expr);
+							}
 						}
 						
 					}

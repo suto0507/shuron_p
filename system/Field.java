@@ -149,6 +149,37 @@ public class Field {
 		return this.dims + this.class_object.dims_sum();
 	}
 	
+	
+	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Check_status cs) throws Exception{
+		Expr expr = value;
+		for(int i = indexs.size()-1; i >= this.class_object_dims_sum(); i--){
+			IntExpr index = indexs.get(i);
+			ArrayList<IntExpr> indexs_sub = new ArrayList<IntExpr>(indexs.subList(0, i));
+			ArrayExpr array = (ArrayExpr) get_full_Expr((ArrayList<IntExpr>) indexs_sub.clone(), cs);
+			ArrayExpr array_assign = (ArrayExpr) get_full_Expr_assign((ArrayList<IntExpr>) indexs_sub.clone(), cs);
+			expr = cs.ctx.mkStore(array, index, expr);
+			
+			//í∑Ç≥Ç…ä÷Ç∑ÇÈêßñÒ
+			int array_dim = this.dims_sum() - i;
+			String array_type;
+			if(this.type.equals("int")){
+				array_type = "int";
+			}else if(this.type.equals("boolean")){
+				array_type = "boolean";
+			}else{
+				array_type = "ref";
+			}
+			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array.getSort(), cs.ctx.mkIntSort()), array);
+			IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array_assign.getSort(), cs.ctx.mkIntSort()), array_assign);
+			
+			cs.add_constraint(cs.ctx.mkEq(length, length_assign));
+		}
+		
+		
+		return cs.ctx.mkStore(this.get_Expr(cs), this.class_object.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs), expr);
+	}
+	
+	
 	//é©ï™Ç∆ìØÇ∂å^ÇÃÉtÉåÉbÉVÉÖÇ»ExprÇï‘Ç∑
 	public Expr get_Expr_tmp(Check_status cs) throws Exception{
 		if(this.type.equals("int")&&this.dims==0){

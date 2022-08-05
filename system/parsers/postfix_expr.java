@@ -552,15 +552,17 @@ public class postfix_expr implements Parser<String>{
 								
 								cs.add_constraint(cs.ctx.mkEq(length, length_assign));
 							}else{
+								BoolExpr length_cnst = cs.ctx.mkBool(true);
 								IntExpr[] index_tmps = new IntExpr[index_expr.size()];
 								for(int k = 0; k < index_expr.size(); k++){
 									index_tmps[k] = index_expr.get(k);
+									length_cnst = cs.ctx.mkAnd(length_cnst, cs.ctx.mkGe(index_expr.get(k), cs.ctx.mkInt(0)));
 								}
 								
 								IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, old_element.getSort(), cs.ctx.mkIntSort()), old_element);
 								IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, new_element.getSort(), cs.ctx.mkIntSort()), new_element);
 								
-								cs.add_constraint(cs.ctx.mkForall(index_tmps, cs.ctx.mkEq(length, length_assign), 1, null, null, null, null));
+								cs.add_constraint(cs.ctx.mkForall(index_tmps, cs.ctx.mkImplies(length_cnst, cs.ctx.mkEq(length, length_assign)), 1, null, null, null, null));
 							}	
 
 							
@@ -575,13 +577,15 @@ public class postfix_expr implements Parser<String>{
 						BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
 						
 						if(index_expr.size()>0){
+							BoolExpr length_cnst = cs.ctx.mkBool(true);
 							Expr[] index_exprs_array = new Expr[index_expr.size()];
 							for(int j = 0; j < index_expr.size(); j++){
 								index_exprs_array[j] = index_expr.get(j);
+								length_cnst = cs.ctx.mkAnd(length_cnst, cs.ctx.mkGe(index_expr.get(j), cs.ctx.mkInt(0)));
 							}
 							
 							
-							cs.add_constraint(cs.ctx.mkForall(index_exprs_array, expr, 1, null, null, null, null));
+							cs.add_constraint(cs.ctx.mkForall(index_exprs_array, cs.ctx.mkImplies(length_cnst, expr), 1, null, null, null, null));
 							fa.field.temp_num++;
 						}else{
 							cs.add_constraint(expr);

@@ -345,6 +345,42 @@ public class spec_case_seq implements Parser<String>  {
 			
 			return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);
 		}
+		
+		public void assign_fresh_value(Check_status cs) throws Exception{
+			Expr expr = null;
+			for(Pair<BoolExpr,List<List<IntExpr>>> ca: cnst_array){
+				for(List<IntExpr> indexs: ca.snd){
+					Expr full_expr = field.get_full_Expr((ArrayList<IntExpr>) ((ArrayList<IntExpr>) indexs).clone(), cs);
+					expr = cs.ctx.mkITE(ca.fst, cs.ctx.mkConst("freshValue_" + cs.Check_status_share.get_tmp_num(), full_expr.getSort()), full_expr);//èåèÇñûÇΩÇ∑èÍçáÇ…ÇÕêVÇµÇ¢ílÇì¸ÇÍÇÈ
+					for(int i = indexs.size()-1; i >= field.class_object_dims_sum(); i--){
+						IntExpr index = indexs.get(i);
+						ArrayList<IntExpr> indexs_sub = new ArrayList<IntExpr>(indexs.subList(0, i));
+						ArrayExpr array = (ArrayExpr) field.get_full_Expr((ArrayList<IntExpr>) indexs_sub.clone(), cs);
+						ArrayExpr array_assign = (ArrayExpr) field.get_full_Expr_assign((ArrayList<IntExpr>) indexs_sub.clone(), cs);
+						expr = cs.ctx.mkStore(array, index, expr);
+						
+						//í∑Ç≥Ç…ä÷Ç∑ÇÈêßñÒ
+						int array_dim = field.dims_sum() - i;
+						String array_type;
+						if(this.field.equals("int")){
+							array_type = "int";
+						}else if(this.field.equals("boolean")){
+							array_type = "boolean";
+						}else{
+							array_type = "ref";
+						}
+						IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array.getSort(), cs.ctx.mkIntSort()), array);
+						IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array_assign.getSort(), cs.ctx.mkIntSort()), array_assign);
+						
+						cs.add_constraint(cs.ctx.mkEq(length, length_assign));
+					}
+					BoolExpr cnst = cs.ctx.mkEq(field.get_Expr_assign(cs), cs.ctx.mkStore(field.get_Expr(cs), field.class_object.get_full_Expr((ArrayList<IntExpr>) ((ArrayList<IntExpr>) indexs).clone(), cs), expr));
+					cs.add_constraint(cnst);
+					field.temp_num++;
+				}
+			}
+			
+		}
 	}
 }
 

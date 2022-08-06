@@ -38,7 +38,20 @@ public class refinement_type implements Parser<String>{
 		return st;
 	}
 	
-	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr) throws Exception{
+	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr, Field class_Field) throws Exception{
+		
+		//バックアップ
+	    Field pre_refined_Field = cs.refined_Field;
+	    Expr pre_refined_Expr = cs.refined_Expr;
+	    String pre_refinement_type_value = cs.refinement_type_value;
+	    boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
+	    Expr pre_refined_class_Expr = cs.refined_class_Expr;
+	    Field pre_refined_class_Field = cs.refined_class_Field;
+	    
+	    //篩型の処理のための事前準備
+        cs.refined_class_Expr = class_Expr;
+        cs.refined_class_Field = class_Field;
+		
 		cs.in_refinement_predicate = true;
 		cs.refinement_type_value = ident;
 		cs.refined_Field = refined_Field;
@@ -73,13 +86,32 @@ public class refinement_type implements Parser<String>{
 				throw new Exception("can't find refinement type " + type.type);
 			}
 		}
+		
+		cs.refined_Expr = pre_refined_Expr;
+	    cs.refined_Field = pre_refined_Field;
+	    cs.refinement_type_value = pre_refinement_type_value;
+	    cs.in_refinement_predicate = pre_in_refinement_predicate;
+	    cs.refined_class_Expr = pre_refined_class_Expr;
+	    cs.refined_class_Field = pre_refined_class_Field;
 	}
 	
-	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr) throws Exception{
+	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr, Field class_Field) throws Exception{
 		
 		if(cs.in_constructor){//コンストラクタ内では篩型は保証されない
 			return;
 		}
+		
+		//バックアップ
+	    Field pre_refined_Field = cs.refined_Field;
+	    Expr pre_refined_Expr = cs.refined_Expr;
+	    String pre_refinement_type_value = cs.refinement_type_value;
+	    boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
+	    Expr pre_refined_class_Expr = cs.refined_class_Expr;
+	    Field pre_refined_class_Field = cs.refined_class_Field;
+	    
+	    //篩型の処理のための事前準備
+        cs.refined_class_Expr = class_Expr;
+        cs.refined_class_Field = class_Field;
 		
 		cs.in_refinement_predicate = true;
 		cs.refinement_type_value = ident;
@@ -115,6 +147,13 @@ public class refinement_type implements Parser<String>{
 				throw new Exception("can't find refinement type " + type.type);
 			}
 		}
+		
+		cs.refined_Expr = pre_refined_Expr;
+	    cs.refined_Field = pre_refined_Field;
+	    cs.refinement_type_value = pre_refinement_type_value;
+	    cs.in_refinement_predicate = pre_in_refinement_predicate;
+	    cs.refined_class_Expr = pre_refined_class_Expr;
+	    cs.refined_class_Field = pre_refined_class_Field;
 	}
 	
 	// subtype <= this

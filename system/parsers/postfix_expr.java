@@ -49,17 +49,23 @@ public class postfix_expr implements Parser<String>{
 		Field f = null;
 		String ident = null;
 		boolean is_refine_value = false;
+		
+
+		//suffixについて
+		List<IntExpr> indexs = new ArrayList<IntExpr>();
+		if(cs.in_method_call) indexs = cs.call_indexs;
+		
 		if(this.primary_expr.is_this){
 			if(this.primary_suffixs.size() == 0 && cs.in_constructor){//this単体のコンストラクターでの使用
 				cs.constructor_refinement_check();
 			}
 			f = cs.this_field;
 			ex = f.get_Expr(cs);
-			//関数呼び出し
-			if(cs.in_method_call){
+			
+			if(cs.in_method_call){//関数呼び出し
 				f = cs.call_field;
 				ex = cs.call_expr;
-			}else if(cs.in_refinement_predicate){
+			}else if(cs.in_refinement_predicate){//篩型
 				f = cs.refined_class_Field;
 				ex = cs.refined_class_Expr;
 			}
@@ -187,12 +193,10 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false){//篩型
-			add_refinement_constraint(cs, f, ex, cs.in_method_call, cs.call_expr, cs.call_field);
+			add_refinement_constraint(cs, f, ex, cs.call_expr, cs.call_field);
 		}
 		
 		
-		//suffixについて
-		List<IntExpr> indexs = new ArrayList<IntExpr>();
 		
 		for(int i = 0; i < this.primary_suffixs.size(); i++){
 			primary_suffix ps = this.primary_suffixs.get(i);
@@ -225,7 +229,7 @@ public class postfix_expr implements Parser<String>{
 					}
 					
 					if(f.refinement_type_clause!=null){//篩型
-						add_refinement_constraint(cs, f, ex, true, pre_ex, pre_f);
+						add_refinement_constraint(cs, f, ex, pre_ex, pre_f);
 					}
 					
 					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
@@ -278,7 +282,7 @@ public class postfix_expr implements Parser<String>{
 				
 			}else if(ps.is_method){
 				//関数の呼び出し
-				f = method(cs, ident,f, ex, ps);
+				f = method(cs, ident, f, ex, (ArrayList<IntExpr>) indexs, ps);
 				ex = f.get_Expr(cs);
 				cs.in_method_call = false;
 				ident = null;
@@ -293,6 +297,8 @@ public class postfix_expr implements Parser<String>{
 		Expr ex = null;
 		Field f = null;
 		ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
+		if(cs.in_method_call) indexs = cs.call_indexs;
+		
 		if(this.primary_suffixs.size() == 0){
 			if(this.primary_expr.is_this){
 				//これはアウト
@@ -406,7 +412,7 @@ public class postfix_expr implements Parser<String>{
 					if(i == this.primary_suffixs.size()-1){
 						throw new Exception("The left-hand side of an assignment must be a variable");
 					}
-					f = method(cs, ident, f, ex, ps);
+					f = method(cs, ident, f, ex, indexs, ps);
 					ex = f.get_Expr(cs);
 					cs.in_method_call = false;
 					ident = null;
@@ -419,7 +425,7 @@ public class postfix_expr implements Parser<String>{
 
 	
 	
-	public Field method(Check_status cs, String ident, Field f, Expr ex, primary_suffix ps)throws Exception{
+	public Field method(Check_status cs, String ident, Field f, Expr ex, ArrayList<IntExpr> indexs, primary_suffix ps)throws Exception{
 		
 		//コンストラクタでの自インスタンスの関数呼び出し
 		if(cs.in_constructor && f.equals(cs.this_field, cs)){
@@ -452,6 +458,7 @@ public class postfix_expr implements Parser<String>{
 		
 		cs.call_expr = ex;
 		cs.call_field = f;
+		cs.call_indexs = (ArrayList<IntExpr>) indexs.clone();
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
@@ -527,70 +534,7 @@ public class postfix_expr implements Parser<String>{
 				//配列の要素に代入
 				//そのフィールドにたどり着くまでに配列アクセスをしていた場合も
 				if(fa.cnst_array.size()>0){
-					for(int i = 0; i <= fa.field.dims; i++){//各次元に関して
-						ArrayList<IntExpr> index_expr = new ArrayList<IntExpr>();
-						for(int j = 0; j < fa.field.class_object_dims_sum(); j++){//そのフィールドまでの配列のindex
-							index_expr.add(cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num()));
-						}
-						Expr old_element = fa.field.get_full_Expr((ArrayList)index_expr.clone(), cs);
-						Expr new_element = fa.field.get_full_Expr_assign((ArrayList)index_expr.clone(), cs);
-						for(int j = 0; j < i; j++){//その配列に対するindex
-							
-							//長さに関する制約
-							int array_dim = fa.field.dims - j;
-							String array_type;
-							if(fa.field.type.equals("int")){
-								array_type = "int";
-							}else if(fa.field.type.equals("boolean")){
-								array_type = "boolean";
-							}else{
-								array_type = "ref";
-							}
-							if(j == 0 && fa.field.class_object_dims_sum()==0){
-								IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, old_element.getSort(), cs.ctx.mkIntSort()), old_element);
-								IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, new_element.getSort(), cs.ctx.mkIntSort()), new_element);
-								
-								cs.add_constraint(cs.ctx.mkEq(length, length_assign));
-							}else{
-								BoolExpr length_cnst = cs.ctx.mkBool(true);
-								IntExpr[] index_tmps = new IntExpr[index_expr.size()];
-								for(int k = 0; k < index_expr.size(); k++){
-									index_tmps[k] = index_expr.get(k);
-									length_cnst = cs.ctx.mkAnd(length_cnst, cs.ctx.mkGe(index_expr.get(k), cs.ctx.mkInt(0)));
-								}
-								
-								IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, old_element.getSort(), cs.ctx.mkIntSort()), old_element);
-								IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, new_element.getSort(), cs.ctx.mkIntSort()), new_element);
-								
-								cs.add_constraint(cs.ctx.mkForall(index_tmps, cs.ctx.mkImplies(length_cnst, cs.ctx.mkEq(length, length_assign)), 1, null, null, null, null));
-							}	
-
-							
-							
-							
-							IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
-							index_expr.add(index);
-							old_element = cs.ctx.mkSelect((ArrayExpr) old_element, index);
-							new_element = cs.ctx.mkSelect((ArrayExpr) new_element, index);
-						}
-						
-						BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
-						
-						if(index_expr.size()>0){
-							BoolExpr length_cnst = cs.ctx.mkBool(true);
-							Expr[] index_exprs_array = new Expr[index_expr.size()];
-							for(int j = 0; j < index_expr.size(); j++){
-								index_exprs_array[j] = index_expr.get(j);
-								length_cnst = cs.ctx.mkAnd(length_cnst, cs.ctx.mkGe(index_expr.get(j), cs.ctx.mkInt(0)));
-							}
-							
-							
-							cs.add_constraint(cs.ctx.mkForall(index_exprs_array, cs.ctx.mkImplies(length_cnst, expr), 1, null, null, null, null));
-							fa.field.temp_num++;
-						}else{
-							cs.add_constraint(expr);
-						}
-					}
+					fa.assign_fresh_value(cs);
 					
 				}
 				
@@ -646,7 +590,7 @@ public class postfix_expr implements Parser<String>{
 		return result;
 	}
 
-	void add_refinement_constraint(Check_status cs,Field f, Expr ex, boolean refined_class_condition, Expr class_Expr, Field class_Field) throws Exception{
+	void add_refinement_constraint(Check_status cs,Field f, Expr ex, Expr class_Expr, Field class_Field) throws Exception{
 	    System.out.println(f.field_name + " has refinement type");
 
 	    //バックアップ
@@ -658,10 +602,9 @@ public class postfix_expr implements Parser<String>{
 	    Field refined_class_Field = cs.refined_class_Field;
 	    
 	    //篩型の処理のための事前準備
-	    if(cs.in_method_call){
-	        cs.refined_class_Expr = cs.call_expr;
-	        cs.refined_class_Field = cs.call_field;
-	    }
+        cs.refined_class_Expr = class_Expr;
+        cs.refined_class_Field = class_Field;
+	        
 	    cs.refinement_deep++;
 	    if(cs.refinement_deep <= cs.refinement_deep_limmit){
 	        if(f.refinement_type_clause.refinement_type!=null){

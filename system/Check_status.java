@@ -30,6 +30,7 @@ public class Check_status {
 	public boolean in_method_call;
 	public Expr call_expr;
 	public Field call_field;
+	public ArrayList<IntExpr> call_indexs;
 	public List<Variable> called_method_args;
 	public Check_status old_status;
 	public Variable result;

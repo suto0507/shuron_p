@@ -99,35 +99,19 @@ public class assignment_expr implements Parser<String>{
 			BoolExpr expr = cs.ctx.mkEq(assign_tmp_expr, implies_tmp);
 			cs.add_constraint(expr);
 			//refinement_type
-			Field refined_Field = cs.refined_Field;
-			Expr refined_Expr = cs.refined_Expr;
-			String refinement_type_value = cs.refinement_type_value;
-			boolean in_refinement_predicate = cs.in_refinement_predicate;
-			Expr refined_class_Expr = cs.refined_class_Expr;
-			Field refined_class_Field = cs.refined_class_Field;
-			
-			//‚øå^ÇÃèàóùÇÃÇΩÇﬂÇÃéñëOèÄîı
-			cs.refined_class_Expr = v_class_object_expr;
-			cs.refined_class_Field = v.class_object;
 			
 			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_expr_full);
+					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_expr_full, v.class_object, v_class_object_expr);
 				}else if(v.refinement_type_clause.ident!=null){
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(cs, v, assign_expr_full);
-					}
+						rt.assert_refinement(cs, v, assign_expr_full, v.class_object, v_class_object_expr);
+					}else{
+		                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
+		            }
 				}
 			}
-			cs.refined_Expr = refined_Expr;
-			cs.refined_Field = refined_Field;
-			cs.refinement_type_value = refinement_type_value;
-			cs.in_refinement_predicate = in_refinement_predicate;
-			
-			cs.refined_class_Expr = refined_class_Expr;
-			cs.refined_class_Field = refined_class_Field;
-			cs.refinement_deep--;
 			
 			
 			v.temp_num++;

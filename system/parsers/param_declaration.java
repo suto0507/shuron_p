@@ -35,6 +35,7 @@ public class param_declaration implements Parser<String>{
 		return st;
 	}
 	
+	//これはメソッド呼び出しの時は使われない
 	public void check(Check_status cs) throws Exception{
 		if(cs.search_variable(this.ident)==false){
 			modifiers modi = new modifiers();
@@ -45,11 +46,11 @@ public class param_declaration implements Parser<String>{
 			v.temp_num=0;
 			if(v.refinement_type_clause!=null){
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.add_refinement_constraint(cs, v, v.get_Expr(cs));
+					v.refinement_type_clause.refinement_type.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs));
 				}else{
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.add_refinement_constraint(cs, v, v.get_Expr(cs));
+						rt.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs));
 					}else{
 						throw new Exception("cant find refinement type " + v.refinement_type_clause.ident);
 					}

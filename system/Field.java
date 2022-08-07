@@ -223,6 +223,7 @@ public class Field {
 		}
 		this.temp_num++;
 		//refinement_type
+		/* postfix_exprで出てきたタイミングでaddされるはずなので問題ないはず
 		Field f = this;
 		if(f.refinement_type_clause!=null){
 			if(f.refinement_type_clause.refinement_type!=null){
@@ -234,6 +235,7 @@ public class Field {
 				}
 			}
 		}
+		*/
 	}
 	
 	public boolean is_this_field(){

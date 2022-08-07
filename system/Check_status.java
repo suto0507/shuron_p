@@ -334,11 +334,11 @@ public class Check_status {
 		for(Field f : this.fields){
 			if(f.class_object!=null && f.class_object.equals(this_field, this) && f.refinement_type_clause!=null){
 				if(f.refinement_type_clause.refinement_type!=null){
-					f.refinement_type_clause.refinement_type.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)));
+					f.refinement_type_clause.refinement_type.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this));
 				}else if(f.refinement_type_clause.ident!=null){
 					refinement_type rt = this.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)));
+						rt.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this));
 					}else{
 						throw new Exception("can't find refinement type " + f.refinement_type_clause.ident);
 					}

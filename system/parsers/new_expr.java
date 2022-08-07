@@ -139,11 +139,11 @@ public class new_expr implements Parser<String>{
 				//篩型
 				if(v.refinement_type_clause!=null){
 					if(v.refinement_type_clause.refinement_type!=null){
-						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs));
+						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), null, null);//class_Fieldとかは本来resultなどだが、まだできていないオブジェクトなのでnullでいいはず
 					}else{
 						refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 						if(rt!=null){
-							rt.assert_refinement(cs, v, v.get_Expr(cs));
+							rt.assert_refinement(cs, v, v.get_Expr(cs), null, null);
 						}else{
 							throw new Exception("cant find refinement type " + v.refinement_type_clause.ident);
 						}

@@ -192,8 +192,15 @@ public class postfix_expr implements Parser<String>{
 			//return null;
 		}
 		
-		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false){//‚øå^
-			add_refinement_constraint(cs, f, ex, cs.call_expr, cs.call_field);
+		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false && !(cs.in_constructor && f.class_object != null && f.class_object.equals(cs.this_field, cs))){//‚øå^
+			if(cs.in_method_call){
+				add_refinement_constraint(cs, f, ex, cs.call_field, cs.call_expr);
+			}if(cs.in_refinement_predicate){
+				add_refinement_constraint(cs, f, ex, cs.refined_class_Field, cs.refined_class_Expr);
+			}else{
+				add_refinement_constraint(cs, f, ex, cs.this_field, cs.this_field.get_Expr(cs));
+			}
+			
 		}
 		
 		
@@ -228,8 +235,8 @@ public class postfix_expr implements Parser<String>{
 						throw new Exception(f.type + " don't have " + ps.ident);
 					}
 					
-					if(f.refinement_type_clause!=null){//‚øå^
-						add_refinement_constraint(cs, f, ex, pre_ex, pre_f);
+					if(f.refinement_type_clause!=null&& !(cs.in_constructor && f.class_object != null && f.class_object.equals(cs.this_field, cs))){//‚øå^
+						add_refinement_constraint(cs, f, ex, pre_f, pre_ex);
 					}
 					
 					if(cs.in_refinement_predicate==true){//‚øå^ÇÃíÜÇ≈ÇÕfinalÇ≈Ç†ÇÈïKóvÇ™Ç†ÇÈ
@@ -472,11 +479,11 @@ public class postfix_expr implements Parser<String>{
 			//‚øå^
 			if(v.refinement_type_clause!=null){
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs));
+					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), f, ex);
 				}else{
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(cs, v, v.get_Expr(cs));
+						rt.assert_refinement(cs, v, v.get_Expr(cs), f, ex);
 					}else{
 						throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
 					}
@@ -554,11 +561,11 @@ public class postfix_expr implements Parser<String>{
 		cs.result = result;
 		if(result.refinement_type_clause!=null){
 			if(result.refinement_type_clause.refinement_type!=null){
-				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs));
+				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex);
 			}else{
 				refinement_type rt = cs.search_refinement_type(result.class_object.type, result.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.add_refinement_constraint(cs, result, result.get_Expr(cs));
+					rt.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex);
 				}else{
 					throw new Exception("can't find refinement type " + result.refinement_type_clause.ident);
 				}
@@ -590,29 +597,19 @@ public class postfix_expr implements Parser<String>{
 		return result;
 	}
 
-	void add_refinement_constraint(Check_status cs,Field f, Expr ex, Expr class_Expr, Field class_Field) throws Exception{
+	void add_refinement_constraint(Check_status cs,Field f, Expr ex, Field class_Field, Expr class_Expr) throws Exception{
 	    System.out.println(f.field_name + " has refinement type");
 
-	    //ÉoÉbÉNÉAÉbÉv
-	    Field refined_Field = cs.refined_Field;
-	    Expr refined_Expr = cs.refined_Expr;
-	    String refinement_type_value = cs.refinement_type_value;
-	    boolean in_refinement_predicate = cs.in_refinement_predicate;
-	    Expr refined_class_Expr = cs.refined_class_Expr;
-	    Field refined_class_Field = cs.refined_class_Field;
 	    
-	    //‚øå^ÇÃèàóùÇÃÇΩÇﬂÇÃéñëOèÄîı
-        cs.refined_class_Expr = class_Expr;
-        cs.refined_class_Field = class_Field;
 	        
 	    cs.refinement_deep++;
 	    if(cs.refinement_deep <= cs.refinement_deep_limmit){
 	        if(f.refinement_type_clause.refinement_type!=null){
-	            f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex);
+	            f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex, class_Field, class_Expr);
 	        }else if(f.refinement_type_clause.ident!=null){
 	        	refinement_type rt = cs.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
 	            if(rt!=null){
-	                rt.add_refinement_constraint(cs, f, ex);
+	                rt.add_refinement_constraint(cs, f, ex, class_Field, class_Expr);
 	            }else{
 	                throw new Exception("can't find refinement type " + f.refinement_type_clause.ident);
 	            }
@@ -621,13 +618,7 @@ public class postfix_expr implements Parser<String>{
 	        throw new Exception("The depth of refinement type's verification has reached its limit.");
 	    }
 	    
-	    cs.refined_Expr = refined_Expr;
-	    cs.refined_Field = refined_Field;
-	    cs.refinement_type_value = refinement_type_value;
-	    cs.in_refinement_predicate = in_refinement_predicate;
 	    
-	    cs.refined_class_Expr = refined_class_Expr;
-	    cs.refined_class_Field = refined_class_Field;
 	    cs.refinement_deep--;
 	}
 }

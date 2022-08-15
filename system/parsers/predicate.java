@@ -16,7 +16,7 @@ public class predicate implements Parser<String>{
 	}
 	
 	public BoolExpr check(Check_status cs) throws Exception{
-		return (BoolExpr)this.spec_expression.check(cs);
+		return (BoolExpr)this.spec_expression.check(cs).expr;
 	}
 	
 

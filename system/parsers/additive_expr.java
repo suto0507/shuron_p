@@ -6,6 +6,7 @@ import java.util.List;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -41,18 +42,20 @@ public class additive_expr implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
-			Expr expr =  this.mult_expr1.check(cs);
-			for(int i = 0; i < this.mult_exprs.size(); i++){
-				mult_expr me = this.mult_exprs.get(i);
-				String op = this.ops.get(i);
-				if(op.equals("+")){
-					expr = (IntExpr)cs.ctx.mkAdd((IntExpr)expr, (IntExpr)me.check(cs));
-				}else if(op.equals("-")){
-					expr = (IntExpr)cs.ctx.mkSub((IntExpr)expr, (IntExpr)me.check(cs));
-				}
+	public Check_return check(Check_status cs) throws Exception{
+		if(this.mult_exprs.size() == 0) return this.mult_expr1.check(cs);
+		
+		Expr expr =  this.mult_expr1.check(cs).expr;
+		for(int i = 0; i < this.mult_exprs.size(); i++){
+			mult_expr me = this.mult_exprs.get(i);
+			String op = this.ops.get(i);
+			if(op.equals("+")){
+				expr = (IntExpr)cs.ctx.mkAdd((IntExpr)expr, (IntExpr)me.check(cs).expr);
+			}else if(op.equals("-")){
+				expr = (IntExpr)cs.ctx.mkSub((IntExpr)expr, (IntExpr)me.check(cs).expr);
 			}
-			return expr;
+		}
+		return new Check_return(expr, null, null);
 	}
 
 }

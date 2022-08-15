@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -38,23 +39,23 @@ public class logical_and_expr implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		if(this.equality_exprs.size()==0){
 			return this.equality_expr.check(cs);
 		}else{
 			BoolExpr pre_pathcondition = cs.pathcondition;
 			
-			BoolExpr expr = (BoolExpr)equality_expr.check(cs);
+			BoolExpr expr = (BoolExpr)equality_expr.check(cs).expr;
 			cs.add_path_condition(expr);
 			
 			for(equality_expr ee : equality_exprs){
-				expr = cs.ctx.mkAnd(expr,(BoolExpr)ee.check(cs));
+				expr = cs.ctx.mkAnd(expr,(BoolExpr)ee.check(cs).expr);
 				cs.add_path_condition(expr);
 			}
 			
 			cs.pathcondition = pre_pathcondition;
 			
-			return expr;
+			return new Check_return(expr, null, null);
 		}
 	}
 	

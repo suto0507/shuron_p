@@ -3,6 +3,7 @@ package system.parsers;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -36,9 +37,9 @@ public class unary_expr  implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		if(unary_expr != null && op == "-"){
-			return (IntExpr)cs.ctx.mkSub((IntExpr)cs.ctx.mkInt(0), (IntExpr)unary_expr.check(cs));
+			return new Check_return(cs.ctx.mkSub((IntExpr)cs.ctx.mkInt(0), (IntExpr)(unary_expr.check(cs).expr)), null, null);
 		}else{
 			return postfix_expr.check(cs);
 		}

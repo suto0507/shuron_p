@@ -125,7 +125,7 @@ public class store_ref_expression implements Parser<String>{
 					}
 					
 				}else if(ps.is_index){
-					IntExpr index = (IntExpr) ps.spec_array_ref_expr.spec_expression.check(cs);
+					IntExpr index = (IntExpr) ps.spec_array_ref_expr.spec_expression.check(cs).expr;
 					ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
 					indexs.add(index);
 				}

@@ -43,7 +43,7 @@ public class local_declaration implements Parser<String>{
 		if(cs.search_variable(this.variable_decls.ident)==false){
 			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null);
 			if(this.implies_expr != null){
-				BoolExpr expr = cs.ctx.mkEq(cs.get_variable(this.variable_decls.ident).get_Expr_assign(cs), this.implies_expr.check(cs));
+				BoolExpr expr = cs.ctx.mkEq(cs.get_variable(this.variable_decls.ident).get_Expr_assign(cs), this.implies_expr.check(cs).expr);
 				cs.add_constraint(expr);
 				cs.get_variable(this.variable_decls.ident).temp_num++;
 				

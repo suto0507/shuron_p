@@ -8,6 +8,7 @@ import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Status;
 
+import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Pair;
@@ -44,7 +45,7 @@ public class assignment_expr implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		Field v = null;
 		Expr assign_expr = null;//左辺のExpr
 		Expr assign_expr_full = null;//左辺のExprのfullバージョン　篩型をもっていた時のために使う 返り値もこれ
@@ -93,7 +94,8 @@ public class assignment_expr implements Parser<String>{
 			v_class_object_expr = v.class_object_expr;
 			
 		}
-		Expr implies_tmp = this.implies_expr.check(cs);
+		Check_return rc = this.implies_expr.check(cs);
+		Expr implies_tmp = rc.expr;
 		if(this.postfix_expr != null){
 			//cs.add_assign(postfix_tmp, implies_tmp);
 			BoolExpr expr = cs.ctx.mkEq(assign_tmp_expr, implies_tmp);
@@ -118,9 +120,9 @@ public class assignment_expr implements Parser<String>{
 			
 
 			
-			return assign_expr_full;
+			return new Check_return(assign_expr_full, v, indexs);
 		}else{
-			return implies_tmp;
+			return rc;
 		}
 	}
 	

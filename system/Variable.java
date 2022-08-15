@@ -45,8 +45,6 @@ public class Variable extends Field{
 		if(this.type.equals("int")&&this.dims==0){
 			String ret = field_name + "_temp_" + this.id + "_" + this.temp_num;
 			return cs.ctx.mkIntConst(ret);
-			
-			
 		}else if(this.type.equals("boolean")&&this.dims==0){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			return cs.ctx.mkBoolConst(ret);

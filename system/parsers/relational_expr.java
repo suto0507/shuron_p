@@ -4,6 +4,7 @@ import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -79,21 +80,21 @@ public class relational_expr implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		if(this.additive_expr2==null){
 			return this.additive_expr1.check(cs);
 		}else{
 			BoolExpr expr = null;
 			if(this.op.equals("<=")){
-				expr = cs.ctx.mkLe((IntExpr)this.additive_expr1.check(cs),(IntExpr)this.additive_expr2.check(cs));
+				expr = cs.ctx.mkLe((IntExpr)this.additive_expr1.check(cs).expr,(IntExpr)this.additive_expr2.check(cs).expr);
 			}else if(this.op.equals(">=")){
-				expr = cs.ctx.mkGe((IntExpr)this.additive_expr1.check(cs),(IntExpr)this.additive_expr2.check(cs));
+				expr = cs.ctx.mkGe((IntExpr)this.additive_expr1.check(cs).expr,(IntExpr)this.additive_expr2.check(cs).expr);
 			}else if(this.op.equals("<")){
-				expr = cs.ctx.mkLt((IntExpr)this.additive_expr1.check(cs),(IntExpr)this.additive_expr2.check(cs));
+				expr = cs.ctx.mkLt((IntExpr)this.additive_expr1.check(cs).expr,(IntExpr)this.additive_expr2.check(cs).expr);
 			}else if(this.op.equals(">")){
-				expr = cs.ctx.mkGt((IntExpr)this.additive_expr1.check(cs),(IntExpr)this.additive_expr2.check(cs));
+				expr = cs.ctx.mkGt((IntExpr)this.additive_expr1.check(cs).expr,(IntExpr)this.additive_expr2.check(cs).expr);
 			}
-			return expr;
+			return new Check_return(expr, null, null);
 		}
 	}
 	

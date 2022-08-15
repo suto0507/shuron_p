@@ -2,6 +2,7 @@ package system.parsers;
 
 import com.microsoft.z3.Expr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -16,7 +17,7 @@ public class expression implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		System.out.println("/////// " + st);
 		return this.assignment_expr.check(cs);
 	}

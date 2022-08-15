@@ -1,6 +1,8 @@
 package system.parsers;
 
 
+import java.util.ArrayList;
+
 import com.microsoft.z3.*;
 
 import system.Check_status;
@@ -12,17 +14,30 @@ import system.Variable;
 
 public class refinement_type implements Parser<String>{
 	type type;
+	int dims;
 	String ident;
 	predicate predicate;
 	public String class_type_name;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st;
+		dims = 0;
 		st = new string("{").parse(s,ps);
 		st = st + new spaces().parse(s,ps);
 		this.type = new type();
 		st = st + type.parse(s,ps);
 		st = st + new spaces().parse(s,ps);
+		
+		Source s_backup = s.clone();
+		try{
+			dims ds = new dims();
+			st += ds.parse(s, ps);
+			this.dims = ds.dims;
+			st = st + new spaces().parse(s,ps);
+		}catch (Exception e){
+			s.revert(s_backup);
+		}
+		
 		this.ident = new ident().parse(s,ps);
 		st = st + this.ident;
 		st = st + new spaces().parse(s,ps);
@@ -192,6 +207,54 @@ public class refinement_type implements Parser<String>{
 				throw new Exception("can't find base type " + type.type);
 			}
 		}
+	}
+	
+	
+	//”z—ñ‚Ìâ¿Œ^“¯m‚Ì”äŠr
+	public void equal_predicate(ArrayList<IntExpr> indexs, Field class_Field, Expr class_Expr, refinement_type comparative_refinement_type, ArrayList<IntExpr> comparative_indexs, Field comparative_class_Field, Expr comparative_class_Expr, Check_status cs) throws Exception{
+		
+		Variable v = new Variable(cs.Check_status_share.get_tmp_num(), "tmp", this.type.type, this.dims, null, new modifiers(), class_Field );
+		v.temp_num++;
+		
+		Variable comparative_v = new Variable(cs.Check_status_share.get_tmp_num(), "comparative_tmp", comparative_refinement_type.type.type, comparative_refinement_type.dims, null, new modifiers(), comparative_class_Field );
+		comparative_v.temp_num++;
+		
+		//‚±‚ÌŒ^‚ğ‚Â•Ï”‚Ì’l‚ª•Ï‚í‚Á‚Ä‚à‘¼•û‚ÌqŒê‚Í–‚½‚³‚ê‚é
+		cs.solver.push();
+		
+		this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr);
+		
+		if(comparative_indexs.size() == 0){
+			cs.add_constraint(cs.ctx.mkEq(comparative_v.get_Expr(cs), v.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs)));
+			
+			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr);
+		}else{
+			comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr);
+			cs.add_constraint(cs.ctx.mkEq(comparative_v.get_Expr_assign(cs), comparative_v.assign_value(comparative_indexs, v.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs), cs)));
+			
+			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr_assign(cs), comparative_class_Field, comparative_class_Expr);
+		}
+		
+		cs.solver.pop();
+		
+		//‘¼•û‚Ìâ¿Œ^‚ğ‚Â•Ï”‚Ì’l‚ª•Ï‚í‚Á‚Ä‚à‚±‚ÌŒ^‚ÌqŒê‚Í–‚½‚³‚ê‚é
+		cs.solver.push();
+		
+		this.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr);
+		
+		if(indexs.size() == 0){
+			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), comparative_v.get_full_Expr((ArrayList<IntExpr>) comparative_indexs.clone(), cs)));
+			
+			this.assert_refinement(cs, v, v.get_Expr(cs), class_Field, class_Expr);
+		}else{
+			this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr);
+			cs.add_constraint(cs.ctx.mkEq(v.get_Expr_assign(cs), v.assign_value(indexs, comparative_v.get_full_Expr((ArrayList<IntExpr>) comparative_indexs.clone(), cs), cs)));
+			
+			this.assert_refinement(cs, v, v.get_Expr_assign(cs), class_Field, class_Expr);
+		}
+		
+		cs.solver.pop();
+
 	}
 
 }

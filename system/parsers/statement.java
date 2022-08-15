@@ -156,7 +156,7 @@ import system.Variable;
 			}else if(this.assert_statement!=null){
 				this.assert_statement.check(cs);
 			}else if(this.is_if){
-				BoolExpr pc = (BoolExpr)this.expression.check(cs);
+				BoolExpr pc = (BoolExpr)this.expression.check(cs).expr;
 
 				Check_status cs_then = cs.clone();
 				this.refresh_list(cs_then);
@@ -265,7 +265,7 @@ import system.Variable;
 			}else if(this.def_type_clause!=null){
 				cs.local_refinements.add(new Pair<String,refinement_type>(this.def_type_clause.ident,this.def_type_clause.refinement_type));
 			}else if(this.is_return){
-				cs.return_exprs.add(this.expression.check(cs));
+				cs.return_exprs.add(this.expression.check(cs).expr);
 				cs.return_pathconditions.add(cs.pathcondition);
 				
 				cs.after_return = true;
@@ -279,12 +279,12 @@ import system.Variable;
 
 				//local_declarationの処理
 				Variable v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
-				BoolExpr enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop);
+				BoolExpr enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
 				
 				
 				//PCにループに入る条件を加える
 				System.out.println("loop init condition");
-				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
+				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);
 				
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 					BoolExpr ex = li.predicate.check(cs_loop);
@@ -301,7 +301,7 @@ import system.Variable;
 				
 				//中身の初期条件
 				System.out.println("a loop pre condition");
-				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
+				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 					BoolExpr ex = li.predicate.check(cs_loop);
 					cs_loop.add_constraint(ex);
@@ -358,7 +358,7 @@ import system.Variable;
 				}
 				
 				//ループ出た後の条件
-				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop));
+				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);
 				
 				BoolExpr pre_pathcondition = cs.pathcondition;
 				

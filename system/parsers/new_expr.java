@@ -135,7 +135,7 @@ public class new_expr implements Parser<String>{
 				cs.called_method_args.add(v);
 				v.temp_num = 0;
 				//ˆø”‚É’l‚ğ•R‚Ã‚¯‚é
-				cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), ps.expression_list.expressions.get(j).check(cs)));
+				cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), ps.expression_list.expressions.get(j).check(cs).expr));
 				//â¿Œ^
 				if(v.refinement_type_clause!=null){
 					if(v.refinement_type_clause.refinement_type!=null){

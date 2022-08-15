@@ -9,6 +9,7 @@ import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Status;
 
+import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Pair;
@@ -43,7 +44,7 @@ public class postfix_expr implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		Expr ex = null;
 		
 		Field f = null;
@@ -147,12 +148,10 @@ public class postfix_expr implements Parser<String>{
 				}
 			}
 		}else if(this.primary_expr.bracket_expression!=null){
-			if(this.primary_suffixs.size() == 0){
-				ex = this.primary_expr.bracket_expression.check(cs);
-			}else{
-				//たぶん厳しい
-				
-			}
+			Check_return cr = this.primary_expr.bracket_expression.check(cs);
+			f = cr.field;
+			ex = cr.expr;
+			indexs = cr.indexs;
 		}else if(this.primary_expr.java_literal!=null){
 			if(this.primary_suffixs.size() == 0){
 				ex = this.primary_expr.java_literal.check(cs);
@@ -166,8 +165,10 @@ public class postfix_expr implements Parser<String>{
 					f = cs.result;
 					ex = f.get_Expr(cs);
 				}else if(this.primary_expr.jml_primary.old_expression!=null){
-					//これもかっこと同じ理由で厳しい
-					ex = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.old_status);
+					Check_return cr = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.old_status);
+					f = cr.field;
+					ex = cr.expr;
+					indexs = cr.indexs;
 				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
 					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
 					if(this.primary_suffixs.size() != 0) throw new Exception("quantifier don't have suffix");
@@ -178,8 +179,10 @@ public class postfix_expr implements Parser<String>{
 					ex = cs.return_expr;
 					//return ex;
 				}else if(this.primary_expr.jml_primary.old_expression!=null){
-					//これもかっこと同じ理由で厳しい
-					ex = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.this_old_status);
+					Check_return cr = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.this_old_status);
+					f = cr.field;
+					ex = cr.expr;
+					indexs = cr.indexs;
 				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
 					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
 					if(this.primary_suffixs.size() != 0) throw new Exception("quantifier don't have suffix");
@@ -259,7 +262,7 @@ public class postfix_expr implements Parser<String>{
 				}
 				
 			}else if(ps.is_index){
-				IntExpr index =  (IntExpr) ps.expression.check(cs);
+				IntExpr index =  (IntExpr) ps.expression.check(cs).expr;
 				//配列のbound check
 				int array_dim = f.dims_sum() - indexs.size();
 				String array_type;
@@ -297,7 +300,7 @@ public class postfix_expr implements Parser<String>{
 		}
 
 		
-		return ex;
+		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs);
 	}
 	
 	public Field check_assign(Check_status cs) throws Exception{
@@ -386,7 +389,7 @@ public class postfix_expr implements Parser<String>{
 					
 					
 				}else if(ps.is_index){
-					IntExpr index = (IntExpr)ps.expression.check(cs);
+					IntExpr index = (IntExpr)ps.expression.check(cs).expr;
 					
 					//配列のbound check
 					int array_dim = f.dims_sum() - indexs.size();
@@ -453,7 +456,7 @@ public class postfix_expr implements Parser<String>{
 		//引数の処理
 		List<Expr> method_arg_valuse = new ArrayList<Expr>();
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
-			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
+			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs).expr);
 		}
 		
 		//関数内の処理

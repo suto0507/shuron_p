@@ -36,7 +36,7 @@ public class array_decl implements Parser<String>{
 	public ArrayList<IntExpr> check(Check_status cs) throws Exception{
 		ArrayList<IntExpr> exprs = new ArrayList<IntExpr>();
 		for(expression e : expressions){
-			IntExpr ex = (IntExpr)e.check(cs);
+			IntExpr ex = (IntExpr)e.check(cs).expr;
 			exprs.add(ex);
 		}
 		

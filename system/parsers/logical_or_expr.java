@@ -6,6 +6,7 @@ import java.util.List;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -39,15 +40,15 @@ public class logical_or_expr implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		if(this.logical_and_exprs.size()==0){
 			return this.logical_and_expr.check(cs);
 		}else{
-			BoolExpr expr = (BoolExpr)logical_and_expr.check(cs);
+			BoolExpr expr = (BoolExpr)logical_and_expr.check(cs).expr;
 			for(logical_and_expr lae : logical_and_exprs){
-				expr = cs.ctx.mkAnd(expr,(BoolExpr)lae.check(cs));
+				expr = cs.ctx.mkAnd(expr,(BoolExpr)lae.check(cs).expr);
 			}
-			return expr;
+			return new Check_return(expr, null, null);
 		}
 	}
 	

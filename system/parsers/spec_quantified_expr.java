@@ -96,7 +96,7 @@ public class spec_quantified_expr implements Parser<String>{
 		BoolExpr pre_pathcondition = cs.pathcondition;
 		cs.add_path_condition(guard);
 		
-		BoolExpr body = (BoolExpr) this.body.check(cs);
+		BoolExpr body = (BoolExpr) this.body.check(cs).expr;
 		
 		cs.pathcondition = pre_pathcondition;
 		

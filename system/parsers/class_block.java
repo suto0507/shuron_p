@@ -85,7 +85,6 @@ public class class_block implements Parser<String>{
 		
 		for(method_decl method :method_decls){
 			Check_status csc =  cs.clone();
-			csc.clone_list();
 			csc.solver = csc.ctx.mkSolver();
 			
 			csc.return_exprs = new ArrayList<Expr>();

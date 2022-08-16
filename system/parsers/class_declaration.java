@@ -39,7 +39,6 @@ public class class_declaration implements Parser<String>{
 	public void check(Check_status cs, Summery summery) throws Exception{
 		System.out.println("Verify class " + this.class_name);
 		Check_status csc =  cs.clone();
-		csc.clone_list();
 		modifiers m = new modifiers();
 		m.is_final = true;
 		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", this.class_name, 0, null, m, null );

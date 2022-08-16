@@ -267,13 +267,14 @@ public class Check_status {
 		return cs;
 	}
 	
+	
+	// \old‚Æ‚©‚Åg‚¤A•Ï”“™‚Ì•Û‘¶—p
 	public void clone_list() throws Exception{
 		if(this.variables!=null){
 			List<Variable> v_tmp = this.variables;
 			this.variables = new ArrayList<Variable>();
 			for(Variable v : v_tmp){
 				Variable new_v = v.clone_e();
-				new_v.id = this.Check_status_share.get_tmp_num();
 				this.variables.add(new_v);
 			}
 		}
@@ -283,7 +284,6 @@ public class Check_status {
 			this.fields = new ArrayList<Field>();
 			for(Field f : f_tmp){
 				Field new_f = f.clone_e();
-				new_f.id = this.Check_status_share.get_tmp_num();
 				this.fields.add(new_f);
 			}
 		}
@@ -293,7 +293,6 @@ public class Check_status {
 			this.called_method_args = new ArrayList<Variable>();
 			for(Variable v : v_tmp){
 				Variable new_v = v.clone_e();
-				new_v.id = this.Check_status_share.get_tmp_num();
 				this.called_method_args.add(new_v);
 			}
 		}

@@ -59,7 +59,10 @@ public class equality_expr implements Parser<String>{
 		}
 	}
 	
-
+	public boolean have_index_access(Check_status cs){
+ 		if(this.relational_expr2!=null) return relational_expr1.have_index_access(cs) || relational_expr2.have_index_access(cs);
+		return relational_expr1.have_index_access(cs);
+	}
 
 	
 }

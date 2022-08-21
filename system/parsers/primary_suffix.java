@@ -1,5 +1,6 @@
 package system.parsers;
 
+import system.Check_status;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -59,5 +60,9 @@ public class primary_suffix implements Parser<String>{
 		
 		return st;
 	}
-
+	
+	public boolean have_index_access(Check_status cs){
+		if(is_index) return true;
+		return false;
+	}
 }

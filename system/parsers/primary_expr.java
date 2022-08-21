@@ -74,5 +74,17 @@ public class primary_expr implements Parser<String>{
 		return st;
 	}
 	
-	
+	public boolean have_index_access(Check_status cs){
+		if(java_literal!=null){
+			return false;
+		}else if(bracket_expression!=null){
+			return this.bracket_expression.assignment_expr.have_index_access(cs);
+		}else if(new_expr != null){
+			return false;
+		}else if(jml_primary != null){
+			return jml_primary.have_index_access(cs);
+		}else{//ident‚©this
+			return false;
+		}
+	}
 }

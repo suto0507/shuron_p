@@ -102,7 +102,9 @@ public class assignment_expr implements Parser<String>{
 			cs.add_constraint(expr);
 			//refinement_type
 			
-			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
+			
+			
+			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){//⿌^
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_expr_full, v.class_object, v_class_object_expr);
 				}else if(v.refinement_type_clause.ident!=null){
@@ -126,6 +128,10 @@ public class assignment_expr implements Parser<String>{
 		}
 	}
 	
+	public boolean have_index_access(Check_status cs){
+ 		if(this.postfix_expr!=null) return implies_expr.have_index_access(cs) || postfix_expr.have_index_access(cs);
+		return implies_expr.have_index_access(cs);
+	}
 
 		
 }

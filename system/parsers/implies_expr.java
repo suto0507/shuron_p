@@ -52,5 +52,8 @@ public class implies_expr implements Parser<String>{
 		}
 	}
 	
-
+	public boolean have_index_access(Check_status cs){
+ 		if(this.implies_expr!=null) return logical_or_expr.have_index_access(cs) || implies_expr.have_index_access(cs);
+		return logical_or_expr.have_index_access(cs);
+	}
 }

@@ -19,6 +19,10 @@ public class predicate implements Parser<String>{
 		return (BoolExpr)this.spec_expression.check(cs).expr;
 	}
 	
+	
+	public boolean have_index_access(Check_status cs){
+		return spec_expression.have_index_access(cs);
+	}
 
 }
 

@@ -16,6 +16,11 @@ public class Variable extends Field{
 	Field class_object; //Variableでは、篩型のスコープ関連で使ったりする
 	*/
 	
+	
+		
+	BoolExpr alias;
+	BoolExpr alias_refined;
+	
 	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object) throws Exception{
 		this.id = id;
 		this.temp_num = - 1;

@@ -57,6 +57,13 @@ public class additive_expr implements Parser<String>{
 		}
 		return new Check_return(expr, null, null);
 	}
-
+	
+	public boolean have_index_access(Check_status cs){
+		boolean have = mult_expr1.have_index_access(cs);
+		for(mult_expr me : mult_exprs){
+			have = have || me.have_index_access(cs);
+		}
+		return have;
+	}
 }
 

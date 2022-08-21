@@ -1,5 +1,6 @@
 package system.parsers;
 
+import system.Check_status;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -42,6 +43,17 @@ public class jml_primary implements Parser<String>{
 		return st;
 	}
 	
-
+	public boolean have_index_access(Check_status cs){
+		if(is_result){
+			return false;
+		}else if(old_expression!=null){
+			return old_expression.spec_expression.expression.have_index_access(cs);
+		}else if(spec_quantified_expr!=null){
+			return spec_quantified_expr.guard.have_index_access(cs) || spec_quantified_expr.body.have_index_access(cs);
+		}
+		
+		return false;
+		
+	}
 	
 }

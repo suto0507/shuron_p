@@ -624,5 +624,13 @@ public class postfix_expr implements Parser<String>{
 	    
 	    cs.refinement_deep--;
 	}
+	
+	public boolean have_index_access(Check_status cs){
+		boolean have = primary_expr.have_index_access(cs);
+		for(primary_suffix ps : primary_suffixs){
+			have = have || ps.have_index_access(cs);
+		}
+		return have;
+	}
 }
 

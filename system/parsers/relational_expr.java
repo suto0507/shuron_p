@@ -98,7 +98,10 @@ public class relational_expr implements Parser<String>{
 		}
 	}
 	
-
+	public boolean have_index_access(Check_status cs){
+ 		if(this.additive_expr2!=null) return additive_expr1.have_index_access(cs) || additive_expr2.have_index_access(cs);
+		return additive_expr1.have_index_access(cs);
+	}
 	
 	
 }

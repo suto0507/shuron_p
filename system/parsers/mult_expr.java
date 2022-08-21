@@ -70,7 +70,13 @@ public class mult_expr implements Parser<String>{
 
 	}
 	
-	
+	public boolean have_index_access(Check_status cs){
+		boolean have = unary_expr1.have_index_access(cs);
+		for(unary_expr ue : unary_exprs){
+			have = have || ue.have_index_access(cs);
+		}
+		return have;
+	}
 	
 }
 

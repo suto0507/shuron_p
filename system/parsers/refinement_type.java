@@ -95,7 +95,7 @@ public class refinement_type implements Parser<String>{
 		}else if(this.type.type.equals(refined_Field.type)){
 			//ƒNƒ‰ƒXŒ^
 		}else{
-			refinement_type rt = cs.search_refinement_type(refined_Field.class_object.type, type.type);
+			refinement_type rt = cs.search_refinement_type(this.class_type_name, type.type);
 			if(rt!=null){
 				rt.assert_refinement(cs, refined_Field, refined_Expr, class_Field, class_Expr);
 			}else{
@@ -158,7 +158,7 @@ public class refinement_type implements Parser<String>{
 		}else if(this.type.type.equals(refined_Field.type)){
 			//ƒNƒ‰ƒXŒ^
 		}else{
-			refinement_type rt = cs.search_refinement_type(refined_Field.class_object.type, type.type);
+			refinement_type rt = cs.search_refinement_type(this.class_type_name, type.type);
 			if(rt!=null){
 				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Field, class_Expr);
 			}else{
@@ -254,6 +254,18 @@ public class refinement_type implements Parser<String>{
 		}
 		
 		cs.solver.pop();
+
+	}
+	
+	public boolean have_index_access(Check_status cs){
+		boolean have = predicate.have_index_access(cs);
+		
+		refinement_type rt = cs.search_refinement_type(class_type_name, type.type);
+		if(rt!=null){
+			return have || rt.have_index_access(cs);
+		}else{
+			return have;
+		}
 
 	}
 

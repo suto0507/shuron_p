@@ -22,6 +22,8 @@ public class expression implements Parser<String>{
 		return this.assignment_expr.check(cs);
 	}
 	
-
+	public boolean have_index_access(Check_status cs){
+		return assignment_expr.have_index_access(cs);
+	}
 
 }

@@ -52,6 +52,12 @@ public class logical_or_expr implements Parser<String>{
 		}
 	}
 	
-
+	public boolean have_index_access(Check_status cs){
+		boolean have = logical_and_expr.have_index_access(cs);
+		for(logical_and_expr lae : logical_and_exprs){
+			have = have || lae.have_index_access(cs);
+		}
+		return have;
+	}
 }
 

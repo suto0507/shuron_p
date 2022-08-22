@@ -18,8 +18,8 @@ public class Variable extends Field{
 	
 	
 		
-	BoolExpr alias;
-	BoolExpr alias_refined;
+	public BoolExpr alias;
+	public BoolExpr alias_refined;
 	
 	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object) throws Exception{
 		this.id = id;

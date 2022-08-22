@@ -103,8 +103,85 @@ public class assignment_expr implements Parser<String>{
 			//refinement_type
 			
 			
+			//”z—ñ‚Ìâ¿Œ^‚ªˆÀ‘S‚©‚Ç‚¤‚©
+			if(rc.field.dims>0 && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
+				if(v.dims>0 && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//‚Ç‚Á‚¿‚àâ¿Œ^‚ğ‚Â”z—ñ
+					rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, v.class_object, v_class_object_expr, cs);
+				}else if(v instanceof Variable){//ƒ[ƒJƒ‹•Ï”
+					Expr alias;
+					if(((Variable) v).alias != null){
+						alias = cs.ctx.mkBool(false);
+					}else{
+						alias = ((Variable) v).alias;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias));
+					
+					Expr alias_refined;
+					if(((Variable) v).alias_refined != null){
+						alias_refined = cs.ctx.mkBool(false);
+					}else{
+						alias_refined = ((Variable) v).alias_refined;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+					
+					if(((Variable) v).alias_refined != null){
+						((Variable) v).alias_refined = cs.pathcondition;
+					}else{
+						((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, cs.pathcondition);
+					}
+				}else{//â¿Œ^‚ÌˆÀ‘S‚ğ•ÛØ‚Å‚«‚È‚¢‚æ‚¤‚È‘å“ü
+					throw new Exception("can not alias with refined array");
+				}
+			}else if(v.dims>0 && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
+				if(rc.field instanceof Variable){//ƒ[ƒJƒ‹•Ï”
+					Expr alias;
+					if(((Variable) rc.field).alias != null){
+						alias = cs.ctx.mkBool(false);
+					}else{
+						alias = ((Variable) rc.field).alias;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias));
+					
+					Expr alias_refined;
+					if(((Variable) rc.field).alias_refined != null){
+						alias_refined = cs.ctx.mkBool(false);
+					}else{
+						alias_refined = ((Variable) rc.field).alias_refined;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+					
+					if(((Variable) rc.field).alias_refined != null){
+						((Variable) rc.field).alias_refined = cs.pathcondition;
+					}else{
+						((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, cs.pathcondition);
+					}
+				}else{//â¿Œ^‚ÌˆÀ‘S‚ğ•ÛØ‚Å‚«‚È‚¢‚æ‚¤‚È‘å“ü
+					throw new Exception("can not alias with refined array");
+				}	
+			}else if(rc.field instanceof Variable){//ƒ[ƒJƒ‹•Ï”
+				Expr alias_refined;
+				if(((Variable) rc.field).alias_refined != null){
+					alias_refined = cs.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) rc.field).alias_refined;
+				}
+				
+				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+				
+				if(((Variable) rc.field).alias != null){
+					((Variable) rc.field).alias = cs.pathcondition;
+				}else{
+					((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+				}
+			}
 			
-			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){//â¿Œ^
+			
+			//â¿Œ^‚ÌŒŸØ
+			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_expr_full, v.class_object, v_class_object_expr);
 				}else if(v.refinement_type_clause.ident!=null){

@@ -104,10 +104,10 @@ public class assignment_expr implements Parser<String>{
 			
 			
 			//配列の篩型が安全かどうか
-			if(rc.field.dims>0 && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
-				if(v.dims>0 && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
+			if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
+				if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
 					rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, v.class_object, v_class_object_expr, cs);
-				}else if(v instanceof Variable){//ローカル変数
+				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
 					Expr alias;
 					if(((Variable) v).alias != null){
 						alias = cs.ctx.mkBool(false);
@@ -134,8 +134,8 @@ public class assignment_expr implements Parser<String>{
 				}else{//篩型の安全を保証できないような大入
 					throw new Exception("can not alias with refined array");
 				}
-			}else if(v.dims>0 && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
-				if(rc.field instanceof Variable){//ローカル変数
+			}else if(v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
+				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
 					Expr alias;
 					if(((Variable) rc.field).alias != null){
 						alias = cs.ctx.mkBool(false);
@@ -162,7 +162,7 @@ public class assignment_expr implements Parser<String>{
 				}else{//篩型の安全を保証できないような大入
 					throw new Exception("can not alias with refined array");
 				}	
-			}else if(rc.field instanceof Variable){//ローカル変数
+			}else if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
 				Expr alias_refined;
 				if(((Variable) rc.field).alias_refined != null){
 					alias_refined = cs.ctx.mkBool(false);
@@ -176,6 +176,21 @@ public class assignment_expr implements Parser<String>{
 					((Variable) rc.field).alias = cs.pathcondition;
 				}else{
 					((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+				}
+			}else if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
+				Expr alias_refined;
+				if(((Variable) v).alias_refined != null){
+					alias_refined = cs.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) v).alias_refined;
+				}
+				
+				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+				
+				if(((Variable) v).alias != null){
+					((Variable) v).alias = cs.pathcondition;
+				}else{
+					((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
 				}
 			}
 			

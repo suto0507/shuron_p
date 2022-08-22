@@ -454,9 +454,9 @@ public class postfix_expr implements Parser<String>{
 		
 		
 		//引数の処理
-		List<Expr> method_arg_valuse = new ArrayList<Expr>();
+		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
-			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs).expr);
+			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
 		}
 		
 		//関数内の処理
@@ -478,8 +478,101 @@ public class postfix_expr implements Parser<String>{
 			cs.called_method_args.add(v);
 			v.temp_num = 0;
 			//引数に値を紐づける
-			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j)));
-			//篩型
+			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
+			
+			//配列の篩型が安全かどうか
+			if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field.refinement_type_clause!=null && method_arg_valuse.get(j).field.refinement_type_clause.have_index_access(method_arg_valuse.get(j).field.class_object.type, cs)){
+				if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
+					method_arg_valuse.get(j).field.refinement_type_clause.equal_predicate(method_arg_valuse.get(j).indexs, method_arg_valuse.get(j).field.class_object, method_arg_valuse.get(j).field.class_object.get_full_Expr(method_arg_valuse.get(j).indexs, cs), v.refinement_type_clause, indexs, v.class_object, ex, cs);
+				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
+					Expr alias;
+					if(((Variable) v).alias != null){
+						alias = cs.ctx.mkBool(false);
+					}else{
+						alias = ((Variable) v).alias;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias));
+					
+					Expr alias_refined;
+					if(((Variable) v).alias_refined != null){
+						alias_refined = cs.ctx.mkBool(false);
+					}else{
+						alias_refined = ((Variable) v).alias_refined;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+					
+					if(((Variable) v).alias_refined != null){
+						((Variable) v).alias_refined = cs.pathcondition;
+					}else{
+						((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, cs.pathcondition);
+					}
+				}else{//篩型の安全を保証できないような大入
+					throw new Exception("can not alias with refined array");
+				}
+			}else if(v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
+				if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field instanceof Variable){//ローカル変数
+					Expr alias;
+					if(((Variable) method_arg_valuse.get(j).field).alias != null){
+						alias = cs.ctx.mkBool(false);
+					}else{
+						alias = ((Variable) method_arg_valuse.get(j).field).alias;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias));
+					
+					Expr alias_refined;
+					if(((Variable) method_arg_valuse.get(j).field).alias_refined != null){
+						alias_refined = cs.ctx.mkBool(false);
+					}else{
+						alias_refined = ((Variable) method_arg_valuse.get(j).field).alias_refined;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+					
+					if(((Variable) method_arg_valuse.get(j).field).alias_refined != null){
+						((Variable) method_arg_valuse.get(j).field).alias_refined = cs.pathcondition;
+					}else{
+						((Variable) method_arg_valuse.get(j).field).alias_refined = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias_refined, cs.pathcondition);
+					}
+				}else{//篩型の安全を保証できないような大入
+					throw new Exception("can not alias with refined array");
+				}	
+			}else if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field instanceof Variable){//ローカル変数
+				Expr alias_refined;
+				if(((Variable) method_arg_valuse.get(j).field).alias_refined != null){
+					alias_refined = cs.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) method_arg_valuse.get(j).field).alias_refined;
+				}
+				
+				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+				
+				if(((Variable) method_arg_valuse.get(j).field).alias != null){
+					((Variable) method_arg_valuse.get(j).field).alias = cs.pathcondition;
+				}else{
+					((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, cs.pathcondition);
+				}
+			}else if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
+				Expr alias_refined;
+				if(((Variable) v).alias_refined != null){
+					alias_refined = cs.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) v).alias_refined;
+				}
+				
+				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+				
+				if(((Variable) v).alias != null){
+					((Variable) v).alias = cs.pathcondition;
+				}else{
+					((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+				}
+			}
+			
+			
+			//篩型の検証
 			if(v.refinement_type_clause!=null){
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), f, ex);

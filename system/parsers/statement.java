@@ -5,7 +5,9 @@ import java.util.List;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.IntExpr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Pair;
@@ -265,7 +267,62 @@ import system.Variable;
 			}else if(this.def_type_clause!=null){
 				cs.local_refinements.add(new Pair<String,refinement_type>(this.def_type_clause.ident,this.def_type_clause.refinement_type));
 			}else if(this.is_return){
-				cs.return_exprs.add(this.expression.check(cs).expr);
+				
+				//配列の篩型が安全かどうか
+				Check_return rc = this.expression.check(cs);
+				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
+					if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){//どっちも篩型を持つ配列
+						rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), cs.return_v.refinement_type_clause, new ArrayList<IntExpr>(), cs.return_v.class_object, cs.this_field.get_Expr(cs), cs);
+					}else{//篩型の安全を保証できないような大入
+						throw new Exception("can not alias with refined array");
+					}
+				}else if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){
+					if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
+						Expr alias;
+						if(((Variable) rc.field).alias != null){
+							alias = cs.ctx.mkBool(false);
+						}else{
+							alias = ((Variable) rc.field).alias;
+						}
+						
+						cs.assert_constraint(cs.ctx.mkNot(alias));
+						
+						Expr alias_refined;
+						if(((Variable) rc.field).alias_refined != null){
+							alias_refined = cs.ctx.mkBool(false);
+						}else{
+							alias_refined = ((Variable) rc.field).alias_refined;
+						}
+						
+						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+						
+						if(((Variable) rc.field).alias_refined != null){
+							((Variable) rc.field).alias_refined = cs.pathcondition;
+						}else{
+							((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, cs.pathcondition);
+						}
+					}else{//篩型の安全を保証できないような大入
+						throw new Exception("can not alias with refined array");
+					}	
+				}else if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
+					Expr alias_refined;
+					if(((Variable) rc.field).alias_refined != null){
+						alias_refined = cs.ctx.mkBool(false);
+					}else{
+						alias_refined = ((Variable) rc.field).alias_refined;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+					
+					if(((Variable) rc.field).alias != null){
+						((Variable) rc.field).alias = cs.pathcondition;
+					}else{
+						((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+					}
+				}
+				
+				//返す値
+				cs.return_exprs.add(rc.expr);
 				cs.return_pathconditions.add(cs.pathcondition);
 				
 				cs.after_return = true;

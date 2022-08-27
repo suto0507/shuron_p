@@ -18,25 +18,26 @@ public class dim_exprs  implements Parser<String>{
 		
 		String st = new string("[").parse(s, ps);
 		st += new spaces().parse(s, ps);
-		expression e = new expression();
-		st +=e.parse(s, ps);
+		expression ex = new expression();
+		st +=ex.parse(s, ps);
 		st += new spaces().parse(s, ps);
 		st += new string("]").parse(s, ps);
 		dims = 1;
-		expressions.add(e);
+		expressions.add(ex);
 		
 		Source  s_backup = s.clone();
 		try {
 			while(true){
+				s_backup = s.clone();
 				String st2 = new spaces().parse(s, ps);
 				st2 += new string("[").parse(s, ps);
 				st2 += new spaces().parse(s, ps);
-				expression e2 = new expression();
-				st2 +=e.parse(s, ps);
+				expression ex2 = new expression();
+				st2 +=ex2.parse(s, ps);
 				st2 += new spaces().parse(s, ps);
 				st2 += new string("]").parse(s, ps);
 				dims++;
-				expressions.add(e);
+				expressions.add(ex2);
 				st += st2;
 			}
 		}catch (Exception e2){

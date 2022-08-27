@@ -14,6 +14,7 @@ public class dims implements Parser<String>{
 		Source  s_backup = s.clone();
 		try {
 			while(true){
+				s_backup = s.clone();
 				st += new string("[]").parse(s, ps);
 				dims++;
 			}

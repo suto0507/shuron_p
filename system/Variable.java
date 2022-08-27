@@ -21,6 +21,8 @@ public class Variable extends Field{
 	public BoolExpr alias;
 	public BoolExpr alias_refined;
 	
+	
+	
 	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object) throws Exception{
 		this.id = id;
 		this.temp_num = - 1;
@@ -30,9 +32,7 @@ public class Variable extends Field{
 		this.refinement_type_clause = refinement_type_clause;
 		this.modifiers = modifiers;
 		this.class_object = class_object;
-		if(this.dims>0 && this.refinement_type_clause!=null){
-			throw new Exception("Cannot use refinement type for array");
-		}
+		this.new_array = false;
 	}
 	
 	public Variable(){}

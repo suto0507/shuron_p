@@ -279,7 +279,7 @@ import system.Variable;
 				}else if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){
 					if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
 						Expr alias;
-						if(((Variable) rc.field).alias != null){
+						if(((Variable) rc.field).alias == null){
 							alias = cs.ctx.mkBool(false);
 						}else{
 							alias = ((Variable) rc.field).alias;
@@ -288,7 +288,7 @@ import system.Variable;
 						cs.assert_constraint(cs.ctx.mkNot(alias));
 						
 						Expr alias_refined;
-						if(((Variable) rc.field).alias_refined != null){
+						if(((Variable) rc.field).alias_refined == null){
 							alias_refined = cs.ctx.mkBool(false);
 						}else{
 							alias_refined = ((Variable) rc.field).alias_refined;
@@ -296,17 +296,18 @@ import system.Variable;
 						
 						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 						
-						if(((Variable) rc.field).alias_refined != null){
+						/*
+						if(((Variable) rc.field).alias_refined == null){
 							((Variable) rc.field).alias_refined = cs.pathcondition;
 						}else{
 							((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, cs.pathcondition);
-						}
+						}*/
 					}else{//篩型の安全を保証できないような大入
 						throw new Exception("can not alias with refined array");
 					}	
 				}else if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
 					Expr alias_refined;
-					if(((Variable) rc.field).alias_refined != null){
+					if(((Variable) rc.field).alias_refined == null){
 						alias_refined = cs.ctx.mkBool(false);
 					}else{
 						alias_refined = ((Variable) rc.field).alias_refined;
@@ -314,11 +315,12 @@ import system.Variable;
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(((Variable) rc.field).alias != null){
+					/*
+					if(((Variable) rc.field).alias == null){
 						((Variable) rc.field).alias = cs.pathcondition;
 					}else{
 						((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
-					}
+					}*/
 				}
 				
 				//返す値

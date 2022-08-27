@@ -31,7 +31,7 @@ public class new_expr implements Parser<String>{
 		this.new_suffix = new new_suffix();
 		st = st + this.new_suffix.parse(s, ps);
 		if(ps.in_jml){
-			throw new Exception("cant use new in jml");
+			throw new Exception("can't use new in jml");
 		}	
 		return st;
 	}
@@ -41,12 +41,13 @@ public class new_expr implements Parser<String>{
 			Variable ret = null;
 			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, this.new_suffix.array_decl.dims, null, new modifiers(), cs.this_field);
 			ret.temp_num++;
+			ret.new_array = true;
 			
-			
-			
+
 			List<IntExpr> lengths = this.new_suffix.array_decl.check(cs);
 			
-			IntExpr[] tmps = new IntExpr[lengths.size()];
+			IntExpr[] tmps = new IntExpr[lengths.size()-1];
+			IntExpr[] tmps_full = new IntExpr[this.new_suffix.array_decl.dims];
 			ArrayList<IntExpr> tmp_list = new ArrayList<IntExpr>();
 			BoolExpr guard = null;
 			BoolExpr length_cnst = null;
@@ -73,25 +74,56 @@ public class new_expr implements Parser<String>{
 					length_cnst = cs.ctx.mkAnd(length_cnst, cs.ctx.mkEq(length, lengths.get(i)));
 				}
 				
-				if(i == lengths.size() - 1){//最後は次のループがないのでいらない
-					IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
-					tmps[i] = index;
-					tmp_list.add(index);
-					//インデックスの範囲のガード 
+				
+				
+				IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
+				
+				if(i == lengths.size() - 1){//最後のループで制約を追加
+					BoolExpr expr;
 					if(guard == null){
-						guard = cs.ctx.mkAnd(cs.ctx.mkGe(index, cs.ctx.mkInt(0)), cs.ctx.mkGt(lengths.get(i), index));
+						expr = length_cnst;
+						cs.add_constraint(expr);
 					}else{
-						guard = cs.ctx.mkAnd(guard, cs.ctx.mkAnd(cs.ctx.mkGe(index, cs.ctx.mkInt(0)), cs.ctx.mkGt(lengths.get(i), index)));
+						expr = cs.ctx.mkImplies(guard, length_cnst);
+						cs.add_constraint(cs.ctx.mkForall(tmps, expr, 1, null, null, null, null));
 					}
 					
-					//次のex
-					ex = ret.get_full_Expr((ArrayList<IntExpr>) tmp_list.clone(), cs);
+					
+				}else{
+					tmps[i] = index;
 				}
+				
+				tmps_full[i] = index;
+				tmp_list.add(index);
+				//インデックスの範囲のガード 
+				if(guard == null){
+					guard = cs.ctx.mkAnd(cs.ctx.mkGe(index, cs.ctx.mkInt(0)), cs.ctx.mkGt(lengths.get(i), index));
+				}else{
+					guard = cs.ctx.mkAnd(guard, cs.ctx.mkAnd(cs.ctx.mkGe(index, cs.ctx.mkInt(0)), cs.ctx.mkGt(lengths.get(i), index)));
+				}
+				
+				//次のex
+				ex = ret.get_full_Expr((ArrayList<IntExpr>) tmp_list.clone(), cs);
+				
 			}
 			
-			BoolExpr expr = cs.ctx.mkImplies(guard, length_cnst);
-			cs.add_constraint(cs.ctx.mkForall(tmps, expr, 1, null, null, null, null));
 			
+			
+			
+			//配列の初期値についての制約
+			for(int i = lengths.size(); i < this.new_suffix.array_decl.dims; i++){
+				IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
+				tmps_full[i] = index;
+				tmp_list.add(index);
+			}
+			
+			if(this.type.type.equals("int")){
+				BoolExpr value_cnst = cs.ctx.mkEq(cs.ctx.mkInt(0), ret.get_full_Expr(tmp_list, cs));
+				cs.add_constraint(cs.ctx.mkForall(tmps_full, cs.ctx.mkImplies(guard, value_cnst), 1, null, null, null, null));
+			}else if(this.type.type.equals("boolean")){
+				BoolExpr value_cnst = cs.ctx.mkEq(cs.ctx.mkBool(false), ret.get_full_Expr(tmp_list, cs));
+				cs.add_constraint(cs.ctx.mkForall(tmps_full, cs.ctx.mkImplies(guard, value_cnst), 1, null, null, null, null));
+			}
 			
 
 			return ret;

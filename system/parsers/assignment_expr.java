@@ -87,7 +87,7 @@ public class assignment_expr implements Parser<String>{
 			assign_expr = v.get_Expr_assign(cs);
 			assign_expr_full = v.get_full_Expr_assign((ArrayList<IntExpr>) v.index.clone(),cs);
 			indexs = v.index;
-			assign_tmp_expr = cs.ctx.mkConst("tmpAssignValue" + cs.Check_status_share.get_tmp_num(), v.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs).getSort());
+			assign_tmp_expr = cs.ctx.mkConst("tmpAssignValue" + cs.Check_status_share.get_tmp_num(), v.get_full_Expr_assign((ArrayList<IntExpr>) indexs.clone(), cs).getSort());
 			BoolExpr expr = cs.ctx.mkEq(assign_expr, v.assign_value(indexs, assign_tmp_expr, cs));
 			cs.add_constraint(expr);
 			
@@ -96,6 +96,7 @@ public class assignment_expr implements Parser<String>{
 		}
 		Check_return rc = this.implies_expr.check(cs);
 		Expr implies_tmp = rc.expr;
+		
 		if(this.postfix_expr != null){
 			//cs.add_assign(postfix_tmp, implies_tmp);
 			BoolExpr expr = cs.ctx.mkEq(assign_tmp_expr, implies_tmp);
@@ -109,7 +110,7 @@ public class assignment_expr implements Parser<String>{
 					rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, v.class_object, v_class_object_expr, cs);
 				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
 					Expr alias;
-					if(((Variable) v).alias != null){
+					if(((Variable) v).alias == null){
 						alias = cs.ctx.mkBool(false);
 					}else{
 						alias = ((Variable) v).alias;
@@ -118,7 +119,7 @@ public class assignment_expr implements Parser<String>{
 					cs.assert_constraint(cs.ctx.mkNot(alias));
 					
 					Expr alias_refined;
-					if(((Variable) v).alias_refined != null){
+					if(((Variable) v).alias_refined == null){
 						alias_refined = cs.ctx.mkBool(false);
 					}else{
 						alias_refined = ((Variable) v).alias_refined;
@@ -126,7 +127,7 @@ public class assignment_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(((Variable) v).alias_refined != null){
+					if(((Variable) v).alias_refined == null){
 						((Variable) v).alias_refined = cs.pathcondition;
 					}else{
 						((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, cs.pathcondition);
@@ -137,7 +138,7 @@ public class assignment_expr implements Parser<String>{
 			}else if(v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
 				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
 					Expr alias;
-					if(((Variable) rc.field).alias != null){
+					if(((Variable) rc.field).alias == null){
 						alias = cs.ctx.mkBool(false);
 					}else{
 						alias = ((Variable) rc.field).alias;
@@ -146,7 +147,7 @@ public class assignment_expr implements Parser<String>{
 					cs.assert_constraint(cs.ctx.mkNot(alias));
 					
 					Expr alias_refined;
-					if(((Variable) rc.field).alias_refined != null){
+					if(((Variable) rc.field).alias_refined == null){
 						alias_refined = cs.ctx.mkBool(false);
 					}else{
 						alias_refined = ((Variable) rc.field).alias_refined;
@@ -154,7 +155,7 @@ public class assignment_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(((Variable) rc.field).alias_refined != null){
+					if(((Variable) rc.field).alias_refined == null){
 						((Variable) rc.field).alias_refined = cs.pathcondition;
 					}else{
 						((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, cs.pathcondition);
@@ -162,35 +163,38 @@ public class assignment_expr implements Parser<String>{
 				}else{//篩型の安全を保証できないような大入
 					throw new Exception("can not alias with refined array");
 				}	
-			}else if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
-				Expr alias_refined;
-				if(((Variable) rc.field).alias_refined != null){
-					alias_refined = cs.ctx.mkBool(false);
-				}else{
-					alias_refined = ((Variable) rc.field).alias_refined;
+			}else{ 
+				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable && !v.new_array){//ローカル変数
+					Expr alias_refined;
+					if(((Variable) rc.field).alias_refined == null){
+						alias_refined = cs.ctx.mkBool(false);
+					}else{
+						alias_refined = ((Variable) rc.field).alias_refined;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+					
+					if(((Variable) rc.field).alias == null){
+						((Variable) rc.field).alias = cs.pathcondition;
+					}else{
+						((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+					}
 				}
-				
-				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-				
-				if(((Variable) rc.field).alias != null){
-					((Variable) rc.field).alias = cs.pathcondition;
-				}else{
-					((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
-				}
-			}else if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
-				Expr alias_refined;
-				if(((Variable) v).alias_refined != null){
-					alias_refined = cs.ctx.mkBool(false);
-				}else{
-					alias_refined = ((Variable) v).alias_refined;
-				}
-				
-				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-				
-				if(((Variable) v).alias != null){
-					((Variable) v).alias = cs.pathcondition;
-				}else{
-					((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+				if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable && !(rc.field!=null && rc.field.new_array)){//ローカル変数
+					Expr alias_refined;
+					if(((Variable) v).alias_refined == null){
+						alias_refined = cs.ctx.mkBool(false);
+					}else{
+						alias_refined = ((Variable) v).alias_refined;
+					}
+					
+					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+					
+					if(((Variable) v).alias == null){
+						((Variable) v).alias = cs.pathcondition;
+					}else{
+						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+					}
 				}
 			}
 			

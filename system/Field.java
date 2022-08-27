@@ -26,7 +26,7 @@ public class Field {
 	
 	public ArrayList<IntExpr> index; //代入するときの右辺値のindexを表してっるっぽい？メソッドには使えないので要確認
 	
-	
+	public boolean new_array;//newとかで生成された配列　
 	
 	//コンストラクタのfinalの初期化状態
 	public boolean final_initialized;
@@ -44,11 +44,9 @@ public class Field {
 		this.refinement_type_clause = refinement_type_clause;
 		this.modifiers = modifiers;
 		this.class_object = class_object;
-		if(this.dims>0 && this.refinement_type_clause!=null){
-			throw new Exception("Cannot use refinement type for array");
-		}
 		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
 		this.class_type_name = class_type_name;
+		this.new_array = false;
 	}
 	
 	public Field(){}

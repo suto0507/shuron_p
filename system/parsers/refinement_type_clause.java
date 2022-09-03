@@ -43,7 +43,7 @@ public class refinement_type_clause implements Parser<String>{
 		}
 	}
 	
-	public void equal_predicate(ArrayList<IntExpr> indexs, Field class_Field, Expr class_Expr, refinement_type_clause comparative_refinement_type_clause, ArrayList<IntExpr> comparative_indexs, Field comparative_class_Field, Expr comparative_class_Expr, Check_status cs) throws Exception{
+	public void equal_predicate(ArrayList<IntExpr> indexs, Field refined_Field, Field class_Field, Expr class_Expr, refinement_type_clause comparative_refinement_type_clause, ArrayList<IntExpr> comparative_indexs, Field comparative_refined_Field, Field comparative_class_Field, Expr comparative_class_Expr, Check_status cs) throws Exception{
 		refinement_type rt;
 		if(this.refinement_type!=null){
 			rt = this.refinement_type;
@@ -59,7 +59,7 @@ public class refinement_type_clause implements Parser<String>{
 			crt = cs.search_refinement_type(comparative_class_Field.type, comparative_refinement_type_clause.ident);
 		}
 		
-		rt.equal_predicate(indexs, class_Field, class_Expr, crt, comparative_indexs, comparative_class_Field, comparative_class_Expr, cs);
+		rt.equal_predicate(indexs, refined_Field, class_Field, class_Expr, crt, comparative_indexs, comparative_refined_Field, comparative_class_Field, comparative_class_Expr, cs);
 		
 	}
 }

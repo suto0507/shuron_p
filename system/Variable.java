@@ -111,6 +111,7 @@ public class Variable extends Field{
 		return this.dims;
 	}
 	
+	//’·‚³‚ÉŠÖ‚·‚é§–ñ‚à’Ç‰Á‚·‚é
 	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Check_status cs) throws Exception{
 		Expr expr = value;
 		for(int i = indexs.size()-1; i >= 0; i--){

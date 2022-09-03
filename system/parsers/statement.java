@@ -272,7 +272,7 @@ import system.Variable;
 				Check_return rc = this.expression.check(cs);
 				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
 					if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){//‚Ç‚Á‚¿‚àâ¿Œ^‚ğ‚Â”z—ñ
-						rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), cs.return_v.refinement_type_clause, new ArrayList<IntExpr>(), cs.return_v.class_object, cs.this_field.get_Expr(cs), cs);
+						rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), cs.return_v.refinement_type_clause, new ArrayList<IntExpr>(), cs.return_v, cs.return_v.class_object, cs.this_field.get_Expr(cs), cs);
 					}else{//â¿Œ^‚ÌˆÀ‘S‚ğ•ÛØ‚Å‚«‚È‚¢‚æ‚¤‚È‘å“ü
 						throw new Exception("can not alias with refined array");
 					}

@@ -48,7 +48,8 @@ public class assignment_expr implements Parser<String>{
 	public Check_return check(Check_status cs) throws Exception{
 		Field v = null;
 		Expr assign_expr = null;//左辺のExpr
-		Expr assign_expr_full = null;//左辺のExprのfullバージョン　篩型をもっていた時のために使う 返り値もこれ
+		Expr assign_field_expr = null;//篩型をもっていた時のために使う this.a.b.x[1]のthis.a.b.xの部分
+		Expr assign_expr_full = null;//左辺のExprのfullバージョン　 返り値として返す
 		ArrayList<IntExpr> indexs = null;//左辺のindexs
 		Expr assign_tmp_expr = null;
 		Expr v_class_object_expr = null;
@@ -85,6 +86,7 @@ public class assignment_expr implements Parser<String>{
 			
 			//左辺のExpr
 			assign_expr = v.get_Expr_assign(cs);
+			assign_field_expr = v.get_full_Expr_assign(new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())), cs);
 			assign_expr_full = v.get_full_Expr_assign((ArrayList<IntExpr>) v.index.clone(),cs);
 			indexs = v.index;
 			assign_tmp_expr = cs.ctx.mkConst("tmpAssignValue" + cs.Check_status_share.get_tmp_num(), v.get_full_Expr_assign((ArrayList<IntExpr>) indexs.clone(), cs).getSort());
@@ -107,7 +109,7 @@ public class assignment_expr implements Parser<String>{
 			//配列の篩型が安全かどうか
 			if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
 				if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
-					rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, v.class_object, v_class_object_expr, cs);
+					rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, v, v.class_object, v_class_object_expr, cs);
 				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
 					Expr alias;
 					if(((Variable) v).alias == null){
@@ -202,11 +204,11 @@ public class assignment_expr implements Parser<String>{
 			//篩型の検証
 			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_expr_full, v.class_object, v_class_object_expr);
+					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr);
 				}else if(v.refinement_type_clause.ident!=null){
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(cs, v, assign_expr_full, v.class_object, v_class_object_expr);
+						rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr);
 					}else{
 		                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
 		            }

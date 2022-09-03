@@ -87,6 +87,8 @@ public class class_block implements Parser<String>{
 			Check_status csc =  cs.clone();
 			csc.solver = csc.ctx.mkSolver();
 			
+			//‰Šú‰»
+			
 			csc.return_exprs = new ArrayList<Expr>();
 			csc.return_pathconditions = new ArrayList<BoolExpr>();
 			method.check(csc, summery);

@@ -262,7 +262,7 @@ public class Check_status {
 		cs.refined_class_Expr = this.refined_class_Expr;
 		cs.in_constructor = this.in_constructor;
 		
-		cs.quantifiers = this.quantifiers;//“Á‚ÉŠÖŒW‚Í‚È‚¢‚Í‚¸
+		cs.quantifiers = new ArrayList<Pair<String, Expr>>();
 		
 		return cs;
 	}

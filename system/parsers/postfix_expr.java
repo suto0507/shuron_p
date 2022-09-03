@@ -56,6 +56,7 @@ public class postfix_expr implements Parser<String>{
 		List<IntExpr> indexs = new ArrayList<IntExpr>();
 		if(cs.in_method_call) indexs = cs.call_indexs;
 		
+		
 		if(this.primary_expr.is_this){
 			if(this.primary_suffixs.size() == 0 && cs.in_constructor){//this単体のコンストラクターでの使用
 				cs.constructor_refinement_check();
@@ -490,7 +491,7 @@ public class postfix_expr implements Parser<String>{
 			//配列の篩型が安全かどうか
 			if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field.refinement_type_clause!=null && method_arg_valuse.get(j).field.refinement_type_clause.have_index_access(method_arg_valuse.get(j).field.class_object.type, cs)){
 				if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
-					method_arg_valuse.get(j).field.refinement_type_clause.equal_predicate(method_arg_valuse.get(j).indexs, method_arg_valuse.get(j).field.class_object, method_arg_valuse.get(j).field.class_object.get_full_Expr(method_arg_valuse.get(j).indexs, cs), v.refinement_type_clause, indexs, v.class_object, ex, cs);
+					method_arg_valuse.get(j).field.refinement_type_clause.equal_predicate(method_arg_valuse.get(j).indexs, method_arg_valuse.get(j).field, method_arg_valuse.get(j).field.class_object, method_arg_valuse.get(j).field.class_object.get_full_Expr(method_arg_valuse.get(j).indexs, cs), v.refinement_type_clause, indexs, v, v.class_object, ex, cs);
 				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
 					Expr alias;
 					if(((Variable) v).alias == null){

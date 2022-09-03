@@ -3,7 +3,7 @@ class A{
     int[] /*`@refinement_type NatArray*/ x;
 
     //`@ def_type NatArray2 = {int[][] x | (\forall int i,j; 0 <= i && i < x.length && 0 <= j && j < x[i].length; x[i][j] >= 0)};
-    int[] /*`@refinement_type NatArray2*/ x2;
+    int[][] /*`@refinement_type NatArray2*/ x2;
 
 
     void test1(){
@@ -22,7 +22,7 @@ class A{
         return x;
     }
 
-    //@ requires x.length == 3;
+    //@ requires x.length == 3 && a2 > 0;
     void test4(int a2){
         x[0] = a2;
     }

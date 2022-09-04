@@ -7,6 +7,7 @@ import com.microsoft.z3.*;
 
 import system.Check_status;
 import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -192,11 +193,9 @@ public class refinement_type implements Parser<String>{
 	}
 	
 	//使わないかも
-	public String base_type(compilation_unit cu) throws Exception{
-		if(this.type.type.equals("boolean") || this.type.type.equals("int")){
-			return this.type.type;
-		}else if(cu.search_class(this.type.type)!=null){
-			return this.type.type;
+	public Pair<String, Integer> base_type(compilation_unit cu) throws Exception{
+		if(this.type.type.equals("boolean") || this.type.type.equals("int") || cu.search_class(this.type.type)!=null){
+			return new Pair(this.type.type, this.dims);
 		}else{
 			
 			
@@ -211,12 +210,16 @@ public class refinement_type implements Parser<String>{
 	
 	
 	//配列の篩型同士の比較
-	public void equal_predicate(ArrayList<IntExpr> indexs, Field refined_Field, Field class_Field, Expr class_Expr, refinement_type comparative_refinement_type, ArrayList<IntExpr> comparative_indexs, Field comparative_refined_Field, Field comparative_class_Field, Expr comparative_class_Expr, Check_status cs) throws Exception{
-		
-		Variable v = new Variable(cs.Check_status_share.get_tmp_num(), "tmp", refined_Field.type, refined_Field.dims, null, new modifiers(), class_Field );
+	//assign_field_exprは長さに関する制約で使う
+	public void equal_predicate(ArrayList<IntExpr> indexs, Expr assign_field_expr, Field class_Field, Expr class_Expr, refinement_type comparative_refinement_type, ArrayList<IntExpr> comparative_indexs, Expr comparative_assign_field_expr, Field comparative_class_Field, Expr comparative_class_Expr, Check_status cs) throws Exception{
+		String type = this.base_type(cs.Check_status_share.compilation_unit).fst;
+		int dims = this.base_type(cs.Check_status_share.compilation_unit).snd;
+		Variable v = new Variable(cs.Check_status_share.get_tmp_num(), "tmp", type, dims, null, new modifiers(), class_Field );
 		v.temp_num++;
 		
-		Variable comparative_v = new Variable(cs.Check_status_share.get_tmp_num(), "comparative_tmp", comparative_refined_Field.type, comparative_refined_Field.dims, null, new modifiers(), comparative_class_Field );
+		String  comparative_type = comparative_refinement_type.base_type(cs.Check_status_share.compilation_unit).fst;
+		int  comparative_dims = comparative_refinement_type.base_type(cs.Check_status_share.compilation_unit).snd;
+		Variable comparative_v = new Variable(cs.Check_status_share.get_tmp_num(), "comparative_tmp", comparative_type, comparative_dims, null, new modifiers(), comparative_class_Field );
 		comparative_v.temp_num++;
 		
 		ArrayList<IntExpr> v_indexs = new ArrayList<IntExpr>(indexs.subList(class_Field.dims_sum(), indexs.size()));
@@ -226,15 +229,20 @@ public class refinement_type implements Parser<String>{
 		
 		//エイリアスする部分に関する配列の長さは変わらない
 		String array_type;
-		if(refined_Field.type.equals("int")){
+		if(type.equals("int")){
 			array_type = "int";
-		}else if(refined_Field.type.equals("boolean")){
+		}else if(type.equals("boolean")){
 			array_type = "boolean";
 		}else{
 			array_type = "ref";
 		}
-		for(int i = 0; i < indexs.size() - class_Field.dims_sum(); i++){
-			Expr ex1 = refined_Field.get_full_Expr(new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum() + i)), cs);
+		for(int i = 0; i <= v_indexs.size(); i++){
+			Expr ex1 = assign_field_expr;
+			if(i>0){
+				for(IntExpr index : v_indexs.subList(0, i)){
+					ex1 = cs.ctx.mkSelect(ex1, index);
+				}
+			}
 			Expr ex2 = v.get_full_Expr(new ArrayList<IntExpr>(indexs.subList(class_Field.dims_sum(), class_Field.dims_sum() + i)), cs);
 			
 			//長さに関する制約
@@ -244,8 +252,13 @@ public class refinement_type implements Parser<String>{
 			IntExpr length2 = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex2.getSort(), cs.ctx.mkIntSort()), ex2);
 			cs.add_constraint(cs.ctx.mkEq(length1, length2));
 		}
-		for(int i = 0; i < comparative_indexs.size() - comparative_class_Field.dims_sum(); i++){
-			Expr ex1 = comparative_refined_Field.get_full_Expr(new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum() + i)), cs);
+		for(int i = 0; i <= comparative_v_indexs.size(); i++){
+			Expr ex1 = comparative_assign_field_expr;
+			if(i>0){
+				for(IntExpr index : comparative_v_indexs.subList(0, i)){
+					ex1 = cs.ctx.mkSelect(ex1, index);
+				}
+			}
 			Expr ex2 = comparative_v.get_full_Expr(new ArrayList<IntExpr>(comparative_indexs.subList(comparative_class_Field.dims_sum(), comparative_class_Field.dims_sum() + i)), cs);
 			
 			//長さに関する制約

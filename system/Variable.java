@@ -33,6 +33,7 @@ public class Variable extends Field{
 		this.modifiers = modifiers;
 		this.class_object = class_object;
 		this.new_array = false;
+		this.assign_inc = 1;
 	}
 	
 	public Variable(){}
@@ -143,9 +144,9 @@ public class Variable extends Field{
 	
 	@Override
 	public Expr get_Expr_assign(Check_status cs) throws Exception{
-		this.temp_num++;
+		this.temp_num += this.assign_inc;
 		Expr ex =  this.get_Expr(cs);
-		this.temp_num--;
+		this.temp_num -= this.assign_inc;
 		return ex;
 	}
 	

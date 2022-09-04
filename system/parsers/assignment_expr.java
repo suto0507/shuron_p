@@ -95,11 +95,18 @@ public class assignment_expr implements Parser<String>{
 			
 			v_class_object_expr = v.class_object_expr;
 			
+			v.assign_inc++;
+			
 		}
 		Check_return rc = this.implies_expr.check(cs);
 		Expr implies_tmp = rc.expr;
 		
+		
+		
 		if(this.postfix_expr != null){
+			v.temp_num++;
+			v.assign_inc--;
+			
 			//cs.add_assign(postfix_tmp, implies_tmp);
 			BoolExpr expr = cs.ctx.mkEq(assign_tmp_expr, implies_tmp);
 			cs.add_constraint(expr);
@@ -109,7 +116,8 @@ public class assignment_expr implements Parser<String>{
 			//配列の篩型が安全かどうか
 			if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
 				if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
-					rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc.field, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, v, v.class_object, v_class_object_expr, cs);
+					Expr rc_assign_field_expr = rc.field.get_full_Expr(new ArrayList<IntExpr>(rc.indexs.subList(0, rc.field.class_object_dims_sum())), cs);
+					rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc_assign_field_expr, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, assign_field_expr, v.class_object, v_class_object_expr, cs);
 				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
 					Expr alias;
 					if(((Variable) v).alias == null){
@@ -216,7 +224,7 @@ public class assignment_expr implements Parser<String>{
 			}
 			
 			
-			v.temp_num++;
+			
 			
 
 			

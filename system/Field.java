@@ -34,6 +34,7 @@ public class Field {
 	//宣言されたクラスの名前
 	public String class_type_name;
 	
+	public int assign_inc;//assignするときに添え字の数字をいくつ増やすか　代入の右辺などで使う
 	
 	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name) throws Exception{
 		this.id = id;
@@ -47,6 +48,7 @@ public class Field {
 		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
+		this.assign_inc = 1;
 	}
 	
 	public Field(){}
@@ -107,9 +109,9 @@ public class Field {
 
 	
 	public Expr get_Expr_assign(Check_status cs) throws Exception{
-		this.temp_num++;
+		this.temp_num += this.assign_inc;
 		Expr ex =  this.get_Expr(cs);
-		this.temp_num--;
+		this.temp_num -= this.assign_inc;
 		return ex;
 	}
 	

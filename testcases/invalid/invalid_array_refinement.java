@@ -1,12 +1,12 @@
 class A{
     //`@ def_type NatArray = {int[] x | (\forall int i; 0 <= i && i < x.length; x >= 0)};
-    int[] /*`@refinement_typ NatArray*/ x;
+    int[] /*`@refinement_type NatArray*/ x;
 
     //`@ def_type PosArray = {int[] x | (\forall int i; 0 <= i && i < x.length; x[i] > 0)};
     int[] /*`@refinement_type PosArray*/ p;
 
     //`@ def_type PosArray2 = {int[][] x | (\forall int i,j; 0 <= i && i < x.length && 0 <= j && j < x.length; x[i][j] > 0)};
-    int[] /*`@refinement_type PosArray2*/ p2;
+    int[][] /*`@refinement_type PosArray2*/ p2;
 
     void test1(){
         int[] local;
@@ -117,5 +117,9 @@ class A{
 
     void test11(int[] a2){
         p2 = x;
+    }
+
+    void test12(int[] a2){
+        int[]/*`@refinement_type NatArray*/ local = a2;
     }
 }

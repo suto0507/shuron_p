@@ -49,5 +49,10 @@ class A{
         local2[0] = local;
     }
 
+    void test8(){
+        int[]/*`@refinement_type NatArray*/ local = x;
+        int[][]/*`@refinement_type NatArray2*/ local2 = x2;
+    }
+
 
 }

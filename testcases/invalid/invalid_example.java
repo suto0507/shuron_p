@@ -6,6 +6,8 @@ class A{
     int/*`@ refinement_type Nat*/ x1;
 
     int/*`@ refinement_type Even*/ test(int/*`@ refinement_type NatEven*/ x){
+        //このメソッドは正しい
+        //@assert false;
 		return 2;
 	}
 }

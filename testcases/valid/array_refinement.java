@@ -8,7 +8,7 @@ class A{
 
     void test1(){
         int[] local;
-        local = new int[5];//ここを7にしたときだけUnreachbleがlocal[0] = 771;の時に出る。8以上でもvalidになるし意味が分からん
+        local = new int[10];//ここを7にしたときだけUnreachbleがlocal[0] = 771;の時に出る。8以上でもvalidになるし意味が分からん//4,5もダメになった？
         local[0] = 771;
         local[1] = 771;
         x = local;
@@ -22,7 +22,7 @@ class A{
         return x;
     }
 
-    //@ requires x.length == 3 && a2 > 0;
+    //@ requires x.length == 5 && a2 > 0;
     void test4(int a2){
         x[0] = a2;
     }

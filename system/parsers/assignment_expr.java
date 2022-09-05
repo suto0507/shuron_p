@@ -51,7 +51,7 @@ public class assignment_expr implements Parser<String>{
 		Expr assign_field_expr = null;//篩型をもっていた時のために使う this.a.b.x[1]のthis.a.b.xの部分
 		Expr assign_expr_full = null;//左辺のExprのfullバージョン　 返り値として返す
 		ArrayList<IntExpr> indexs = null;//左辺のindexs
-		Expr assign_tmp_expr = null;
+		ArrayList<IntExpr> v_indexs = null;//左辺のindexs this.a[1][2].b.x[3][4]の3,4の部分
 		Expr v_class_object_expr = null;
 		if(this.postfix_expr != null){
 			v = this.postfix_expr.check_assign(cs);
@@ -85,17 +85,13 @@ public class assignment_expr implements Parser<String>{
 			}
 			
 			//左辺のExpr
-			assign_expr = v.get_Expr_assign(cs);
-			assign_field_expr = v.get_full_Expr_assign(new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())), cs);
-			assign_expr_full = v.get_full_Expr_assign((ArrayList<IntExpr>) v.index.clone(),cs);
 			indexs = v.index;
-			assign_tmp_expr = cs.ctx.mkConst("tmpAssignValue" + cs.Check_status_share.get_tmp_num(), v.get_full_Expr_assign((ArrayList<IntExpr>) indexs.clone(), cs).getSort());
-			BoolExpr expr = cs.ctx.mkEq(assign_expr, v.assign_value(indexs, assign_tmp_expr, cs));
-			cs.add_constraint(expr);
+			
+			v_indexs = new ArrayList<IntExpr>(v.index.subList(v.class_object_dims_sum(), v.index.size()));
 			
 			v_class_object_expr = v.class_object_expr;
 			
-			v.assign_inc++;
+			
 			
 		}
 		Check_return rc = this.implies_expr.check(cs);
@@ -104,12 +100,29 @@ public class assignment_expr implements Parser<String>{
 		
 		
 		if(this.postfix_expr != null){
-			v.temp_num++;
-			v.assign_inc--;
 			
-			//cs.add_assign(postfix_tmp, implies_tmp);
-			BoolExpr expr = cs.ctx.mkEq(assign_tmp_expr, implies_tmp);
+			assign_expr = v.get_Expr_assign(cs);
+			
+			if(v instanceof Variable){
+				assign_field_expr = v.get_Expr_assign(cs);
+			}else{
+				assign_field_expr = cs.ctx.mkSelect(v.get_Expr_assign(cs), v_class_object_expr);
+			}
+			
+			assign_expr_full = assign_field_expr;
+			for(IntExpr index : v_indexs){
+				cs.ctx.mkSelect(assign_expr_full, index);
+			}
+			
+			
+			BoolExpr expr = cs.ctx.mkEq(assign_expr, v.assign_value(indexs, implies_tmp, cs));
 			cs.add_constraint(expr);
+			
+			
+			
+			v.temp_num++;
+			
+			
 			//refinement_type
 			
 			
@@ -222,11 +235,6 @@ public class assignment_expr implements Parser<String>{
 		            }
 				}
 			}
-			
-			
-			
-			
-
 			
 			return new Check_return(assign_expr_full, v, indexs);
 		}else{

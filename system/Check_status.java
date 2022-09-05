@@ -162,7 +162,7 @@ public class Check_status {
 	public void add_constraint(BoolExpr arg_expr) throws Exception{
 		System.out.println("add" + arg_expr);
 		this.solver.add(arg_expr);
-		
+		/*なんかおかしくなるのでコメントアウト　処理時間的にもない方がいいし、多分なくても問題ないはず
 		this.solver.push();
 		if(this.pathcondition!=null){
 			this.solver.add(this.pathcondition);
@@ -170,9 +170,12 @@ public class Check_status {
 		if(solver.check() == Status.SATISFIABLE) {
 
         }else{
+	        Model model = solver.getModel();
+	        System.out.println("Unreachable expr");
+	        System.out.println(model.toString());
         	throw new Exception("Unreachable.");
         }
-		this.solver.pop();
+		this.solver.pop();*/
 	}
 	
 	public void assert_constraint(BoolExpr arg_expr) throws Exception{

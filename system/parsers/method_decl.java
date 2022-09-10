@@ -427,9 +427,12 @@ public class method_decl implements Parser<String>{
 		clone_md.ident = this.ident;
 		clone_md.args_num = this.args_num;
 		clone_md.compound_statement = this.compound_statement;
+		clone_md.class_type_name = this.class_type_name;
+		
 		clone_md.type_spec = new type_spec();
 		clone_md.type_spec.type = this.type_spec.type;
 		clone_md.type_spec.dims = this.type_spec.dims;
+		
 		clone_md.formals = new formals();
 		clone_md.formals.param_declarations = new ArrayList<param_declaration>();
 		for(param_declaration pd : this.formals.param_declarations){

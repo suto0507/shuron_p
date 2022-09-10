@@ -78,7 +78,7 @@ public class compilation_unit implements Parser<String>{
 						}
 						
 						if(override_md == null){//同じメソッドでもサブクラスで検証は行う
-							class_decl.class_block.method_decls.add(super_md);
+							class_decl.class_block.method_decls.add(super_md.clone_no_refinemet_type());
 						}else{//事前条件、事後条件などの継承
 							if(super_md.method_specification!=null){
 								if(override_md.method_specification!=null && override_md.method_specification.spec_case_seq!=null){

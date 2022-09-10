@@ -144,7 +144,7 @@ public class override_refinement_type_clause implements Parser<String>{
 					md.type_spec.refinement_type_clause = new refinement_type_clause();
 					md.type_spec.refinement_type_clause.refinement_type = this.type_or_refinement_type.refinement_type;
 				}else{
-					throw new Exception("method " + this.ident + "already have refinementtype.");
+					throw new Exception("method " + this.ident + "already have refinement type.");
 				}
 			}else if(this.type_or_refinement_type.type != null){
 				if(this.type_or_refinement_type.type.type.equals(md.type_spec.type.type)){//⿌^�ł͂Ȃ�
@@ -153,7 +153,7 @@ public class override_refinement_type_clause implements Parser<String>{
 					md.type_spec.refinement_type_clause = new refinement_type_clause();
 					md.type_spec.refinement_type_clause.ident = this.type_or_refinement_type.type.type;
 				}else{
-					throw new Exception("method " + this.ident + "already have refinementtype.");
+					throw new Exception("method " + this.ident + "already have refinement type.");
 				}
 			}
 			
@@ -170,7 +170,7 @@ public class override_refinement_type_clause implements Parser<String>{
 						pd.type_spec.refinement_type_clause = new refinement_type_clause();
 						pd.type_spec.refinement_type_clause.refinement_type = rt.snd.refinement_type;
 					}else{
-						throw new Exception("method " + this.ident + "already have refinementtype.");
+						throw new Exception("method " + this.ident + "already have refinement type.");
 					}
 				}else if(rt.snd != null){
 					if(rt.snd.type.type.equals(pd.type_spec.type.type)){//⿌^�ł͂Ȃ�
@@ -179,7 +179,7 @@ public class override_refinement_type_clause implements Parser<String>{
 						pd.type_spec.refinement_type_clause = new refinement_type_clause();
 						pd.type_spec.refinement_type_clause.ident = rt.snd.type.type;
 					}else{
-						throw new Exception("method " + this.ident + "already have refinementtype.");
+						throw new Exception("method " + this.ident + "already have refinement type.");
 					}
 				}
 				

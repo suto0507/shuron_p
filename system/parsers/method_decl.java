@@ -382,6 +382,9 @@ public class method_decl implements Parser<String>{
 				method_decl super_md = cu.search_method(super_class.class_name, this.ident);
 				if(super_md == null || super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause==null){//â¿Œ^‚ªŒ©‚Â‚©‚é‚Ü‚Åsuper class‚ğ’Tõ
 					if(super_class.super_class == null){
+						if(this.formals.param_declarations.get(i).type_spec.refinement_type_clause!=null){
+							throw new Exception(this.formals.param_declarations.get(i).ident + " in " + class_decl.super_class.class_name + "don't have refinement type");
+						}
 						break;//e‚Éâ¿Œ^‚ª‚È‚¢‚È‚ç—Ç‚¢
 					}else{
 						super_class = super_class.super_class;
@@ -413,6 +416,32 @@ public class method_decl implements Parser<String>{
 			}
 
 		}
+	}
+
+	//‚±‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ÌAâ¿Œ^‚ğ‚½‚È‚¢clone‚ğ•Ô‚·
+	public method_decl clone_no_refinemet_type(){
+		method_decl clone_md = new method_decl();
+		clone_md.st = this.st;
+		clone_md.method_specification = this.method_specification;
+		clone_md.modifiers = this.modifiers;
+		clone_md.ident = this.ident;
+		clone_md.args_num = this.args_num;
+		clone_md.compound_statement = this.compound_statement;
+		clone_md.type_spec = new type_spec();
+		clone_md.type_spec.type = this.type_spec.type;
+		clone_md.type_spec.dims = this.type_spec.dims;
+		clone_md.formals = new formals();
+		clone_md.formals.param_declarations = new ArrayList<param_declaration>();
+		for(param_declaration pd : this.formals.param_declarations){
+			param_declaration clone_pd = new param_declaration();
+			clone_pd.is_final = pd.is_final;
+			clone_pd.ident = pd.ident;
+			clone_pd.type_spec = new type_spec();
+			clone_pd.type_spec.type = pd.type_spec.type;
+			clone_pd.type_spec.dims = pd.type_spec.dims;
+			clone_md.formals.param_declarations.add(clone_pd);
+		}
+		return clone_md;
 	}
 }
 

@@ -155,9 +155,15 @@ public class new_expr implements Parser<String>{
 			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type.type + "_constructor_tmp", this.type.type, 0, null, md.modifiers, cs.this_field);
 			result.temp_num++;
 			cs.result = result;
+			
+			Expr pre_instance_expr = cs.instance_expr;
+			Field pre_instance_Field = cs.instance_Field;
+			ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+			
+			cs.instance_expr = result.get_Expr(cs);
+			cs.instance_Field = result;
+			cs.instance_indexs = new ArrayList<IntExpr>();
 
-			cs.call_expr = result.get_Expr(cs);
-			cs.call_field = result;
 			
 			for(int j = 0; j < md.formals.param_declarations.size(); j++){
 				param_declaration pd = md.formals.param_declarations.get(j);
@@ -171,11 +177,11 @@ public class new_expr implements Parser<String>{
 				//篩型
 				if(v.refinement_type_clause!=null){
 					if(v.refinement_type_clause.refinement_type!=null){
-						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), null, null);//class_Fieldとかは本来resultなどだが、まだできていないオブジェクトなのでnullでいいはず
+						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), null, null, new ArrayList<IntExpr>());//class_Fieldとかは本来resultなどだが、まだできていないオブジェクトなのでnullでいいはず
 					}else{
 						refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 						if(rt!=null){
-							rt.assert_refinement(cs, v, v.get_Expr(cs), null, null);
+							rt.assert_refinement(cs, v, v.get_Expr(cs), null, null, new ArrayList<IntExpr>());
 						}else{
 							throw new Exception("cant find refinement type " + v.refinement_type_clause.ident);
 						}
@@ -338,6 +344,10 @@ public class new_expr implements Parser<String>{
 				cs.add_constraint(ensures_expr);
 			}
 			cs.in_method_call = false;
+			
+			cs.instance_expr = pre_instance_expr;
+			cs.instance_Field = pre_instance_Field;
+			cs.instance_indexs = pre_instance_indexs;
 			
 			return result;
 		}else{

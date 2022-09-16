@@ -6,6 +6,7 @@ import java.util.Random;
 
 import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.IntExpr;
 
 import system.Check_status;
 import system.Field;
@@ -239,11 +240,11 @@ public class method_decl implements Parser<String>{
 			//返り値のrefinement_type
 			if(this.type_spec!=null&&cs.return_v.refinement_type_clause!=null){
 				if(cs.return_v.refinement_type_clause.refinement_type!=null){
-					cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs));
+					cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 				}else if(cs.return_v.refinement_type_clause.ident!=null){
 					refinement_type rt = cs.search_refinement_type(cs.return_v.class_object.type, cs.return_v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs));
+						rt.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 					}else{
 						throw new Exception("can't find refinement type " + cs.return_v.refinement_type_clause.ident);
 					}
@@ -358,11 +359,15 @@ public class method_decl implements Parser<String>{
 		m.is_final = true;
 		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", class_decl.class_name, 0, null, m, null );
 		this_field.temp_num = 0;
-		cs.fields.add(this_field);
 		cs.this_field = this_field;
+		
+		Field super_this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", super_class.class_name, 0, null, m, null );
+		super_this_field.temp_num = 0;
+		
 		//初期化
-		cs.refined_class_Expr = this_field.get_Expr(cs);
-		cs.refined_class_Field = this_field;
+		cs.instance_expr = this_field.get_Expr(cs);
+		cs.instance_Field = this_field;
+		cs.instance_indexs = new ArrayList<IntExpr>();
 		
 		//各引数のチェック
 		for(int i = 0; i < this.formals.param_declarations.size(); i++){
@@ -405,7 +410,7 @@ public class method_decl implements Parser<String>{
 						if(super_refinement_type==null) throw new Exception("can't find refinement type " + super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
 					}
 					
-					this_refinement_type.check_subtype(v, super_refinement_type,this_field, this_field.get_Expr(cs), cs);
+					this_refinement_type.check_subtype(v, this_field, this_field.get_Expr(cs), new ArrayList<IntExpr>(), super_refinement_type, super_this_field, super_this_field.get_Expr(cs), new ArrayList<IntExpr>(), cs);
 					break;
 					
 				}else{//篩型を持つ親クラスが見つかった場合、かつ篩型を持っていなかった場合

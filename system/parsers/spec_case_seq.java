@@ -43,14 +43,9 @@ public class spec_case_seq implements Parser<String>  {
 		BoolExpr expr = null;
 		for(generic_spec_case gsc : generic_spec_cases){
 			
-			String pre_class_type_name = null;
-			if(cs.in_method_call){
-				pre_class_type_name = cs.call_field.type;
-				cs.call_field.type = gsc.class_type_name;
-			}else{
-				pre_class_type_name = cs.this_field.type;
-				cs.this_field.type = gsc.class_type_name;
-			}
+			
+			String pre_class_type_name = cs.instance_Field.type;
+			cs.instance_Field.type = gsc.class_type_name;
 			
 			List<requires_clause> rcs = gsc.get_requires();
 			if(rcs == null || rcs.size()==0){
@@ -80,11 +75,8 @@ public class spec_case_seq implements Parser<String>  {
 				cs.pathcondition = pre_pathcondition;
 			}
 			
-			if(cs.in_method_call){
-				cs.call_field.type = pre_class_type_name;
-			}else{
-				cs.this_field.type = pre_class_type_name;
-			}
+			
+			cs.instance_Field.type = pre_class_type_name;
 		}
 		
 		if(expr == null) expr = cs.ctx.mkBool(true);
@@ -96,14 +88,8 @@ public class spec_case_seq implements Parser<String>  {
 		BoolExpr expr = null;
 		for(generic_spec_case gsc : generic_spec_cases){
 			
-			String pre_class_type_name = null;
-			if(cs.in_method_call){
-				pre_class_type_name = cs.call_field.type;
-				cs.call_field.type = gsc.class_type_name;
-			}else{
-				pre_class_type_name = cs.this_field.type;
-				cs.this_field.type = gsc.class_type_name;
-			}
+			String pre_class_type_name = cs.instance_Field.type;
+			cs.instance_Field.type = gsc.class_type_name;
 			
 			List<ensures_clause> ecs = gsc.get_ensures();
 			if(ecs != null && ecs.size() > 0){
@@ -150,11 +136,8 @@ public class spec_case_seq implements Parser<String>  {
 				}
 			}
 			
-			if(cs.in_method_call){
-				cs.call_field.type = pre_class_type_name;
-			}else{
-				cs.this_field.type = pre_class_type_name;
-			}
+			
+			cs.instance_Field.type = pre_class_type_name;
 		}
 		
 		if(expr == null) expr = cs.ctx.mkBool(true);
@@ -172,14 +155,8 @@ public class spec_case_seq implements Parser<String>  {
 		
 		for(generic_spec_case gsc : generic_spec_cases){
 			
-			String pre_class_type_name = null;
-			if(cs.in_method_call){
-				pre_class_type_name = cs.call_field.type;
-				cs.call_field.type = gsc.class_type_name;
-			}else{
-				pre_class_type_name = cs.this_field.type;
-				cs.this_field.type = gsc.class_type_name;
-			}
+			String pre_class_type_name = cs.instance_Field.type;
+			cs.instance_Field.type = gsc.class_type_name;
 			
 			List<assignable_clause> acs = gsc.get_assignable();
 			
@@ -239,11 +216,8 @@ public class spec_case_seq implements Parser<String>  {
 				all_assign_exprs.add(pre_expr);
 			}
 			
-			if(cs.in_method_call){
-				cs.call_field.type = pre_class_type_name;
-			}else{
-				cs.this_field.type = pre_class_type_name;
-			}
+			
+			cs.instance_Field.type = pre_class_type_name;
 		}
 		
 		

@@ -225,11 +225,11 @@ public class assignment_expr implements Parser<String>{
 			//‚øå^ÇÃåüèÿ
 			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr);
+					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 				}else if(v.refinement_type_clause.ident!=null){
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr);
+						rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 					}else{
 		                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
 		            }
@@ -246,6 +246,8 @@ public class assignment_expr implements Parser<String>{
  		if(this.postfix_expr!=null) return implies_expr.have_index_access(cs) || postfix_expr.have_index_access(cs);
 		return implies_expr.have_index_access(cs);
 	}
+	
+	
 
 		
 }

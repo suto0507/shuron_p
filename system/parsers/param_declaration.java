@@ -1,5 +1,9 @@
 package system.parsers;
 
+import java.util.ArrayList;
+
+import com.microsoft.z3.IntExpr;
+
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -46,11 +50,11 @@ public class param_declaration implements Parser<String>{
 			v.temp_num=0;
 			if(v.refinement_type_clause!=null){
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs));
+					v.refinement_type_clause.refinement_type.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 				}else{
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs));
+						rt.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 					}else{
 						throw new Exception("cant find refinement type " + v.refinement_type_clause.ident);
 					}

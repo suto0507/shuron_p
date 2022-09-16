@@ -55,31 +55,33 @@ public class refinement_type implements Parser<String>{
 	}
 	
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
-	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr) throws Exception{
+	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
 		
 		//バックアップ
 	    Field pre_refined_Field = cs.refined_Field;
 	    Expr pre_refined_Expr = cs.refined_Expr;
 	    String pre_refinement_type_value = cs.refinement_type_value;
 	    boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
-	    Expr pre_refined_class_Expr = cs.refined_class_Expr;
-	    Field pre_refined_class_Field = cs.refined_class_Field;
-	    
+	    Expr pre_instance_expr = cs.instance_expr;
+		Field pre_instance_Field = cs.instance_Field;
+		ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+
 	    //篩型の処理のための事前準備
-        cs.refined_class_Expr = class_Expr;
-        cs.refined_class_Field = class_Field;
+		cs.instance_expr = class_Expr;
+		cs.instance_Field = class_Field;
+		cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
 		
 		cs.in_refinement_predicate = true;
 		cs.refinement_type_value = ident;
 		cs.refined_Field = refined_Field;
 		cs.refined_Expr = refined_Expr;
 		
-		String pre_class_type_name = cs.refined_class_Field.type;
-		cs.refined_class_Field.type = this.class_type_name;
+		String pre_class_type_name = cs.instance_Field.type;
+		cs.instance_Field.type = this.class_type_name;
 		
 		BoolExpr expr = this.predicate.check(cs);
 		
-		cs.refined_class_Field.type = pre_class_type_name;
+		cs.instance_Field.type = pre_class_type_name;
 		
 		cs.assert_constraint(expr);
 		cs.in_refinement_predicate = false;
@@ -98,7 +100,7 @@ public class refinement_type implements Parser<String>{
 		}else{
 			refinement_type rt = cs.search_refinement_type(this.class_type_name, type.type);
 			if(rt!=null){
-				rt.assert_refinement(cs, refined_Field, refined_Expr, class_Field, class_Expr);
+				rt.assert_refinement(cs, refined_Field, refined_Expr, class_Field, class_Expr, indexs);
 			}else{
 				throw new Exception("can't find refinement type " + type.type);
 			}
@@ -108,13 +110,14 @@ public class refinement_type implements Parser<String>{
 	    cs.refined_Field = pre_refined_Field;
 	    cs.refinement_type_value = pre_refinement_type_value;
 	    cs.in_refinement_predicate = pre_in_refinement_predicate;
-	    cs.refined_class_Expr = pre_refined_class_Expr;
-	    cs.refined_class_Field = pre_refined_class_Field;
+	    cs.instance_expr = pre_instance_expr;
+		cs.instance_Field = pre_instance_Field;
+		cs.instance_indexs = pre_instance_indexs;
 	}
 	
 	
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
-	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr) throws Exception{
+	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
 		
 		if(cs.in_constructor){//コンストラクタ内では篩型は保証されない
 			return;
@@ -125,24 +128,26 @@ public class refinement_type implements Parser<String>{
 	    Expr pre_refined_Expr = cs.refined_Expr;
 	    String pre_refinement_type_value = cs.refinement_type_value;
 	    boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
-	    Expr pre_refined_class_Expr = cs.refined_class_Expr;
-	    Field pre_refined_class_Field = cs.refined_class_Field;
-	    
+	    Expr pre_instance_expr = cs.instance_expr;
+		Field pre_instance_Field = cs.instance_Field;
+		ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+
 	    //篩型の処理のための事前準備
-        cs.refined_class_Expr = class_Expr;
-        cs.refined_class_Field = class_Field;
+		cs.instance_expr = class_Expr;
+		cs.instance_Field = class_Field;
+		cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
 		
 		cs.in_refinement_predicate = true;
 		cs.refinement_type_value = ident;
 		cs.refined_Field = refined_Field;
 		cs.refined_Expr = refined_Expr;
 		
-		String pre_class_type_name = cs.refined_class_Field.type;
-		cs.refined_class_Field.type = this.class_type_name;
+		String pre_class_type_name = cs.instance_Field.type;
+		cs.instance_Field.type = this.class_type_name;
 		
 		BoolExpr expr = this.predicate.check(cs);
 		
-		cs.refined_class_Field.type = pre_class_type_name;
+		cs.instance_Field.type = pre_class_type_name;
 		
 		cs.add_constraint(expr);
 		cs.in_refinement_predicate = false;
@@ -161,7 +166,7 @@ public class refinement_type implements Parser<String>{
 		}else{
 			refinement_type rt = cs.search_refinement_type(this.class_type_name, type.type);
 			if(rt!=null){
-				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Field, class_Expr);
+				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Field, class_Expr, indexs);
 			}else{
 				throw new Exception("can't find refinement type " + type.type);
 			}
@@ -171,19 +176,20 @@ public class refinement_type implements Parser<String>{
 	    cs.refined_Field = pre_refined_Field;
 	    cs.refinement_type_value = pre_refinement_type_value;
 	    cs.in_refinement_predicate = pre_in_refinement_predicate;
-	    cs.refined_class_Expr = pre_refined_class_Expr;
-	    cs.refined_class_Field = pre_refined_class_Field;
+	    cs.instance_expr = pre_instance_expr;
+		cs.instance_Field = pre_instance_Field;
+		cs.instance_indexs = pre_instance_indexs;
 	}
 	
 	// subtype <= this
 	// addしてしまうので、必要であればcs.solver.push()をしておく必要はある。
-	public void check_subtype(Variable refined_variable,  refinement_type sub_type, Field class_Field, Expr class_Expr, Check_status cs) throws Exception{
+	public void check_subtype(Variable refined_variable, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs, refinement_type sub_type, Field sub_type_class_Field, Expr sub_type_class_Expr, ArrayList<IntExpr> sub_type_indexs, Check_status cs) throws Exception{
 		cs.in_refinement_predicate = true;
 		
 		
 		
-		sub_type.add_refinement_constraint(cs, refined_variable, refined_variable.get_Expr(cs), class_Field , class_Expr);
-		this.assert_refinement(cs, refined_variable, refined_variable.get_Expr(cs), class_Field , class_Expr);
+		sub_type.add_refinement_constraint(cs, refined_variable, refined_variable.get_Expr(cs), class_Field , class_Expr, indexs);
+		this.assert_refinement(cs, refined_variable, refined_variable.get_Expr(cs), class_Field , class_Expr, indexs);
 		
 		
 		
@@ -272,17 +278,17 @@ public class refinement_type implements Parser<String>{
 		System.out.println("check refinement type equality 1");
 		cs.solver.push();
 		
-		this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr);
+		this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));
 		
 		if(comparative_v_indexs.size() == 0){
 			cs.add_constraint(cs.ctx.mkEq(comparative_v.get_Expr(cs), v.get_full_Expr((ArrayList<IntExpr>) v_indexs.clone(), cs)));
 			
-			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr);
+			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
 		}else{
-			comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr);
+			comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
 			cs.add_constraint(cs.ctx.mkEq(comparative_v.get_Expr_assign(cs), comparative_v.assign_value(comparative_v_indexs, v.get_full_Expr((ArrayList<IntExpr>) v_indexs.clone(), cs), cs)));
 			
-			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr_assign(cs), comparative_class_Field, comparative_class_Expr);
+			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr_assign(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
 			//comparative_v.temp_num++;
 		}
 		
@@ -292,17 +298,17 @@ public class refinement_type implements Parser<String>{
 		System.out.println("check refinement type equality 2");
 		cs.solver.push();
 		
-		comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr);
+		comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
 		
 		if(v_indexs.size() == 0){
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), comparative_v.get_full_Expr((ArrayList<IntExpr>) comparative_v_indexs.clone(), cs)));
 			
-			this.assert_refinement(cs, v, v.get_Expr(cs), class_Field, class_Expr);
+			this.assert_refinement(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));
 		}else{
-			this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr);
+			this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr_assign(cs), v.assign_value(v_indexs, comparative_v.get_full_Expr((ArrayList<IntExpr>) comparative_v_indexs.clone(), cs), cs)));
 			
-			this.assert_refinement(cs, v, v.get_Expr_assign(cs), class_Field, class_Expr);
+			this.assert_refinement(cs, v, v.get_Expr_assign(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));
 			//v.temp_num++;
 		}
 		

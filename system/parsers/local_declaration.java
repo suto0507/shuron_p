@@ -154,11 +154,11 @@ public class local_declaration implements Parser<String>{
 				//⿌^
 				if(v.refinement_type_clause!=null){
 					if(v.refinement_type_clause.refinement_type!=null){
-						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs));
+						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 					}else if(v.refinement_type_clause.ident!=null){
 						refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 						if(rt!=null){
-							rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs));
+							rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 						}else{
 							throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
 						}

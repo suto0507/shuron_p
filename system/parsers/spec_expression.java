@@ -22,5 +22,7 @@ public class spec_expression implements Parser<String>{
 	public boolean have_index_access(Check_status cs){
 		return expression.have_index_access(cs);
 	}
+	
+	
 
 }

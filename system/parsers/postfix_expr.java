@@ -54,23 +54,17 @@ public class postfix_expr implements Parser<String>{
 
 		//suffixについて
 		List<IntExpr> indexs = new ArrayList<IntExpr>();
-		if(cs.in_method_call) indexs = cs.call_indexs;
+		if(cs.instance_indexs!=null) indexs = (ArrayList<IntExpr>) cs.instance_indexs.clone();
 		
 		
 		if(this.primary_expr.is_this){
 			if(this.primary_suffixs.size() == 0 && cs.in_constructor){//this単体のコンストラクターでの使用
 				cs.constructor_refinement_check();
 			}
-			f = cs.this_field;
-			ex = f.get_Expr(cs);
+			f = cs.instance_Field;
+			ex = cs.instance_expr;
 			
-			if(cs.in_method_call){//関数呼び出し
-				f = cs.call_field;
-				ex = cs.call_expr;
-			}else if(cs.in_refinement_predicate){//篩型
-				f = cs.refined_class_Field;
-				ex = cs.refined_class_Expr;
-			}
+			
 		}else if(this.primary_expr.ident!=null){
 			
 			Quantifier_Variable quantifier = cs.search_quantifier(this.primary_expr.ident, cs);
@@ -82,52 +76,37 @@ public class postfix_expr implements Parser<String>{
 				ex = cs.refined_Expr;
 				is_refine_value = true;
 			}else{
+				//ローカル変数
 				if(cs.in_method_call){//関数呼び出し
-					Field searched_field = cs.search_field(primary_expr.ident, cs.call_field ,cs);
 					if(cs.search_called_method_arg(primary_expr.ident)){
 						f = cs.get_called_method_arg(primary_expr.ident);
 						ex = f.get_Expr(cs);
-					}else if(searched_field != null){
-						f = searched_field;
-						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.call_expr);
-					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
-						ident = this.primary_expr.ident;
-						f = cs.call_field;
-						ex = cs.call_expr;
-					}else{
-						throw new Exception(cs.call_field.type + " don't have " + this.primary_expr.ident);
 					}
 					
 				}else if(cs.in_refinement_predicate){//篩型
-					Field searched_field = cs.search_field(primary_expr.ident, cs.refined_class_Field ,cs);
-					if((cs.refined_class_Field==null||cs.refined_class_Field.equals(cs.this_field, cs))&&cs.search_variable(this.primary_expr.ident)){
+					if((cs.instance_Field==null||cs.instance_Field.equals(cs.this_field, cs))&&cs.search_variable(this.primary_expr.ident)){
 						f = cs.get_variable(this.primary_expr.ident);
 						ex = f.get_Expr(cs);
-					}else if(searched_field != null){
-						f = searched_field;
-						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.refined_class_Expr);
-					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
-						ident = this.primary_expr.ident;
-						f = cs.refined_class_Field;
-						ex = cs.refined_class_Expr;
-					}else{
-						throw new Exception(cs.refined_class_Field.type + " don't have " + this.primary_expr.ident);
 					}
 					
 				}else{
-					Field searched_field = cs.search_field(primary_expr.ident, cs.this_field ,cs);
 					if(cs.search_variable(primary_expr.ident)){
 						f = cs.get_variable(primary_expr.ident);
 						ex = f.get_Expr(cs);
-					}else if(searched_field != null){
+					}
+				}
+				
+				if(f==null){//ローカル変数ではない場合
+					Field searched_field = cs.search_field(primary_expr.ident, cs.instance_Field ,cs);
+					if(searched_field != null){//フィールド
 						f = searched_field;
-						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.this_field.get_Expr(cs));
-					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){
+						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.instance_expr);
+					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//メソッド
 						ident = this.primary_expr.ident;
-						f = cs.this_field;
-						ex = f.get_Expr(cs);
+						f = cs.instance_Field;
+						ex = cs.instance_expr;
 					}else{
-						throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
+						throw new Exception(cs.instance_Field.type + " don't have " + this.primary_expr.ident);
 					}
 				}
 
@@ -197,13 +176,9 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false && !(cs.in_constructor && f.class_object != null && f.class_object.equals(cs.this_field, cs))){//篩型
-			if(cs.in_method_call){
-				add_refinement_constraint(cs, f, ex, cs.call_field, cs.call_expr);
-			}if(cs.in_refinement_predicate){
-				add_refinement_constraint(cs, f, ex, cs.refined_class_Field, cs.refined_class_Expr);
-			}else{
-				add_refinement_constraint(cs, f, ex, cs.this_field, cs.this_field.get_Expr(cs));
-			}
+			
+			add_refinement_constraint(cs, f, ex, cs.instance_Field, cs.instance_Field.get_Expr(cs), cs.instance_indexs);
+			
 			
 		}
 		
@@ -240,7 +215,7 @@ public class postfix_expr implements Parser<String>{
 					}
 					
 					if(f.refinement_type_clause!=null&& !(cs.in_constructor && f.class_object != null && f.class_object.equals(cs.this_field, cs))){//篩型
-						add_refinement_constraint(cs, f, ex, pre_f, pre_ex);
+						add_refinement_constraint(cs, f, ex, pre_f, pre_ex, (ArrayList<IntExpr>) indexs);
 					}
 					
 					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
@@ -299,7 +274,6 @@ public class postfix_expr implements Parser<String>{
 				//関数の呼び出し
 				f = method(cs, ident, f, ex, (ArrayList<IntExpr>) indexs, ps);
 				ex = f.get_Expr(cs);
-				cs.in_method_call = false;
 				ident = null;
 			}
 		}
@@ -312,7 +286,6 @@ public class postfix_expr implements Parser<String>{
 		Expr ex = null;
 		Field f = null;
 		ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
-		if(cs.in_method_call) indexs = cs.call_indexs;
 		
 		if(this.primary_suffixs.size() == 0){
 			if(this.primary_expr.is_this){
@@ -472,11 +445,13 @@ public class postfix_expr implements Parser<String>{
 		
 		cs.called_method_args = new ArrayList<Variable>();
 		
+		Expr pre_instance_expr = cs.instance_expr;
+		Field pre_instance_Field = cs.instance_Field;
+		ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
 		
-		
-		cs.call_expr = ex;
-		cs.call_field = f;
-		cs.call_indexs = (ArrayList<IntExpr>) indexs.clone();
+		cs.instance_expr = ex;
+		cs.instance_Field = f;
+		cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
@@ -587,11 +562,11 @@ public class postfix_expr implements Parser<String>{
 			//篩型の検証
 			if(v.refinement_type_clause!=null){
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), f, ex);
+					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), f, ex, indexs);
 				}else{
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(cs, v, v.get_Expr(cs), f, ex);
+						rt.assert_refinement(cs, v, v.get_Expr(cs), f, ex, indexs);
 					}else{
 						throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
 					}
@@ -669,11 +644,11 @@ public class postfix_expr implements Parser<String>{
 		cs.result = result;
 		if(result.refinement_type_clause!=null){
 			if(result.refinement_type_clause.refinement_type!=null){
-				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex);
+				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs);
 			}else{
 				refinement_type rt = cs.search_refinement_type(result.class_object.type, result.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex);
+					rt.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs);
 				}else{
 					throw new Exception("can't find refinement type " + result.refinement_type_clause.ident);
 				}
@@ -699,13 +674,19 @@ public class postfix_expr implements Parser<String>{
 			ensures_expr = md.method_specification.ensures_expr(cs);
 			cs.add_constraint(ensures_expr);
 		}
+
+		cs.in_method_call = false;
+		
+		cs.instance_expr = pre_instance_expr;
+		cs.instance_Field = pre_instance_Field;
+		cs.instance_indexs = pre_instance_indexs;
 		
 		
 		
 		return result;
 	}
 
-	void add_refinement_constraint(Check_status cs,Field f, Expr ex, Field class_Field, Expr class_Expr) throws Exception{
+	void add_refinement_constraint(Check_status cs,Field f, Expr ex, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
 	    System.out.println(f.field_name + " has refinement type");
 
 	    
@@ -713,11 +694,11 @@ public class postfix_expr implements Parser<String>{
 	    cs.refinement_deep++;
 	    if(cs.refinement_deep <= cs.refinement_deep_limmit){
 	        if(f.refinement_type_clause.refinement_type!=null){
-	            f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex, class_Field, class_Expr);
+	            f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex, class_Field, class_Expr, indexs);
 	        }else if(f.refinement_type_clause.ident!=null){
 	        	refinement_type rt = cs.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
 	            if(rt!=null){
-	                rt.add_refinement_constraint(cs, f, ex, class_Field, class_Expr);
+	                rt.add_refinement_constraint(cs, f, ex, class_Field, class_Expr, indexs);
 	            }else{
 	                throw new Exception("can't find refinement type " + f.refinement_type_clause.ident);
 	            }

@@ -1,5 +1,7 @@
 package system.parsers;
 
+import java.util.ArrayList;
+
 import system.Check_status;
 import system.Field;
 import system.Pair;
@@ -8,6 +10,8 @@ import system.Parser_status;
 import system.Source;
 import system.Summery;
 import system.Variable;
+
+import com.microsoft.z3.*;
 
 public class class_declaration implements Parser<String>{
 	String class_name;
@@ -46,8 +50,9 @@ public class class_declaration implements Parser<String>{
 		//csc.fields.add(this_field);
 		csc.this_field = this_field;
 		//èâä˙âª
-		csc.refined_class_Expr = this_field.get_Expr(csc);
-		csc.refined_class_Field = this_field;
+		csc.instance_expr = this_field.get_Expr(csc);
+		csc.instance_Field = this_field;
+		csc.instance_indexs = new ArrayList<IntExpr>();
 		
 		this.class_block.check(csc, summery);
 	}

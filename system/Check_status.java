@@ -19,18 +19,23 @@ public class Check_status {
 	public Field this_field;
 	public List<Pair<String, refinement_type>> local_refinements;
 	
+	
+	public Expr instance_expr;
+	public Field instance_Field;
+	public ArrayList<IntExpr> instance_indexs;
+	
 	public boolean in_refinement_predicate;
 	public Field refined_Field;
 	public Expr refined_Expr;
 	public String refinement_type_value;
 	//篩型を持つフィールドを持つクラス
-	public Field refined_class_Field;
-	public Expr refined_class_Expr;
+	//public Field refined_class_Field;
+	//public Expr refined_class_Expr;
 	
 	public boolean in_method_call;
-	public Expr call_expr;
-	public Field call_field;
-	public ArrayList<IntExpr> call_indexs;
+	//public Expr call_expr;
+	//public Field call_field;
+	//public ArrayList<IntExpr> call_indexs;
 	public List<Variable> called_method_args;
 	public Check_status old_status;
 	public Variable result;
@@ -244,8 +249,6 @@ public class Check_status {
 		cs.called_method_args = this.called_method_args;
 		cs.old_status = this.old_status;
 		cs.result = this.result;
-		cs.call_expr = this.call_expr;
-		cs.call_field = this.call_field;
 		
 		cs.return_v = this.return_v;
 		cs.return_expr = this.return_expr;
@@ -261,8 +264,10 @@ public class Check_status {
 		cs.refinement_deep = this.refinement_deep;
 		cs.refinement_deep_limmit = this.refinement_deep_limmit;
 		
-		cs.refined_class_Field = this.refined_class_Field;
-		cs.refined_class_Expr = this.refined_class_Expr;
+		cs.instance_expr = this.instance_expr;
+		cs.instance_Field = this.instance_Field;
+		cs.instance_indexs = this.instance_indexs;
+		
 		cs.in_constructor = this.in_constructor;
 		
 		cs.quantifiers = new ArrayList<Pair<String, Expr>>();
@@ -336,11 +341,11 @@ public class Check_status {
 		for(Field f : this.fields){
 			if(f.class_object!=null && f.class_object.equals(this_field, this) && f.refinement_type_clause!=null){
 				if(f.refinement_type_clause.refinement_type!=null){
-					f.refinement_type_clause.refinement_type.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this));
+					f.refinement_type_clause.refinement_type.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this), new ArrayList<IntExpr>());
 				}else if(f.refinement_type_clause.ident!=null){
 					refinement_type rt = this.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this));
+						rt.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this), new ArrayList<IntExpr>());
 					}else{
 						throw new Exception("can't find refinement type " + f.refinement_type_clause.ident);
 					}

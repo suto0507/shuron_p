@@ -23,6 +23,8 @@ public class predicate implements Parser<String>{
 	public boolean have_index_access(Check_status cs){
 		return spec_expression.have_index_access(cs);
 	}
+	
+	
 
 }
 

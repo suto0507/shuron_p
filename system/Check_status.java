@@ -24,18 +24,12 @@ public class Check_status {
 	public Field instance_Field;
 	public ArrayList<IntExpr> instance_indexs;
 	
-	public boolean in_refinement_predicate;
+	public boolean in_refinement_predicate;//篩型の述語のの中でメソッドを呼び出した場合、その検証中はこのフラグはfalseになる
 	public Field refined_Field;
 	public Expr refined_Expr;
 	public String refinement_type_value;
-	//篩型を持つフィールドを持つクラス
-	//public Field refined_class_Field;
-	//public Expr refined_class_Expr;
 	
 	public boolean in_method_call;
-	//public Expr call_expr;
-	//public Field call_field;
-	//public ArrayList<IntExpr> call_indexs;
 	public List<Variable> called_method_args;
 	public Check_status old_status;
 	public Variable result;
@@ -62,7 +56,12 @@ public class Check_status {
 	
 	public boolean in_constructor;
 	
+	public boolean can_not_use_mutable;//篩型の中のメソッド呼び出し
+	
 	public List<Pair<String, Expr>> quantifiers;
+	
+	public boolean in_jml_predicate;
+	
 	
 	public Check_status(compilation_unit cu){
 		variables = new ArrayList<Variable>();
@@ -270,7 +269,11 @@ public class Check_status {
 		
 		cs.in_constructor = this.in_constructor;
 		
+		cs.can_not_use_mutable = this.can_not_use_mutable;
+		
 		cs.quantifiers = new ArrayList<Pair<String, Expr>>();
+		
+		cs.in_jml_predicate = this.in_jml_predicate;
 		
 		return cs;
 	}

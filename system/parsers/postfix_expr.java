@@ -101,6 +101,11 @@ public class postfix_expr implements Parser<String>{
 					if(searched_field != null){//フィールド
 						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.instance_expr);
+						if(cs.can_not_use_mutable){
+							if(!f.modifiers.is_final){
+								new Exception("method depends on mutable field in refinenment type predicate.");
+							}
+						}
 					}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//メソッド
 						ident = this.primary_expr.ident;
 						f = cs.instance_Field;
@@ -210,6 +215,11 @@ public class postfix_expr implements Parser<String>{
 					if(searched_field != null){
 						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+						if(cs.can_not_use_mutable){
+							if(!f.modifiers.is_final){
+								new Exception("method depends on mutable field in refinenment type predicate.");
+							}
+						}
 					}else{
 						throw new Exception(f.type + " don't have " + ps.ident);
 					}
@@ -418,6 +428,11 @@ public class postfix_expr implements Parser<String>{
 	
 	public Field method(Check_status cs, String ident, Field f, Expr ex, ArrayList<IntExpr> indexs, primary_suffix ps)throws Exception{
 		
+		boolean pre_can_not_use_mutable = cs.can_not_use_mutable;
+		if(cs.in_refinement_predicate) cs.can_not_use_mutable = true;
+		boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
+		cs.in_refinement_predicate = false;
+		
 		//コンストラクタでの自インスタンスの関数呼び出し
 		if(cs.in_constructor && f.equals(cs.this_field, cs)){
 			cs.constructor_refinement_check();
@@ -433,6 +448,9 @@ public class postfix_expr implements Parser<String>{
 			throw new Exception("wrong number of arguments");
 		}
 		
+		if(cs.in_jml_predicate && !md.modifiers.is_pure){
+			throw new Exception("non pure method in jml predicate");
+		}
 		
 		//引数の処理
 		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
@@ -681,7 +699,8 @@ public class postfix_expr implements Parser<String>{
 		cs.instance_Field = pre_instance_Field;
 		cs.instance_indexs = pre_instance_indexs;
 		
-		
+		cs.can_not_use_mutable = pre_can_not_use_mutable;
+		cs.in_refinement_predicate = pre_in_refinement_predicate;
 		
 		return result;
 	}

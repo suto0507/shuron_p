@@ -16,7 +16,14 @@ public class predicate implements Parser<String>{
 	}
 	
 	public BoolExpr check(Check_status cs) throws Exception{
-		return (BoolExpr)this.spec_expression.check(cs).expr;
+		boolean pre_in_jml_predicate = cs.in_jml_predicate;
+		cs.in_jml_predicate = true;
+		
+		BoolExpr expr = (BoolExpr)this.spec_expression.check(cs).expr;
+		
+		cs.in_jml_predicate = pre_in_jml_predicate;
+		
+		return expr;
 	}
 	
 	

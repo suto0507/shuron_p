@@ -8,11 +8,13 @@ public class modifiers implements Parser<String>{
 	boolean is_privte;
 	public boolean is_final;
 	boolean is_spec_public;
+	boolean is_pure;
 	
 	modifiers(){
 		this.is_final = false;
 		this.is_privte = false;
 		this.is_spec_public = false;
+		this.is_pure = false;
 	}
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -28,6 +30,8 @@ public class modifiers implements Parser<String>{
 					this.is_final = true;
 				}else if(st.equals("spec_public")){
 					this.is_spec_public = true;
+				}else if(st.equals("pure")){
+					this.is_pure = true;
 				}
 				ret = ret + st + new spaces().parse(s,ps);
 			}

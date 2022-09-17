@@ -134,6 +134,11 @@ public class new_expr implements Parser<String>{
 			new_suffix ps = this.new_suffix;
 			//IntExpr f_index
 			
+			boolean pre_can_not_use_mutable = cs.can_not_use_mutable;
+			if(cs.in_refinement_predicate) cs.can_not_use_mutable = true;
+			boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
+			cs.in_refinement_predicate = false;
+			
 			
 			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type.type);
 			if(cd == null){
@@ -348,6 +353,9 @@ public class new_expr implements Parser<String>{
 			cs.instance_expr = pre_instance_expr;
 			cs.instance_Field = pre_instance_Field;
 			cs.instance_indexs = pre_instance_indexs;
+			
+			cs.can_not_use_mutable = pre_can_not_use_mutable;
+			cs.in_refinement_predicate = pre_in_refinement_predicate;
 			
 			return result;
 		}else{

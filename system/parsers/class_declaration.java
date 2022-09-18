@@ -54,7 +54,9 @@ public class class_declaration implements Parser<String>{
 		csc.instance_Field = this_field;
 		csc.instance_indexs = new ArrayList<IntExpr>();
 		
-		this.class_block.check(csc, summery);
+		this.class_block.check(csc, summery, this);
 	}
+	
+	
 	
 }

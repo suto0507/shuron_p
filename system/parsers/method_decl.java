@@ -46,8 +46,9 @@ public class method_decl implements Parser<String>{
 		
 		this.modifiers = new modifiers();
 		this.st = this.st + this.modifiers.parse(s, ps);
-		this.st = this.st + new spaces().parse(s, ps);
+		this.st = this.st + new newLines().parse(s, ps);
 		
+		this.st = this.st + new spaces().parse(s, ps);
 		s_backup = s.clone();
 		try{
 			String st2 = "";
@@ -94,6 +95,7 @@ public class method_decl implements Parser<String>{
 				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field);
 			}else{
 				//コンストラクタでの初期化
+				
 				for(Field f : cs.fields){
 					if(f.type.equals("int")){
 						BoolExpr ex = cs.ctx.mkEq(cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs)), cs.ctx.mkInt(0));	

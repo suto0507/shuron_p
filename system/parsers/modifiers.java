@@ -33,7 +33,7 @@ public class modifiers implements Parser<String>{
 				}else if(st.equals("pure")){
 					this.is_pure = true;
 				}
-				ret = ret + st + new spaces().parse(s,ps);
+				ret = ret + st + new newLines().parse(s,ps);
 			}
 		}catch (Exception e){
 			s.revert(s_backup);

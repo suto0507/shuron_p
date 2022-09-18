@@ -5,9 +5,11 @@ import java.util.List;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.IntExpr;
 
 import system.Check_status;
 import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -79,7 +81,7 @@ public class class_block implements Parser<String>{
 		return ret;
 	}
 	
-	public void check(Check_status cs, Summery summery) throws Exception{
+	public void check(Check_status cs, Summery summery, class_declaration cd) throws Exception{
 		//invariantとフィールドについて書く
 		cs.invariants = this.invariants;
 		
@@ -89,10 +91,29 @@ public class class_block implements Parser<String>{
 			
 			//初期化
 			
+			//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため
+			while(cd!=null){
+				class_block cb = cd.class_block;
+				for(variable_definition vd : cb.variable_definitions){
+					Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
+							, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type);
+					
+					//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
+					List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
+					indexs.add(new ArrayList<IntExpr>());
+					f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkBool(false), indexs));
+					
+					csc.fields.add(f);
+				}
+				cd = cd.super_class;
+			}
+			
 			csc.return_exprs = new ArrayList<Expr>();
 			csc.return_pathconditions = new ArrayList<BoolExpr>();
 			method.check(csc, summery);
 		}
 	}
+	
+	
 	
 }

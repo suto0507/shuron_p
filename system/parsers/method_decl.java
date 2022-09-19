@@ -289,6 +289,10 @@ public class method_decl implements Parser<String>{
 		class_declaration super_class = class_decl.super_class;
 		
 		//返り値の型の篩型
+		
+		//配列には新しい篩型をつけることができない
+		if(this.type_spec.dims > 0 && this.type_spec.refinement_type_clause!=null) throw new Exception("array can not override refinement type");
+		
 		boolean exist_super_md = false;
 		while(true){
 			method_decl super_md = cu.search_method(super_class.class_name, this.ident);
@@ -373,6 +377,9 @@ public class method_decl implements Parser<String>{
 		
 		//各引数のチェック
 		for(int i = 0; i < this.formals.param_declarations.size(); i++){
+			
+			//配列には新しい篩型をつけることができない
+			if(this.formals.param_declarations.get(i).type_spec.dims > 0 && this.formals.param_declarations.get(i).type_spec.refinement_type_clause!=null) throw new Exception("array can not override refinement type");
 			
 			//処理する引数を表すVariable
 			modifiers modi = new modifiers();

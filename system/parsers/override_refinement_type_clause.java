@@ -1,5 +1,6 @@
 package system.parsers;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import system.Check_status;
@@ -47,7 +48,10 @@ public class override_refinement_type_clause implements Parser<String>{
 			}
 			
 			st2 = st2 + new string(")").parse(s,ps);
-			
+			if(this.param_override_list == null){
+				this.param_override_list = new param_override_list();
+				this.param_override_list.param_overrides = new ArrayList<Pair<String, type_or_refinement_type>>();
+			}
 			st = st + st2;
 		}catch (Exception e){
 			s.revert(s_backup);
@@ -69,9 +73,15 @@ public class override_refinement_type_clause implements Parser<String>{
 			String base_type = "";
 			while(true){
 				variable_definition super_vd = cu.search_field(super_class.class_name, this.ident);
+				
+				
+				
 				if(super_vd != null){
 					exist_super_vd = true;
 					base_type = super_vd.variable_decls.type_spec.type.type;
+					
+					//”z—ñ‚É‚ÍV‚µ‚¢â¿Œ^‚ğ‚Â‚¯‚é‚±‚Æ‚ª‚Å‚«‚È‚¢
+					if(super_vd.variable_decls.type_spec.dims > 0) throw new Exception("array can not override refinement type");
 				}
 				if(super_vd == null || super_vd.variable_decls.type_spec.refinement_type_clause==null){//â¿Œ^‚ªŒ©‚Â‚©‚é‚Ü‚Åsuper class‚ğ’Tõ
 					if(super_class.super_class == null){

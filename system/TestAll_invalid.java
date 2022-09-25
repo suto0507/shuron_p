@@ -34,6 +34,8 @@ public class TestAll_invalid {
 			System.out.println(st + "is file");
 			
 			st = new Comment_analysis().comment_analysis(st);
+			st = st.replace('\n', ' ');
+			st = st.replaceAll("[ \t]+", " ");
 			
 			System.out.println(st + "is erase comment");
 			

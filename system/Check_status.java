@@ -64,6 +64,8 @@ public class Check_status {
 	
 	public boolean in_constructor_refinement_check;
 	
+	public boolean in_loop;//ƒNƒ[ƒ“‚µ‚È‚¢
+	
 	
 	public Check_status(compilation_unit cu){
 		variables = new ArrayList<Variable>();

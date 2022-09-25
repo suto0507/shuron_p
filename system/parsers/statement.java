@@ -196,6 +196,9 @@ import system.Variable;
 							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
 							v.temp_num++;
 						}
+						
+						v.loop_alias = v_then.loop_alias;
+						
 					}else{
 						Variable v_then = cs_then.get_variable(v.field_name);
 						Variable v_else = cs_else.get_variable(v.field_name);
@@ -206,6 +209,8 @@ import system.Variable;
 							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
 							v.temp_num++;
 						}
+						
+						v.loop_alias = v_then.loop_alias || v_else.loop_alias;
 					}
 				}
 				
@@ -280,6 +285,9 @@ import system.Variable;
 					}
 				}else if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){
 					if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
+						
+						if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+						
 						Expr alias;
 						if(((Variable) rc.field).alias == null){
 							alias = cs.ctx.mkBool(false);
@@ -336,7 +344,7 @@ import system.Variable;
 				//インスタンスの生成
 				Check_status cs_loop = cs.clone();
 				this.refresh_list(cs_loop);
-				
+				cs_loop.in_loop = true;
 
 				//local_declarationの処理
 				Variable v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
@@ -397,6 +405,24 @@ import system.Variable;
 						Expr e2 = v_loop.get_Expr(cs_loop);
 						cs.add_constraint(cs.ctx.mkEq(e1, e2));
 					}
+					
+
+					//配列のエイリアス
+					if(v_loop.loop_alias){
+						if(cs.in_loop){
+							v.loop_alias = true;
+						}else{
+							if(((Variable) v).alias == null){
+								((Variable) v).alias = enter_loop_condition;
+							}else{
+								((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, enter_loop_condition);
+							}
+						}
+					}
+				}
+				//cs.fieldsに含まれないものがあれば追加する
+				for(Field f : cs_loop.fields){
+					cs.search_field(f.field_name, f.class_object, cs);
 				}
 				for(Field f : cs.fields){
 					Field f_loop = cs_loop.search_field(f.field_name,f.class_object, cs);
@@ -416,6 +442,7 @@ import system.Variable;
 						Expr e2 = f_loop.get_Expr(cs_loop);
 						cs.add_constraint(cs.ctx.mkEq(e1, e2));
 					}
+					
 				}
 				
 				//ループ出た後の条件
@@ -454,6 +481,10 @@ import system.Variable;
 					new_v.id = cs.Check_status_share.get_tmp_num();
 					cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), new_v.get_Expr(cs)));
 					cs.variables.add(new_v);
+					
+					//配列のループ内でのエイリアスしたかどうかは引き継ぐ
+					new_v.loop_alias = v.loop_alias;
+					
 				}
 			}
 			if(cs.fields!=null){

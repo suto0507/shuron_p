@@ -60,6 +60,8 @@ public class param_declaration implements Parser<String>{
 					}
 				}
 			}
+			
+			v.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
 		}else{
 			//System.out.println("this name is used");
 			throw new Exception("this name is used");

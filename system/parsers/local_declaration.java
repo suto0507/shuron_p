@@ -60,6 +60,9 @@ public class local_declaration implements Parser<String>{
 						Expr rc_assign_field_expr = rc.field.get_full_Expr(new ArrayList<IntExpr>(rc.indexs.subList(0, rc.field.class_object_dims_sum())), cs);
 						rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc_assign_field_expr, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), v.refinement_type_clause, indexs, v.get_Expr(cs), v.class_object, v.class_object.get_Expr(cs), cs);
 					}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
+						
+						if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+						
 						Expr alias;
 						if(((Variable) v).alias == null){
 							alias = cs.ctx.mkBool(false);
@@ -88,6 +91,9 @@ public class local_declaration implements Parser<String>{
 					}
 				}else if(v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
 					if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
+						
+						if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+						
 						Expr alias;
 						if(((Variable) rc.field).alias == null){
 							alias = cs.ctx.mkBool(false);
@@ -125,10 +131,14 @@ public class local_declaration implements Parser<String>{
 						
 						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 						
-						if(((Variable) rc.field).alias == null){
-							((Variable) rc.field).alias = cs.pathcondition;
+						if(cs.in_loop){
+							((Variable) rc.field).loop_alias = true;
 						}else{
-							((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+							if(((Variable) rc.field).alias == null){
+								((Variable) rc.field).alias = cs.pathcondition;
+							}else{
+								((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+							}
 						}
 					}
 					if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable && !(rc.field!=null && rc.field.new_array)){//ローカル変数
@@ -141,10 +151,14 @@ public class local_declaration implements Parser<String>{
 						
 						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 						
-						if(((Variable) v).alias == null){
-							((Variable) v).alias = cs.pathcondition;
+						if(cs.in_loop){
+							((Variable) v).loop_alias = true;
 						}else{
-							((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+							if(((Variable) v).alias == null){
+								((Variable) v).alias = cs.pathcondition;
+							}else{
+								((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+							}
 						}
 					}
 				}

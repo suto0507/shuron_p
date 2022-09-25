@@ -487,6 +487,9 @@ public class postfix_expr implements Parser<String>{
 					Expr method_arg_assign_field_expr = method_arg_valuse.get(j).field.get_full_Expr(new ArrayList<IntExpr>(method_arg_valuse.get(j).indexs.subList(0, method_arg_valuse.get(j).field.class_object_dims_sum())), cs);
 					method_arg_valuse.get(j).field.refinement_type_clause.equal_predicate(method_arg_valuse.get(j).indexs, method_arg_assign_field_expr, method_arg_valuse.get(j).field.class_object, method_arg_valuse.get(j).field.class_object.get_full_Expr(method_arg_valuse.get(j).indexs, cs), v.refinement_type_clause, indexs, v.get_Expr(cs), v.class_object, ex, cs);
 				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
+					
+					if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+					
 					Expr alias;
 					if(((Variable) v).alias == null){
 						alias = cs.ctx.mkBool(false);
@@ -515,6 +518,9 @@ public class postfix_expr implements Parser<String>{
 				}
 			}else if(v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
 				if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field instanceof Variable){//ローカル変数
+					
+					if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+					
 					Expr alias;
 					if(((Variable) method_arg_valuse.get(j).field).alias == null){
 						alias = cs.ctx.mkBool(false);
@@ -552,11 +558,16 @@ public class postfix_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(((Variable) method_arg_valuse.get(j).field).alias == null){
-						((Variable) method_arg_valuse.get(j).field).alias = cs.pathcondition;
+					if(cs.in_loop){
+						((Variable) method_arg_valuse.get(j).field).loop_alias = true;
 					}else{
-						((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, cs.pathcondition);
+						if(((Variable) method_arg_valuse.get(j).field).alias == null){
+							((Variable) method_arg_valuse.get(j).field).alias = cs.pathcondition;
+						}else{
+							((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, cs.pathcondition);
+						}
 					}
+					
 				}
 				if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable && !(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.new_array)){//ローカル変数
 					Expr alias_refined;
@@ -568,10 +579,14 @@ public class postfix_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(((Variable) v).alias == null){
-						((Variable) v).alias = cs.pathcondition;
+					if(cs.in_loop){
+						((Variable) v).loop_alias = true;
 					}else{
-						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+						if(((Variable) v).alias == null){
+							((Variable) v).alias = cs.pathcondition;
+						}else{
+							((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+						}
 					}
 				}
 			}

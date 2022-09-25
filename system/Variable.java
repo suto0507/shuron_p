@@ -20,6 +20,7 @@ public class Variable extends Field{
 		
 	public BoolExpr alias;
 	public BoolExpr alias_refined;
+	public boolean loop_alias;
 	
 	
 	
@@ -41,6 +42,9 @@ public class Variable extends Field{
 	public Variable clone_e() throws Exception{
 		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object);
 		ret.temp_num = this.temp_num;
+		ret.alias = this.alias;
+		ret.alias_refined = this.alias_refined;
+		ret.loop_alias = this.loop_alias;
 		return ret;
 	}
 	

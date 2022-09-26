@@ -32,6 +32,11 @@ public class compilation_unit implements Parser<String>{
 		return st;
 	}
 	
+	public void preprocessing(List<Pair<String, String>> extends_pairs, Summery summery){
+		pure_modifier();
+		link_inheritance(extends_pairs, summery);
+	}
+	
 	public void link_inheritance(List<Pair<String, String>> extends_pairs, Summery summery){
 		try {
 			//全てのクラスのsuper_classフィールドを埋める
@@ -105,6 +110,8 @@ public class compilation_unit implements Parser<String>{
 				}
 			}
 			
+			
+			
 			//不変条件の継承
 			for(class_declaration class_decl :classes){
 				if(class_decl.super_class != null){
@@ -133,6 +140,16 @@ public class compilation_unit implements Parser<String>{
 			summery.inheritance_faileds.add("Inheritance failed : "  + summery.file.toString());
 		}
 		
+	}
+	
+
+	public void pure_modifier(){
+		for(class_declaration class_decl : classes){
+			for(method_decl md : class_decl.class_block.method_decls){
+				md.pure_modifier();
+			}
+			
+		}
 	}
 	
 	public void check(int deep_limit, Summery summery) throws Exception{

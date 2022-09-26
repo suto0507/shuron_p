@@ -431,6 +431,15 @@ public class method_decl implements Parser<String>{
 
 		}
 	}
+	
+	
+	public void pure_modifier(){
+		if(this.modifiers.is_pure){
+			for(generic_spec_case gsc : this.method_specification.spec_case_seq.generic_spec_cases){
+				gsc.simple_spec_body.assignable_nothing = true;
+			}
+		}
+	}
 
 	//このインスタンスの、篩型を持たないcloneを返す
 	public method_decl clone_no_refinemet_type(){

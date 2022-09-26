@@ -62,7 +62,7 @@ public class Check_status {
 	
 	public boolean in_jml_predicate;
 	
-	public boolean in_constructor_refinement_check;
+	
 	
 	public boolean in_loop;//ƒNƒ[ƒ“‚µ‚È‚¢
 	
@@ -278,8 +278,7 @@ public class Check_status {
 		cs.quantifiers = new ArrayList<Pair<String, Expr>>();
 		
 		cs.in_jml_predicate = this.in_jml_predicate;
-		
-		cs.in_constructor_refinement_check = this.in_constructor_refinement_check;		
+			
 		return cs;
 	}
 	
@@ -346,8 +345,6 @@ public class Check_status {
 	
 	public void constructor_refinement_check() throws Exception{
 		
-		if(in_constructor_refinement_check) return;
-		in_constructor_refinement_check = true;
 		
 		System.out.println("check all refinement type predicates");
 		class_declaration cd = this.Check_status_share.compilation_unit.search_class(this.this_field.class_type_name);
@@ -366,7 +363,7 @@ public class Check_status {
 			}
 		}
 		
-		in_constructor_refinement_check = false;
+		
 	}
 	
 	//local‚Ìâ¿Œ^‚àŠÜ‚ß‚Ä’T‚·

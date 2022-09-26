@@ -71,7 +71,7 @@ public class Test1 {
 			String parsed = cu.parse(s, ps);
 			System.out.println(parsed + "is parsed");
 			s.is_parsed(summery);
-			cu.link_inheritance(ps.extends_pairs, summery);
+			cu.preprocessing(ps.extends_pairs, summery);
 			cu.check(10, summery);
 		}catch (Exception e){
 			System.out.println(e);

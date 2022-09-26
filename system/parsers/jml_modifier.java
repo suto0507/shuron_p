@@ -12,8 +12,13 @@ public class jml_modifier implements Parser<String>{
 		try{
 			st = new string("spec_public").parse(s,ps);
 		}catch (Exception e){
-			s.revert(s_backup);
-			st = new string("pure").parse(s,ps);
+			try{
+				s.revert(s_backup);
+				st = new string("pure").parse(s,ps);
+			}catch (Exception e2){
+				s.revert(s_backup);
+				st = new string("helper").parse(s,ps);
+			}
 		}
 		return st;
 	}

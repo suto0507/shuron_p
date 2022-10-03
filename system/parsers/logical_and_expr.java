@@ -46,11 +46,11 @@ public class logical_and_expr implements Parser<String>{
 			BoolExpr pre_pathcondition = cs.pathcondition;
 			
 			BoolExpr expr = (BoolExpr)equality_expr.check(cs).expr;
-			cs.add_path_condition(expr);
+			cs.add_path_condition_tmp(expr);
 			
 			for(equality_expr ee : equality_exprs){
 				expr = cs.ctx.mkAnd(expr,(BoolExpr)ee.check(cs).expr);
-				cs.add_path_condition(expr);
+				cs.add_path_condition_tmp(expr);
 			}
 			
 			cs.pathcondition = pre_pathcondition;

@@ -482,6 +482,12 @@ public class postfix_expr implements Parser<String>{
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
 			
 			//配列の篩型が安全かどうか
+			BoolExpr pathcondition;
+			if(cs.pathcondition==null){
+				pathcondition = cs.ctx.mkBool(true);
+			}else{
+				pathcondition = cs.pathcondition;
+			}
 			if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field.refinement_type_clause!=null && method_arg_valuse.get(j).field.refinement_type_clause.have_index_access(method_arg_valuse.get(j).field.class_object.type, cs)){
 				if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
 					Expr method_arg_assign_field_expr = method_arg_valuse.get(j).field.get_full_Expr(new ArrayList<IntExpr>(method_arg_valuse.get(j).indexs.subList(0, method_arg_valuse.get(j).field.class_object_dims_sum())), cs);
@@ -509,9 +515,9 @@ public class postfix_expr implements Parser<String>{
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
 					if(((Variable) v).alias_refined == null){
-						((Variable) v).alias_refined = cs.pathcondition;
+						((Variable) v).alias_refined = pathcondition;
 					}else{
-						((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, cs.pathcondition);
+						((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, pathcondition);
 					}
 				}else{//篩型の安全を保証できないような大入
 					throw new Exception("can not alias with refined array");
@@ -540,9 +546,9 @@ public class postfix_expr implements Parser<String>{
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
 					if(((Variable) method_arg_valuse.get(j).field).alias_refined == null){
-						((Variable) method_arg_valuse.get(j).field).alias_refined = cs.pathcondition;
+						((Variable) method_arg_valuse.get(j).field).alias_refined = pathcondition;
 					}else{
-						((Variable) method_arg_valuse.get(j).field).alias_refined = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias_refined, cs.pathcondition);
+						((Variable) method_arg_valuse.get(j).field).alias_refined = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias_refined, pathcondition);
 					}
 				}else{//篩型の安全を保証できないような大入
 					throw new Exception("can not alias with refined array");
@@ -562,9 +568,9 @@ public class postfix_expr implements Parser<String>{
 						((Variable) method_arg_valuse.get(j).field).loop_alias = true;
 					}else{
 						if(((Variable) method_arg_valuse.get(j).field).alias == null){
-							((Variable) method_arg_valuse.get(j).field).alias = cs.pathcondition;
+							((Variable) method_arg_valuse.get(j).field).alias = pathcondition;
 						}else{
-							((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, cs.pathcondition);
+							((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, pathcondition);
 						}
 					}
 					
@@ -583,9 +589,9 @@ public class postfix_expr implements Parser<String>{
 						((Variable) v).loop_alias = true;
 					}else{
 						if(((Variable) v).alias == null){
-							((Variable) v).alias = cs.pathcondition;
+							((Variable) v).alias = pathcondition;
 						}else{
-							((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+							((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, pathcondition);
 						}
 					}
 				}
@@ -607,7 +613,17 @@ public class postfix_expr implements Parser<String>{
 			}
 		}
 		//事前条件
-		//BoolExpr pre_invariant_expr = null;
+		BoolExpr pre_invariant_expr = null;
+		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0){
+			for(invariant inv : cd.class_block.invariants){
+				if(pre_invariant_expr == null){
+					pre_invariant_expr = (BoolExpr) inv.check(cs);
+				}else{
+					pre_invariant_expr = cs.ctx.mkAnd(pre_invariant_expr, (BoolExpr)inv.check(cs));
+				}
+			}
+			cs.assert_constraint(pre_invariant_expr);
+		}
 		BoolExpr require_expr = null;
 
 		if(md.method_specification != null){
@@ -673,6 +689,7 @@ public class postfix_expr implements Parser<String>{
 		//返り値
 		modifiers m_tmp = new modifiers();
 		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, f);
+		result.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
 		result.temp_num++;
 		cs.result = result;
 		if(result.refinement_type_clause!=null){

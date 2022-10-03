@@ -274,6 +274,12 @@ import system.Variable;
 			}else if(this.is_return){
 				
 				//配列の篩型が安全かどうか
+				BoolExpr pathcondition;
+				if(cs.pathcondition==null){
+					pathcondition = cs.ctx.mkBool(true);
+				}else{
+					pathcondition = cs.pathcondition;
+				}
 				Check_return rc = this.expression.check(cs);
 				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
 					if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){//どっちも篩型を持つ配列
@@ -308,9 +314,9 @@ import system.Variable;
 						
 						/*
 						if(((Variable) rc.field).alias_refined == null){
-							((Variable) rc.field).alias_refined = cs.pathcondition;
+							((Variable) rc.field).alias_refined = pathcondition;
 						}else{
-							((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, cs.pathcondition);
+							((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, pathcondition);
 						}*/
 					}else{//篩型の安全を保証できないような大入
 						throw new Exception("can not alias with refined array");
@@ -327,9 +333,9 @@ import system.Variable;
 					
 					/*
 					if(((Variable) rc.field).alias == null){
-						((Variable) rc.field).alias = cs.pathcondition;
+						((Variable) rc.field).alias = pathcondition;
 					}else{
-						((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+						((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, pathcondition);
 					}*/
 				}
 				
@@ -347,8 +353,18 @@ import system.Variable;
 				cs_loop.in_loop = true;
 
 				//local_declarationの処理
-				Variable v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
-				BoolExpr enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+				Variable v_local=null;
+				if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
+					v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
+				}
+				
+				BoolExpr enter_loop_condition = null;
+				if(this.possibly_annotated_loop.loop_stmt.expression!=null){
+					enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+				}else{
+					enter_loop_condition = cs.ctx.mkBool(true);
+				}
+				
 				
 				
 				//PCにループに入る条件を加える
@@ -378,7 +394,7 @@ import system.Variable;
 				
 				//中身
 				this.possibly_annotated_loop.loop_stmt.statement.check(cs_loop);
-				this.possibly_annotated_loop.loop_stmt.expression_list.check(cs_loop);
+				if(this.possibly_annotated_loop.loop_stmt.expression_list!=null)this.possibly_annotated_loop.loop_stmt.expression_list.check(cs_loop);
 				
 				
 				//中身の事後条件
@@ -453,7 +469,7 @@ import system.Variable;
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 					BoolExpr li_expr = li.predicate.check(cs_loop);
 					post_loop = cs.ctx.mkAnd(post_loop, li_expr);
-					cs.add_path_condition(li_expr);
+					cs.add_path_condition_tmp(li_expr);
 				}
 				
 				cs.pathcondition = pre_pathcondition;
@@ -461,7 +477,7 @@ import system.Variable;
 				cs.add_constraint(cs.ctx.mkImplies(enter_loop_condition, post_loop));
 				
 				//v_localは中身での変数なので消す
-				cs.variables.remove(v_local);
+				if(v_local!=null)cs.variables.remove(v_local);
 				
 				
 				

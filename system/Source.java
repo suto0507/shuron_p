@@ -47,6 +47,9 @@ public class Source {
 	
 	public void deepestwhere(){
 		System.out.println("deepestline is " + this.deepestline + ",deepestcount is " + this.deepestcount);
+		if(this.deepestcount>3 && this.deepestcount<this.s.length()-3){
+			System.out.println(s.substring(this.deepestcount-3, this.deepestcount) + "    >>>" + s.substring(this.deepestcount, this.deepestcount+1) + "<<<   " + s.substring(this.deepestcount+1, this.deepestcount+4));
+		}
 	}
 	
 	public void revert(Source s){

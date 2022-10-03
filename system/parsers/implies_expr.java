@@ -42,7 +42,7 @@ public class implies_expr implements Parser<String>{
 			BoolExpr pre_pathcondition = cs.pathcondition;
 			
 			BoolExpr guard = (BoolExpr)this.logical_or_expr.check(cs).expr;
-			cs.add_path_condition(guard);
+			cs.add_path_condition_tmp(guard);
 			
 			Expr expr = cs.ctx.mkImplies(guard,(BoolExpr)this.implies_expr.check(cs).expr);
 			

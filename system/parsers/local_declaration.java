@@ -55,6 +55,12 @@ public class local_declaration implements Parser<String>{
 				
 				
 				//”z—ñ‚Ìâ¿Œ^‚ªˆÀ‘S‚©‚Ç‚¤‚©
+				BoolExpr pathcondition;
+				if(cs.pathcondition==null){
+					pathcondition = cs.ctx.mkBool(true);
+				}else{
+					pathcondition = cs.pathcondition;
+				}
 				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
 					if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//‚Ç‚Á‚¿‚àâ¿Œ^‚ğ‚Â”z—ñ
 						Expr rc_assign_field_expr = rc.field.get_full_Expr(new ArrayList<IntExpr>(rc.indexs.subList(0, rc.field.class_object_dims_sum())), cs);
@@ -82,9 +88,9 @@ public class local_declaration implements Parser<String>{
 						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 						
 						if(((Variable) v).alias_refined == null){
-							((Variable) v).alias_refined = cs.pathcondition;
+							((Variable) v).alias_refined = pathcondition;
 						}else{
-							((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, cs.pathcondition);
+							((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, pathcondition);
 						}
 					}else{//â¿Œ^‚ÌˆÀ‘S‚ğ•ÛØ‚Å‚«‚È‚¢‚æ‚¤‚È‘å“ü
 						throw new Exception("can not alias with refined array");
@@ -113,9 +119,9 @@ public class local_declaration implements Parser<String>{
 						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 						
 						if(((Variable) rc.field).alias_refined == null){
-							((Variable) rc.field).alias_refined = cs.pathcondition;
+							((Variable) rc.field).alias_refined = pathcondition;
 						}else{
-							((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, cs.pathcondition);
+							((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, pathcondition);
 						}
 					}else{//â¿Œ^‚ÌˆÀ‘S‚ğ•ÛØ‚Å‚«‚È‚¢‚æ‚¤‚È‘å“ü
 						throw new Exception("can not alias with refined array");
@@ -135,9 +141,9 @@ public class local_declaration implements Parser<String>{
 							((Variable) rc.field).loop_alias = true;
 						}else{
 							if(((Variable) rc.field).alias == null){
-								((Variable) rc.field).alias = cs.pathcondition;
+								((Variable) rc.field).alias = pathcondition;
 							}else{
-								((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, cs.pathcondition);
+								((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, pathcondition);
 							}
 						}
 					}
@@ -155,9 +161,9 @@ public class local_declaration implements Parser<String>{
 							((Variable) v).loop_alias = true;
 						}else{
 							if(((Variable) v).alias == null){
-								((Variable) v).alias = cs.pathcondition;
+								((Variable) v).alias = pathcondition;
 							}else{
-								((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, cs.pathcondition);
+								((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, pathcondition);
 							}
 						}
 					}

@@ -20,10 +20,10 @@ public class loop_stmt implements Parser<String>{
 			local_declaration ld = new local_declaration();
 			st = st + ld.parse(s, ps);
 			this.local_declaration = ld;
+			st = st + new spaces().parse(s, ps);
 		}catch (Exception e){
 			s.revert(s_backup);
 		}
-		st = st + new spaces().parse(s, ps);
 		st = st + new string(";").parse(s, ps);
 		st = st + new spaces().parse(s, ps);
 		s_backup = s.clone();
@@ -31,10 +31,10 @@ public class loop_stmt implements Parser<String>{
 			expression ex = new expression();
 			st = st + ex.parse(s, ps);
 			this.expression = ex;
+			st = st + new spaces().parse(s, ps);
 		}catch (Exception e){
 			s.revert(s_backup);
 		}
-		st = st + new spaces().parse(s, ps);
 		st = st + new string(";").parse(s, ps);
 		st = st + new spaces().parse(s, ps);
 		s_backup = s.clone();
@@ -42,10 +42,10 @@ public class loop_stmt implements Parser<String>{
 			expression_list el = new expression_list();
 			st = st + el.parse(s, ps);
 			this.expression_list = el;
+			st = st + new spaces().parse(s, ps);
 		}catch (Exception e){
 			s.revert(s_backup);
 		}
-		st = st + new spaces().parse(s, ps);
 		st = st + new string(")").parse(s, ps);
 		st = st + new spaces().parse(s, ps);
 		this.statement = new statement();

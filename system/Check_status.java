@@ -170,20 +170,7 @@ public class Check_status {
 	public void add_constraint(BoolExpr arg_expr) throws Exception{
 		System.out.println("add" + arg_expr);
 		this.solver.add(arg_expr);
-		/*なんかおかしくなるのでコメントアウト　処理時間的にもない方がいいし、多分なくても問題ないはず
-		this.solver.push();
-		if(this.pathcondition!=null){
-			this.solver.add(this.pathcondition);
-		}
-		if(solver.check() == Status.SATISFIABLE) {
-
-        }else{
-	        Model model = solver.getModel();
-	        System.out.println("Unreachable expr");
-	        System.out.println(model.toString());
-        	throw new Exception("Unreachable.");
-        }
-		this.solver.pop();*/
+		
 	}
 	
 	public void assert_constraint(BoolExpr arg_expr) throws Exception{
@@ -195,11 +182,6 @@ public class Check_status {
 		}
 		System.out.println("assert " + expr);
 		
-		if(solver.check() == Status.SATISFIABLE) {
-
-        }else{
-        	throw new Exception("Unreachable.");
-        }
 
 		this.solver.push();
 		this.solver.add(expr);
@@ -340,6 +322,18 @@ public class Check_status {
         	throw new Exception("Unreachable.");
         }
 		this.solver.pop();
+	}
+	
+	//論理式内でのパスコンディションなど
+	//Unreachableでもいい
+	public void add_path_condition_tmp(BoolExpr expr) throws Exception{
+		
+		if(this.pathcondition==null){
+			this.pathcondition = expr;
+		}else{
+			this.pathcondition = this.ctx.mkAnd(this.pathcondition, expr);
+		}
+		
 	}
 	
 	

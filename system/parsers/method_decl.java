@@ -87,6 +87,7 @@ public class method_decl implements Parser<String>{
 		
 		System.out.println("Verify method " + this.ident);
 		
+		if(this.modifiers.is_helper) cs.in_helper = true;
 		
 		
 		//色々の処理を後で追加
@@ -115,7 +116,7 @@ public class method_decl implements Parser<String>{
 				//事前条件
 				System.out.println("precondition invariant");
 				BoolExpr pre_invariant_expr = null;
-				if(cs.invariants!=null&&cs.invariants.size()>0){
+				if(cs.invariants!=null&&cs.invariants.size()>0 && !cs.in_helper){
 					for(invariant inv : cs.invariants){
 						if(inv.is_private==true){//可視性が同じものしか使えない
 							cs.ban_default_visibility = true;
@@ -203,7 +204,7 @@ public class method_decl implements Parser<String>{
 			//事後条件
 			System.out.println("postcondition invariant");
 			BoolExpr post_invariant_expr = null;
-			if(cs.invariants!=null&&cs.invariants.size()>0){
+			if(cs.invariants!=null&&cs.invariants.size()>0 && !cs.in_helper){
 				for(invariant inv : cs.invariants){
 					if(inv.is_private==true){//可視性が同じものしか使えない
 						cs.ban_default_visibility = true;

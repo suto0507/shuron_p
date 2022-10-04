@@ -62,9 +62,9 @@ public class Check_status {
 	
 	public boolean in_jml_predicate;
 	
-	
-	
 	public boolean in_loop;//クローンしない
+	
+	public boolean in_helper; //helperメソッドの中かどうか
 	
 	
 	public Check_status(compilation_unit cu){
@@ -260,6 +260,8 @@ public class Check_status {
 		cs.quantifiers = new ArrayList<Pair<String, Expr>>();
 		
 		cs.in_jml_predicate = this.in_jml_predicate;
+		
+		cs.in_helper = this.in_helper;
 			
 		return cs;
 	}

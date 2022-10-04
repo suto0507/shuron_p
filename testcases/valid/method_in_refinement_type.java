@@ -6,7 +6,7 @@ class A{
     }
 
     //@ensures \result == a + b;
-    //@pure
+    //@pure helper
     int plus(int a, int b){
         return a + b;
     }

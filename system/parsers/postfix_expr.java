@@ -433,10 +433,6 @@ public class postfix_expr implements Parser<String>{
 		boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
 		cs.in_refinement_predicate = false;
 		
-		//コンストラクタでの自インスタンスの関数呼び出し
-		if(cs.in_constructor && f.equals(cs.this_field, cs)){
-			cs.constructor_refinement_check();
-		}
 		
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(f.type);
 		method_decl md = cs.Check_status_share.compilation_unit.search_method(f.type, ident);
@@ -448,9 +444,17 @@ public class postfix_expr implements Parser<String>{
 			throw new Exception("wrong number of arguments");
 		}
 		
-		if(cs.in_jml_predicate && !md.modifiers.is_pure){
+		if(cs.in_jml_predicate && !(md.modifiers.is_pure && md.modifiers.is_helper)){
 			throw new Exception("non pure method in jml predicate");
 		}
+		
+		//コンストラクタでの自インスタンスの関数呼び出し
+		if(cs.in_constructor && f.equals(cs.this_field, cs) && !md.modifiers.is_helper){
+			cs.constructor_refinement_check();
+		}
+		
+		boolean pre_in_helper = cs.in_helper;
+		cs.in_helper = md.modifiers.is_helper;
 		
 		//引数の処理
 		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
@@ -614,7 +618,7 @@ public class postfix_expr implements Parser<String>{
 		}
 		//事前条件
 		BoolExpr pre_invariant_expr = null;
-		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0){
+		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0 && !cs.in_helper){
 			for(invariant inv : cd.class_block.invariants){
 				if(pre_invariant_expr == null){
 					pre_invariant_expr = (BoolExpr) inv.check(cs);
@@ -708,7 +712,7 @@ public class postfix_expr implements Parser<String>{
 		
 		//事後条件
 		BoolExpr post_invariant_expr = null;
-		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0){
+		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0 && !cs.in_helper){
 			for(invariant inv : cd.class_block.invariants){
 				if(post_invariant_expr == null){
 					post_invariant_expr = (BoolExpr) inv.check(cs);
@@ -733,6 +737,8 @@ public class postfix_expr implements Parser<String>{
 		
 		cs.can_not_use_mutable = pre_can_not_use_mutable;
 		cs.in_refinement_predicate = pre_in_refinement_predicate;
+		
+		cs.in_helper = pre_in_helper;
 		
 		return result;
 	}

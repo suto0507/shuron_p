@@ -33,6 +33,7 @@ public class TestAll {
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\array_refinement.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\array_method.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\array_branch_alias.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\method_in_refinement_type.java"));
 		
 		Summery summery = new Summery();
 		

@@ -57,6 +57,8 @@ public class refinement_type implements Parser<String>{
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
 	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
 		
+		if(cs.in_helper && !(refined_Field instanceof Variable))return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
+		
 		//バックアップ
 	    Field pre_refined_Field = cs.refined_Field;
 	    Expr pre_refined_Expr = cs.refined_Expr;

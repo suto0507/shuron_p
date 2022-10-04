@@ -9,12 +9,14 @@ public class modifiers implements Parser<String>{
 	public boolean is_final;
 	boolean is_spec_public;
 	boolean is_pure;
+	boolean is_helper;
 	
 	modifiers(){
 		this.is_final = false;
 		this.is_privte = false;
 		this.is_spec_public = false;
 		this.is_pure = false;
+		this.is_helper = false;
 	}
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -32,6 +34,8 @@ public class modifiers implements Parser<String>{
 					this.is_spec_public = true;
 				}else if(st.equals("pure")){
 					this.is_pure = true;
+				}else if(st.equals("helper")){
+					this.is_helper = true;
 				}
 				ret = ret + st + new newLines().parse(s,ps);
 			}

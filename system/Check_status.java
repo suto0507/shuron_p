@@ -61,6 +61,7 @@ public class Check_status {
 	public List<Pair<String, Expr>> quantifiers;
 	
 	public boolean in_jml_predicate;
+	public boolean use_only_helper_method;
 	
 	public boolean in_loop;//ƒNƒ[ƒ“‚µ‚È‚¢
 	
@@ -260,6 +261,7 @@ public class Check_status {
 		cs.quantifiers = new ArrayList<Pair<String, Expr>>();
 		
 		cs.in_jml_predicate = this.in_jml_predicate;
+		cs.use_only_helper_method = this.use_only_helper_method;
 		
 		cs.in_helper = this.in_helper;
 			

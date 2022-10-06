@@ -67,6 +67,7 @@ public class refinement_type implements Parser<String>{
 	    Expr pre_instance_expr = cs.instance_expr;
 		Field pre_instance_Field = cs.instance_Field;
 		ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+		boolean pre_use_only_helper_method = cs.use_only_helper_method;
 
 	    //â¿Œ^‚Ìˆ—‚Ì‚½‚ß‚Ì–‘O€”õ
 		cs.instance_expr = class_Expr;
@@ -77,6 +78,7 @@ public class refinement_type implements Parser<String>{
 		cs.refinement_type_value = ident;
 		cs.refined_Field = refined_Field;
 		cs.refined_Expr = refined_Expr;
+		cs.use_only_helper_method = true;
 		
 		String pre_class_type_name = cs.instance_Field.type;
 		cs.instance_Field.type = this.class_type_name;
@@ -115,6 +117,7 @@ public class refinement_type implements Parser<String>{
 	    cs.instance_expr = pre_instance_expr;
 		cs.instance_Field = pre_instance_Field;
 		cs.instance_indexs = pre_instance_indexs;
+		cs.use_only_helper_method = pre_use_only_helper_method;
 	}
 	
 	

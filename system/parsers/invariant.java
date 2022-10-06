@@ -36,9 +36,14 @@ public class invariant implements Parser<String>{
 	public Expr check(Check_status cs) throws Exception{
 		String pre_class_type_name = cs.this_field.type;
 		cs.this_field.type = this.class_type_name;
+		
+		boolean pre_use_only_helper_method = cs.use_only_helper_method;
+		cs.use_only_helper_method = true;
+		
 		BoolExpr ret_val =  this.predicate.check(cs);
 		
 		cs.this_field.type = pre_class_type_name;
+		cs.use_only_helper_method = pre_use_only_helper_method;
 		
 		return ret_val;
 	}

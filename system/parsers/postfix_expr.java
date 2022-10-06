@@ -266,7 +266,7 @@ public class postfix_expr implements Parser<String>{
 				index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, index));
 				
 				System.out.println("check index out of bounds");
-				cs.assert_constraint(index_bound);
+				if(!cs.in_jml_predicate)cs.assert_constraint(index_bound);
 				
 				indexs.add(index);
 				
@@ -399,7 +399,7 @@ public class postfix_expr implements Parser<String>{
 					index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, index));
 					
 					System.out.println("check index out of bounds");
-					cs.assert_constraint(index_bound);
+					if(!cs.in_jml_predicate)cs.assert_constraint(index_bound);
 					
 					
 					
@@ -444,8 +444,11 @@ public class postfix_expr implements Parser<String>{
 			throw new Exception("wrong number of arguments");
 		}
 		
-		if(cs.in_jml_predicate && !(md.modifiers.is_pure && md.modifiers.is_helper)){
+		if(cs.in_jml_predicate && !md.modifiers.is_pure){
 			throw new Exception("non pure method in jml predicate");
+		}
+		if(cs.use_only_helper_method && !md.modifiers.is_helper){
+			throw new Exception("non helper method in invarinat or in refinement type");
 		}
 		
 		//コンストラクタでの自インスタンスの関数呼び出し

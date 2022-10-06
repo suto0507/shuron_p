@@ -369,7 +369,7 @@ import system.Variable;
 				
 				//PC‚Éƒ‹[ƒv‚É“ü‚éğŒ‚ğ‰Á‚¦‚é
 				System.out.println("loop init condition");
-				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);
+				cs_loop.add_path_condition_tmp((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);//“r’†‚ÅUnreachble‚©‚Ç‚¤‚©‚ÍŠÖŒW‚È‚¢‚Í‚¸
 				
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 					BoolExpr ex = li.predicate.check(cs_loop);

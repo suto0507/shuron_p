@@ -346,7 +346,24 @@ import system.Variable;
 				cs.after_return = true;
 			}else if(this.possibly_annotated_loop!=null){
 				
+				/////////////どのフィールドが変更されるかの検証
+				//インスタンスの生成
+				Check_status cs_loop_assign_check = cs.clone();
+				this.refresh_list(cs_loop_assign_check);
+				cs_loop_assign_check.in_loop = true;
+
+				//local_declarationの処理
+				if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
+					//あとで書く
+					
+				}
 				
+				//中身
+				Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean> assigned_fields = new Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>(new ArrayList<Pair<Field,List<List<IntExpr>>>>(), false);
+				this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs_loop_assign_check);
+				if(this.possibly_annotated_loop.loop_stmt.expression_list!=null)this.possibly_annotated_loop.loop_stmt.expression_list.loop_assign(assigned_fields, cs_loop_assign_check);
+				
+				////////////ここからが本番の検証
 				//インスタンスの生成
 				Check_status cs_loop = cs.clone();
 				this.refresh_list(cs_loop);
@@ -533,6 +550,34 @@ import system.Variable;
 					Field new_f = f.clone_e();
 					new_f.id = cs.Check_status_share.get_tmp_num();
 					cs.fields.add(new_f);
+				}
+			}
+		}
+		
+		public void loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs){
+			if(this.is_expression){
+				this.expression.loop_assign(assigned_fields,cs);
+			}else if(this.local_declaration!=null){
+				this.local_declaration.loop_assign(assigned_fields,cs);
+			}else if(this.assert_statement!=null){
+				//なにもしない
+			}else if(this.is_if){
+				this.true_statement.loop_assign(assigned_fields,cs);
+				this.false_statement.loop_assign(assigned_fields,cs);
+			}else if(this.compound_statement!=null){
+				for(statement statement : this.compound_statement.statements){
+					statement.loop_assign(assigned_fields,cs);
+				}
+			}else if(this.def_type_clause!=null){
+				//なにもしない
+			}else if(this.is_return){
+				//なにもしない
+			}else if(this.possibly_annotated_loop!=null){
+				this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs);
+				if(this.possibly_annotated_loop.loop_stmt.expression_list!=null){
+					for(expression expression : this.possibly_annotated_loop.loop_stmt.expression_list.expressions){
+						expression.loop_assign(assigned_fields, cs);
+					}
 				}
 			}
 		}

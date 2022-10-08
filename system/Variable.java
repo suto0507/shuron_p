@@ -22,6 +22,8 @@ public class Variable extends Field{
 	public BoolExpr alias_refined;
 	public boolean loop_alias;
 	
+	public Field arg_field;//この変数がメソッド呼び出しの引数であるとき、引数として渡されたField
+	
 	
 	
 	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object) throws Exception{

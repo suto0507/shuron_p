@@ -41,6 +41,7 @@ public class store_ref_expression implements Parser<String>{
 		Expr ex = null;
 		Field f = null;
 		List<IntExpr> indexs = new ArrayList<IntExpr>();
+		if(cs.instance_indexs!=null) indexs = (ArrayList<IntExpr>) cs.instance_indexs.clone();
 		if(this.store_ref_name_suffix.size() == 0){
 			if(this.store_ref_name.is_this){
 				throw new Exception("Cannot be assigned to \"this\"");

@@ -478,6 +478,9 @@ public class postfix_expr implements Parser<String>{
 		cs.instance_Field = f;
 		cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
 		
+		
+		ArrayList<Variable> assignable_args = new ArrayList<Variable>();
+		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
 			modifiers m = new modifiers();
@@ -487,6 +490,8 @@ public class postfix_expr implements Parser<String>{
 			v.temp_num = 0;
 			//引数に値を紐づける
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
+			v.arg_field =  method_arg_valuse.get(j).field;
+			if(v.type.equals("int") || v.type.equals("boolean")) assignable_args.add(v);
 			
 			//配列の篩型が安全かどうか
 			BoolExpr pathcondition;
@@ -648,7 +653,14 @@ public class postfix_expr implements Parser<String>{
 			
 			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 			for(F_Assign fa : assign_cnsts.fst){
+
 				BoolExpr assign_expr = null;
+				
+				//引数のフィールドに代入する場合には、紐づけられたフィールドに代入する
+				if(fa.field instanceof Variable && ((Variable)fa.field).arg_field!=null && !((fa.field.type.equals("int") || fa.field.type.equals("boolean")) && fa.field.dims==0)){
+					fa.field = ((Variable)fa.field).arg_field;
+				}
+				
 				//配列の要素に代入できる制約
 				if(fa.cnst_array.size()>0){
 					for(int i = 0; i <= fa.field.dims; i++){//各次元に関して
@@ -658,6 +670,7 @@ public class postfix_expr implements Parser<String>{
 						}
 						BoolExpr call_assign_expr = fa.assign_index_expr(index_expr, cs);
 						BoolExpr field_assign_expr = fa.field.assign_index_expr(index_expr, cs);
+						
 						if(assign_expr == null){
 							assign_expr = cs.ctx.mkImplies(call_assign_expr, field_assign_expr);
 						}else{
@@ -686,12 +699,39 @@ public class postfix_expr implements Parser<String>{
 				
 				
 			}
+			
+			
+			//assign_cnsts.fstに含まれないものは、assign_cnsts.sndのときに代入を行う
+			cs.assert_constraint(cs.ctx.mkImplies(assign_cnsts.snd, cs.assinable_cnst_all));
+			for(Field field : cs.fields){//変数には関係ないはず local.xはxがfield
+				boolean in_assign = false;
+				for(F_Assign fa : assign_cnsts.fst){
+					if(fa.field == field){
+						in_assign = true;
+						break;
+					}
+				}
+				if(!in_assign){
+					List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+					List<List<IntExpr>> assign_list = new ArrayList<List<IntExpr>>();
+					assign_list.add(new ArrayList<IntExpr>());
+					b_is.add(new Pair(assign_cnsts.snd, assign_list));//全てに代入する時には、
+					F_Assign fa = new spec_case_seq().new F_Assign(field, b_is);
+					fa.assign_fresh_value(cs);
+				}
+			}
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
 			for(Field f_a : cs.fields){
 				f_a.temp_num++;
 			}
 		}
+		
+		//引数自体には,intやbooleanであれば無条件に代入できる
+		for(Variable v : assignable_args){
+			v.temp_num++;
+		}
+		
 		
 		//返り値
 		modifiers m_tmp = new modifiers();
@@ -778,5 +818,212 @@ public class postfix_expr implements Parser<String>{
 		}
 		return have;
 	}
+	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		
+		Field f = null;
+		Expr ex = null;
+		String ident = null;
+		boolean is_refine_value = false;
+		
+
+		//suffixについて
+		List<IntExpr> indexs = new ArrayList<IntExpr>();
+		if(cs.instance_indexs!=null) indexs = (ArrayList<IntExpr>) cs.instance_indexs.clone();
+		
+		
+		if(this.primary_expr.is_this){
+			f = cs.instance_Field;
+			ex = cs.instance_expr;
+		}else if(this.primary_expr.ident!=null){
+			//ローカル変数
+			if(cs.in_method_call){//関数呼び出し
+				if(cs.search_called_method_arg(primary_expr.ident)){
+					f = cs.get_called_method_arg(primary_expr.ident);
+					ex = f.get_Expr(cs);
+				}
+				
+			}else{
+				if(cs.search_variable(primary_expr.ident)){
+					f = cs.get_variable(primary_expr.ident);
+					ex = f.get_Expr(cs);
+				}
+			}
+			
+			if(f==null){//ローカル変数ではない場合
+				Field searched_field = cs.search_field(primary_expr.ident, cs.instance_Field ,cs);
+				if(searched_field != null){//フィールド
+					f = searched_field;
+					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.instance_expr);
+				}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//メソッド
+					ident = this.primary_expr.ident;
+					f = cs.instance_Field;
+					ex = cs.instance_expr;
+				}else{
+					throw new Exception(cs.instance_Field.type + " don't have " + this.primary_expr.ident);
+				}
+			}
+
+			
+		}else if(this.primary_expr.bracket_expression!=null){
+			Check_return cr = this.primary_expr.bracket_expression.check(cs);
+			f = cr.field;
+			ex = cr.expr;
+			indexs = cr.indexs;
+		}else if(this.primary_expr.java_literal!=null){
+			if(this.primary_suffixs.size() == 0){
+				ex = this.primary_expr.java_literal.check(cs);
+			}else{
+				throw new Exception("literal don't have suffix");
+				
+			}
+		}else if(this.primary_expr.jml_primary!=null){
+			//jml内は見ない
+		}else if(this.primary_expr.new_expr!=null){
+			//新しく作るオブジェクトも関係ない
+		}else{
+			//return null;
+		}
+		
+		for(int i = 0; i < this.primary_suffixs.size(); i++){
+			primary_suffix ps = this.primary_suffixs.get(i);
+			if(ps.is_field){
+				if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
+					ident = ps.ident;
+				}else if(f.dims_sum() > indexs.size() && ps.ident.equals("length")){
+					if(this.primary_suffixs.size()-1 != i) throw new Exception("length don't have suffix");
+					f = null;
+				}else{
+					Field pre_f = f;
+					Expr pre_ex = ex;
+					
+					Field searched_field = cs.search_field(ps.ident, f, cs);
+					if(searched_field != null){
+						f = searched_field;
+						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+						if(cs.can_not_use_mutable){
+							if(!f.modifiers.is_final){
+								new Exception("method depends on mutable field in refinenment type predicate.");
+							}
+						}
+					}else{
+						throw new Exception(f.type + " don't have " + ps.ident);
+					}
+				}
+				
+			}else if(ps.is_index){
+				IntExpr index =  (IntExpr) ps.expression.loop_assign(assigned_fields, cs).expr;
+				
+				indexs.add(index);
+				
+				ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
+				ident = null;
+				
+			}else if(ps.is_method){
+				//関数の呼び出し
+				f = loop_assign_method(assigned_fields, cs, ident, f, ex, (ArrayList<IntExpr>) indexs, ps);
+				ex = f.get_Expr(cs);
+				ident = null;
+			}
+		}
+
+		
+		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs);
+	}
+	
+	public Field loop_assign_method(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs, String ident, Field f, Expr ex, ArrayList<IntExpr> indexs, primary_suffix ps)throws Exception{
+		
+		
+		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(f.type);
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(f.type, ident);
+		if(md == null){
+			throw new Exception("can't find method " + ident);
+		}
+		
+		
+		//引数の処理
+		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
+		for(int j = 0; j < md.formals.param_declarations.size(); j++){
+			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
+		}
+		
+		//関数内の処理
+		cs.in_method_call = true;
+		
+		cs.called_method_args = new ArrayList<Variable>();
+		
+		Expr pre_instance_expr = cs.instance_expr;
+		Field pre_instance_Field = cs.instance_Field;
+		ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+		
+		cs.instance_expr = ex;
+		cs.instance_Field = f;
+		cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
+		
+		for(int j = 0; j < md.formals.param_declarations.size(); j++){
+			param_declaration pd = md.formals.param_declarations.get(j);
+			modifiers m = new modifiers();
+			m.is_final = pd.is_final;
+			Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, f);
+			cs.called_method_args.add(v);
+			v.temp_num = 0;
+			//引数に値を紐づける
+			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
+			
+			
+		}
+		
+		
+		//assign
+		if(md.method_specification != null){
+			
+			for(generic_spec_case gsc : md.method_specification.spec_case_seq.generic_spec_cases){
+				List<assignable_clause> assignables = gsc.get_assignable();
+				if(assignables == null){//何でも代入していい
+					assigned_fields.snd = true;
+				}else{
+					for(assignable_clause ac : assignables){
+						
+						for(store_ref_expression sre : ac.store_ref_list.store_ref_expressions){
+							Pair<Field, List<IntExpr>> f_indexs = sre.check(cs);
+							
+							boolean find_field = false;
+							for(Pair<Field,List<List<IntExpr>>> f_i : assigned_fields.fst){
+								if(f_i.fst == f_indexs.fst){//見つかったら追加する
+									find_field = true;
+									f_i.snd.add(f_indexs.snd);
+									break;
+								}
+							}
+							//見つからなかったら新しくフィールドごと追加する
+							if(!find_field){
+								List<List<IntExpr>> f_indexs_snd = new ArrayList<List<IntExpr>>();
+								f_indexs_snd.add(f_indexs.snd);
+								Pair<Field,List<List<IntExpr>>> f_i = new Pair<Field,List<List<IntExpr>>>(f_indexs.fst, f_indexs_snd);
+								assigned_fields.fst.add(f_i);
+							}
+						}
+					}
+				}
+			}
+		}else{
+			//assignableを含めた任意の仕様が書かれていない関数
+			assigned_fields.snd = true;
+		}
+		
+		//返り値
+		modifiers m_tmp = new modifiers();
+		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, f);
+
+		cs.in_method_call = false;
+		
+		cs.instance_expr = pre_instance_expr;
+		cs.instance_Field = pre_instance_Field;
+		cs.instance_indexs = pre_instance_indexs;
+		
+		return result;
+	}
+
+	
 }
 

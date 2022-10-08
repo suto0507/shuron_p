@@ -1,6 +1,7 @@
 package system.parsers;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BoolExpr;
@@ -277,7 +278,14 @@ public class assignment_expr implements Parser<String>{
 		return implies_expr.have_index_access(cs);
 	}
 	
-	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs){
+		
+		if(this.postfix_expr!=null){
+			Check_return cr = this.postfix_expr.loop_assign(assigned_fields, cs);
+			assigned_fields.fst.add(new Pair(cr.field, cr.indexs));
+		}
+		return this.implies_expr.loop_assign(assigned_fields, cs);
+	}
 
 		
 }

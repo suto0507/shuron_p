@@ -265,6 +265,8 @@ public class Check_status {
 		
 		cs.in_helper = this.in_helper;
 			
+	
+		
 		return cs;
 	}
 	

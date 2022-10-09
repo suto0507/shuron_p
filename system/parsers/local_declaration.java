@@ -9,6 +9,7 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.Field;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -194,6 +195,23 @@ public class local_declaration implements Parser<String>{
 			throw new Exception("this name is used");
 		}
 	}
+
 	
+	public void loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		if(cs.search_variable(this.variable_decls.ident)==false){
+			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null);
+			if(this.implies_expr != null){
+				ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
+				
+				Check_return rc = this.implies_expr.loop_assign(assigned_fields, cs);
+				
+				cs.get_variable(this.variable_decls.ident).temp_num++;
+			}
+			
+		}else{
+			//System.out.println("this name is used");
+			throw new Exception("this name is used");
+		}
+	}
 }
 

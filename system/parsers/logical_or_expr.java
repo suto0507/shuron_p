@@ -5,9 +5,12 @@ import java.util.List;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -60,6 +63,17 @@ public class logical_or_expr implements Parser<String>{
 		return have;
 	}
 	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		if(this.logical_and_exprs.size()==0){
+			return this.logical_and_expr.loop_assign(assigned_fields, cs);
+		}else{
+			BoolExpr expr = (BoolExpr)logical_and_expr.loop_assign(assigned_fields, cs).expr;
+			for(logical_and_expr lae : logical_and_exprs){
+				expr = cs.ctx.mkAnd(expr,(BoolExpr)lae.loop_assign(assigned_fields, cs).expr);
+			}
+			return new Check_return(expr, null, null);
+		}
+	}
 	
 }
 

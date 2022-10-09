@@ -278,11 +278,26 @@ public class assignment_expr implements Parser<String>{
 		return implies_expr.have_index_access(cs);
 	}
 	
-	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs){
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
 		
 		if(this.postfix_expr!=null){
 			Check_return cr = this.postfix_expr.loop_assign(assigned_fields, cs);
-			assigned_fields.fst.add(new Pair(cr.field, cr.indexs));
+			
+			boolean find_field = false;
+			for(Pair<Field,List<List<IntExpr>>> f_i : assigned_fields.fst){
+				if(f_i.fst == cr.field){//見つかったら追加する
+					find_field = true;
+					f_i.snd.add(cr.indexs);
+					break;
+				}
+			}
+			//見つからなかったら新しくフィールドごと追加する
+			if(!find_field){
+				List<List<IntExpr>> f_indexs_snd = new ArrayList<List<IntExpr>>();
+				f_indexs_snd.add(cr.indexs);
+				Pair<Field,List<List<IntExpr>>> f_i = new Pair<Field,List<List<IntExpr>>>(cr.field, f_indexs_snd);
+				assigned_fields.fst.add(f_i);
+			}
 		}
 		return this.implies_expr.loop_assign(assigned_fields, cs);
 	}

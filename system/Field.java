@@ -216,7 +216,7 @@ public class Field {
 	}
 	
 	public void tmp_plus(Check_status cs) throws Exception{
-		if(this.modifiers!=null && this.modifiers.is_final){
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
 			return;
 		}
 		this.temp_num++;

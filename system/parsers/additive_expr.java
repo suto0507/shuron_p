@@ -8,9 +8,13 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+
+
 public class additive_expr implements Parser<String>{
 	mult_expr mult_expr1;
 	List<mult_expr> mult_exprs;
@@ -66,6 +70,21 @@ public class additive_expr implements Parser<String>{
 		return have;
 	}
 	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		if(this.mult_exprs.size() == 0) return this.mult_expr1.loop_assign(assigned_fields, cs);
+		
+		Expr expr =  this.mult_expr1.loop_assign(assigned_fields, cs).expr;
+		for(int i = 0; i < this.mult_exprs.size(); i++){
+			mult_expr me = this.mult_exprs.get(i);
+			String op = this.ops.get(i);
+			if(op.equals("+")){
+				expr = (IntExpr)cs.ctx.mkAdd((IntExpr)expr, (IntExpr)me.loop_assign(assigned_fields, cs).expr);
+			}else if(op.equals("-")){
+				expr = (IntExpr)cs.ctx.mkSub((IntExpr)expr, (IntExpr)me.loop_assign(assigned_fields, cs).expr);
+			}
+		}
+		return new Check_return(expr, null, null);
+	}
 	
 }
 

@@ -348,7 +348,13 @@ public class spec_case_seq implements Parser<String>  {
 						
 						cs.add_constraint(cs.ctx.mkEq(length, length_assign));
 					}
-					BoolExpr cnst = cs.ctx.mkEq(field.get_Expr_assign(cs), cs.ctx.mkStore(field.get_Expr(cs), field.class_object.get_full_Expr((ArrayList<IntExpr>) ((ArrayList<IntExpr>) indexs).clone(), cs), expr));
+					BoolExpr cnst = null;
+					if(field instanceof Variable){
+						cnst = cs.ctx.mkEq(field.get_Expr_assign(cs),  expr);
+					}else{
+						cnst = cs.ctx.mkEq(field.get_Expr_assign(cs), cs.ctx.mkStore(field.get_Expr(cs), field.class_object.get_full_Expr((ArrayList<IntExpr>) ((ArrayList<IntExpr>) indexs).clone(), cs), expr));
+					}
+					
 					cs.add_constraint(cnst);
 					field.temp_num++;
 				}

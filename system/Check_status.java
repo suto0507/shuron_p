@@ -325,7 +325,7 @@ public class Check_status {
 		if(solver.check() == Status.SATISFIABLE) {
 
         }else{
-        	throw new Exception("Unreachable.");
+        	throw new Exception("Unreachable. when path condition is " + this.pathcondition);
         }
 		this.solver.pop();
 	}

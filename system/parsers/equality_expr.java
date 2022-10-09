@@ -1,10 +1,16 @@
 package system.parsers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -64,7 +70,19 @@ public class equality_expr implements Parser<String>{
 		return relational_expr1.have_index_access(cs);
 	}
 	
-	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		if(this.relational_expr2==null){
+			return this.relational_expr1.loop_assign(assigned_fields, cs);
+		}else{
+			BoolExpr expr = null;
+			if(this.op.equals("==")){
+				expr = cs.ctx.mkEq(this.relational_expr1.check(cs).expr,this.relational_expr2.loop_assign(assigned_fields, cs).expr);
+			}else if(this.op.equals("!=")){
+				expr = cs.ctx.mkDistinct(this.relational_expr1.check(cs).expr,this.relational_expr2.loop_assign(assigned_fields, cs).expr);
+			}
+			return new Check_return(expr, null, null);
+		}
+	}
 
 	
 }

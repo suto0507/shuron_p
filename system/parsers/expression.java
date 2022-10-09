@@ -31,7 +31,7 @@ public class expression implements Parser<String>{
 		return assignment_expr.have_index_access(cs);
 	}
 	
-	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs){
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
 		return this.assignment_expr.loop_assign(assigned_fields, cs);
 	}
 

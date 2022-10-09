@@ -1,10 +1,15 @@
 package system.parsers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -50,5 +55,12 @@ public class unary_expr  implements Parser<String>{
 		return postfix_expr.have_index_access(cs);
 	}
 	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		if(unary_expr != null && op == "-"){
+			return new Check_return(cs.ctx.mkSub((IntExpr)cs.ctx.mkInt(0), (IntExpr)(unary_expr.loop_assign(assigned_fields, cs).expr)), null, null);
+		}else{
+			return postfix_expr.loop_assign(assigned_fields, cs);
+		}
+	}
 	
 }

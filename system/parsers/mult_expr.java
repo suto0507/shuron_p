@@ -8,6 +8,8 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -78,7 +80,32 @@ public class mult_expr implements Parser<String>{
 		return have;
 	}
 	
-	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		if(this.unary_exprs.size() == 0) return this.unary_expr1.loop_assign(assigned_fields, cs);
+			
+		Expr expr = this.unary_expr1.loop_assign(assigned_fields, cs).expr;
+		for(int i = 0; i<this.unary_exprs.size(); i++){
+			unary_expr ue = unary_exprs.get(i);
+			String op = this.ops.get(i);
+			if(op.equals("*")){
+				expr = (IntExpr)cs.ctx.mkMul((IntExpr)expr,(IntExpr)ue.loop_assign(assigned_fields, cs).expr);
+
+			}else if(op.equals("/")){
+				expr = (IntExpr)cs.ctx.mkDiv((IntExpr)expr,(IntExpr)ue.loop_assign(assigned_fields, cs).expr);
+			}else if(op.equals("%")){
+				expr = (IntExpr)cs.ctx.mkITE(cs.ctx.mkGt((IntExpr)expr, cs.ctx.mkInt(0))
+						, cs.ctx.mkSub(
+								(IntExpr)expr
+								,cs.ctx.mkMul((IntExpr)ue.loop_assign(assigned_fields, cs).expr,cs.ctx.mkDiv((IntExpr)expr, (IntExpr)ue.loop_assign(assigned_fields, cs).expr)))
+						, cs.ctx.mkSub(
+								(IntExpr)expr
+								,cs.ctx.mkMul((IntExpr)ue.loop_assign(assigned_fields, cs).expr,cs.ctx.mkDiv(cs.ctx.mkUnaryMinus((IntExpr)expr), cs.ctx.mkUnaryMinus((IntExpr)ue.loop_assign(assigned_fields, cs).expr))))
+						);
+			}
+		}
+		return new Check_return(expr, null, null);
+
+	}
 	
 }
 

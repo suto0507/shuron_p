@@ -1,10 +1,15 @@
 package system.parsers;
 
+import java.util.List;
+
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.Field;
+import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -55,6 +60,22 @@ public class implies_expr implements Parser<String>{
 	public boolean have_index_access(Check_status cs){
  		if(this.implies_expr!=null) return logical_or_expr.have_index_access(cs) || implies_expr.have_index_access(cs);
 		return logical_or_expr.have_index_access(cs);
+	}
+	
+	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		if(this.implies_expr==null){
+			return this.logical_or_expr.loop_assign(assigned_fields, cs);
+		}else{
+			BoolExpr pre_pathcondition = cs.pathcondition;
+			
+			BoolExpr guard = (BoolExpr)this.logical_or_expr.loop_assign(assigned_fields, cs).expr;
+			
+			Expr expr = cs.ctx.mkImplies(guard,(BoolExpr)this.implies_expr.loop_assign(assigned_fields, cs).expr);
+			
+			cs.pathcondition = pre_pathcondition;
+			
+			return new Check_return(expr, null, null);
+		}
 	}
 	
 	

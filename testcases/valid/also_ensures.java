@@ -16,7 +16,7 @@ class assign_array {
 	}
 	
 	//@ requires 1 == x;
-	//@ ensures \result == x * 2;
+	//@ ensures \result == \old(x) * 2;
 	int method2(int x){
 		return x * 2;
 	}

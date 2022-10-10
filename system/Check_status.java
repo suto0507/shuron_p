@@ -117,7 +117,7 @@ public class Check_status {
 		String field_name = ident + "_" + vd.class_type_name;
 		
 		for(Field v :fields){
-			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_object.equals(class_object)){
+			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_object.equals(class_object, cs)){
 				return v;
 			}
 		}
@@ -171,7 +171,6 @@ public class Check_status {
 	public void add_constraint(BoolExpr arg_expr) throws Exception{
 		System.out.println("add" + arg_expr);
 		this.solver.add(arg_expr);
-		
 	}
 	
 	public void assert_constraint(BoolExpr arg_expr) throws Exception{
@@ -311,7 +310,7 @@ public class Check_status {
 	}
 	
 	public void add_path_condition(BoolExpr expr) throws Exception{
-		
+		System.out.println("check unreachable");
 		if(this.pathcondition==null){
 			this.pathcondition = expr;
 		}else{

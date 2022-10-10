@@ -5,7 +5,7 @@ class A{
         x = 5;
     }
 
-    //@ensures \result == a + b;
+    //@ensures \result == \old(a) + \old(b);
     //@pure helper
     int plus(int a, int b){
         return a + b;

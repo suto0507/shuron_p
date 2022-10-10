@@ -369,8 +369,9 @@ import system.parsers.spec_case_seq.F_Assign;
 
 				
 				//local_declarationの処理
+				Variable assign_check_local_v = null;
 				if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
-					this.possibly_annotated_loop.loop_stmt.local_declaration.loop_assign(assigned_fields,cs_loop_assign_check);
+					assign_check_local_v = this.possibly_annotated_loop.loop_stmt.local_declaration.loop_assign(assigned_fields,cs_loop_assign_check);
 				}
 				
 				//中身
@@ -425,6 +426,9 @@ import system.parsers.spec_case_seq.F_Assign;
 				Variable v_local=null;
 				if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
 					v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
+					if(assign_check_local_v!=null){
+						v_local.internal_id = assign_check_local_v.internal_id;
+					}
 				}
 				
 				BoolExpr enter_loop_condition = null;
@@ -438,7 +442,7 @@ import system.parsers.spec_case_seq.F_Assign;
 				
 				//PCにループに入る条件を加える
 				System.out.println("loop init condition");
-				cs_loop.add_path_condition_tmp((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);//途中でUnreachbleかどうかは関係ないはず
+				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);
 				
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 					BoolExpr ex = li.predicate.check(cs_loop);
@@ -454,7 +458,6 @@ import system.parsers.spec_case_seq.F_Assign;
 					}
 				}else{//代入されるフィールドのそれぞれのインデックスにフレッシュな値を代入する
 					for(Variable v_loop : cs_loop.variables){//ローカル変数
-						System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 						Pair<Field,List<List<IntExpr>>> v_assign_indexs = null;
 						for(Pair<Field,List<List<IntExpr>>> variable_assign_indexs : assigned_fields.fst){
 							if(v_loop.equals(variable_assign_indexs.fst, cs)){
@@ -464,15 +467,10 @@ import system.parsers.spec_case_seq.F_Assign;
 						}
 						
 						if(v_assign_indexs!=null){
-							System.out.println("cccccccccccccccccccccccccccccc " + v_loop.field_name + " " + v_loop.id + " " + v_loop.temp_num  + " " +  v_assign_indexs.snd.size());
 							List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
 							b_is.add(new Pair(cs.ctx.mkBool(true), v_assign_indexs.snd));
 							F_Assign fa = new spec_case_seq().new F_Assign(v_loop, b_is);
 							fa.assign_fresh_value(cs_loop);
-							System.out.println("ddddddddddddddddddddddddddddd " + v_loop.field_name + " " + v_loop.id + " " + v_loop.temp_num);
-						}else{
-							System.out.println("gggggggggggggggggggggggggggggggg " + v_loop.field_name + " " + v_loop.id + " " + v_loop.temp_num);
-							v_loop.tmp_plus(cs_loop);
 						}
 						
 					}
@@ -497,7 +495,7 @@ import system.parsers.spec_case_seq.F_Assign;
 				
 				//中身の初期条件
 				System.out.println("a loop pre condition");
-				cs_loop.add_path_condition((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);
+				cs_loop.add_path_condition_tmp((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);//途中でUnreachbleかどうかは関係ないはず
 				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 					BoolExpr ex = li.predicate.check(cs_loop);
 					cs_loop.add_constraint(ex);

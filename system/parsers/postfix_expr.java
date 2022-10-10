@@ -491,6 +491,7 @@ public class postfix_expr implements Parser<String>{
 			//引数に値を紐づける
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
 			v.arg_field =  method_arg_valuse.get(j).field;
+			if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
 			if(v.type.equals("int") || v.type.equals("boolean")) assignable_args.add(v);
 			
 			//配列の篩型が安全かどうか
@@ -703,7 +704,7 @@ public class postfix_expr implements Parser<String>{
 			
 			//assign_cnsts.fstに含まれないものは、assign_cnsts.sndのときに代入を行う
 			cs.assert_constraint(cs.ctx.mkImplies(assign_cnsts.snd, cs.assinable_cnst_all));
-			for(Field field : cs.fields){//変数には関係ないはず local.xはxがfield
+			for(Field field : cs.fields){//ローカル変数には関係ないはず local.xはxがfield
 				boolean in_assign = false;
 				for(F_Assign fa : assign_cnsts.fst){
 					if(fa.field == field){

@@ -28,6 +28,7 @@ public class Variable extends Field{
 	
 	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object) throws Exception{
 		this.id = id;
+		this.internal_id = id;
 		this.temp_num = - 1;
 		this.field_name = field_name;
 		this.type = type;

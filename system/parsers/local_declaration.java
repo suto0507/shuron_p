@@ -197,7 +197,7 @@ public class local_declaration implements Parser<String>{
 	}
 
 	
-	public void loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+	public Variable loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
 		if(cs.search_variable(this.variable_decls.ident)==false){
 			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null);
 			if(this.implies_expr != null){
@@ -207,7 +207,7 @@ public class local_declaration implements Parser<String>{
 				
 				cs.get_variable(this.variable_decls.ident).temp_num++;
 			}
-			
+			return v;
 		}else{
 			//System.out.println("this name is used");
 			throw new Exception("this name is used");

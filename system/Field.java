@@ -11,6 +11,7 @@ import system.parsers.refinement_type;
 
 public class Field {
 	public int id;
+	public int internal_id;//if文とかループとかでクローンしても変わらない。メソッド呼び出しでは、引数のこれは渡したフィールドのものと同じになる
 	public int temp_num;
 	public String field_name;
 	public String type;
@@ -37,6 +38,7 @@ public class Field {
 	
 	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name) throws Exception{
 		this.id = id;
+		this.internal_id = id;
 		this.temp_num = 0;
 		this.field_name = field_name;
 		this.type = type;
@@ -208,7 +210,8 @@ public class Field {
 	
 	
 	public boolean equals(Field f, Check_status cs){
-		if(this.field_name.equals(f.field_name) && ((this.class_object==null&&f.class_object==null) || this.class_object.equals(f.class_object, cs) ) ){
+		//if(this.field_name.equals(f.field_name) && ((this.class_object==null&&f.class_object==null) || this.class_object.equals(f.class_object, cs) ) ){
+		if(this.internal_id == f.internal_id){
 			return true;
 		}
 		

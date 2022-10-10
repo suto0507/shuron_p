@@ -8,11 +8,13 @@ class A{
     //篩型を返すメソッド
 
     //@ensures \result == x;
+    //@pure
     int[]/*`@refinement_type NatArray*/ rt_return(){
         return x;
     }
 
     //@ensures \result == x2;
+    //@pure
     int[][]/*`@refinement_type NatArray2*/ rt_return2(){
         return x2;
     }

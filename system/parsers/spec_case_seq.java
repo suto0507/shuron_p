@@ -63,7 +63,7 @@ public class spec_case_seq implements Parser<String>  {
 					}else{
 						gsc_expr = cs.ctx.mkAnd(gsc_expr, rc_expr);
 					}
-					cs.add_path_condition(rc_expr);
+					cs.add_path_condition_tmp(rc_expr);
 				}
 				
 				if(expr == null){
@@ -110,7 +110,7 @@ public class spec_case_seq implements Parser<String>  {
 						}else{
 							pre_expr = cs.ctx.mkAnd(pre_expr, rc_expr);
 						}
-						cs.add_path_condition(rc_expr);
+						cs.add_path_condition_tmp(rc_expr);
 					}
 				}
 				

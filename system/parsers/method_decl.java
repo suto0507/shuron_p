@@ -98,10 +98,10 @@ public class method_decl implements Parser<String>{
 				//コンストラクタでの初期化
 				
 				for(Field f : cs.fields){
-					if(f.type.equals("int")){
+					if(f.type.equals("int") && f.dims == 0){
 						BoolExpr ex = cs.ctx.mkEq(cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs)), cs.ctx.mkInt(0));	
 						cs.add_constraint(ex);
-					}else if(f.type.equals("boolean")){
+					}else if(f.type.equals("boolean") && f.dims == 0){
 						BoolExpr ex = cs.ctx.mkEq(cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs)), cs.ctx.mkFalse());
 						cs.add_constraint(ex);			
 					}

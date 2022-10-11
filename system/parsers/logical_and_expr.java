@@ -73,7 +73,7 @@ public class logical_and_expr implements Parser<String>{
 	
 	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
 		if(this.equality_exprs.size()==0){
-			return this.equality_expr.check(cs);
+			return this.equality_expr.loop_assign(assigned_fields, cs);
 		}else{
 			BoolExpr pre_pathcondition = cs.pathcondition;
 			

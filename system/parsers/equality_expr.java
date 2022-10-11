@@ -76,9 +76,9 @@ public class equality_expr implements Parser<String>{
 		}else{
 			BoolExpr expr = null;
 			if(this.op.equals("==")){
-				expr = cs.ctx.mkEq(this.relational_expr1.check(cs).expr,this.relational_expr2.loop_assign(assigned_fields, cs).expr);
+				expr = cs.ctx.mkEq(this.relational_expr1.loop_assign(assigned_fields, cs).expr,this.relational_expr2.loop_assign(assigned_fields, cs).expr);
 			}else if(this.op.equals("!=")){
-				expr = cs.ctx.mkDistinct(this.relational_expr1.check(cs).expr,this.relational_expr2.loop_assign(assigned_fields, cs).expr);
+				expr = cs.ctx.mkDistinct(this.relational_expr1.loop_assign(assigned_fields, cs).expr,this.relational_expr2.loop_assign(assigned_fields, cs).expr);
 			}
 			return new Check_return(expr, null, null);
 		}

@@ -265,8 +265,11 @@ public class postfix_expr implements Parser<String>{
 				
 				index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, index));
 				
-				System.out.println("check index out of bounds");
-				if(!cs.in_jml_predicate)cs.assert_constraint(index_bound);
+				
+				if(!cs.in_jml_predicate){
+					System.out.println("check index out of bounds");
+					cs.assert_constraint(index_bound);
+				}
 				
 				indexs.add(index);
 				
@@ -492,7 +495,7 @@ public class postfix_expr implements Parser<String>{
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
 			v.arg_field =  method_arg_valuse.get(j).field;
 			if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
-			if(v.type.equals("int") || v.type.equals("boolean")) assignable_args.add(v);
+			if((v.type.equals("int") || v.type.equals("boolean")) && v.dims>0) assignable_args.add(v);
 			
 			//”z—ñ‚Ìâ¿Œ^‚ªˆÀ‘S‚©‚Ç‚¤‚©
 			BoolExpr pathcondition;
@@ -867,7 +870,7 @@ public class postfix_expr implements Parser<String>{
 
 			
 		}else if(this.primary_expr.bracket_expression!=null){
-			Check_return cr = this.primary_expr.bracket_expression.check(cs);
+			Check_return cr = this.primary_expr.bracket_expression.loop_assign(assigned_fields, cs);
 			f = cr.field;
 			ex = cr.expr;
 			indexs = cr.indexs;

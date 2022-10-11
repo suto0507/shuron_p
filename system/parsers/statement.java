@@ -350,6 +350,7 @@ import system.parsers.spec_case_seq.F_Assign;
 				System.out.println("loop verification");
 				
 				/////////////どのフィールドが変更されるかの検証
+				System.out.println("check assigned fields");
 				//インスタンスの生成
 				Check_status cs_loop_assign_check = cs.clone();
 				this.refresh_list(cs_loop_assign_check);
@@ -375,7 +376,6 @@ import system.parsers.spec_case_seq.F_Assign;
 				}
 				
 				//中身
-				
 				this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs_loop_assign_check);
 				if(this.possibly_annotated_loop.loop_stmt.expression_list!=null){
 					for(expression ex : this.possibly_annotated_loop.loop_stmt.expression_list.expressions){
@@ -417,6 +417,7 @@ import system.parsers.spec_case_seq.F_Assign;
 				}
 				
 				////////////ここからが本番の検証
+				System.out.println("check loop");
 				//インスタンスの生成
 				Check_status cs_loop = cs.clone();
 				this.refresh_list(cs_loop);
@@ -448,8 +449,11 @@ import system.parsers.spec_case_seq.F_Assign;
 					BoolExpr ex = li.predicate.check(cs_loop);
 					cs_loop.assert_constraint(ex);
 				}
+				
 				//中身用に変数を一新
+				System.out.println("loop fields refresh");
 				if(assigned_fields.snd){//何でも代入できるメソッドを呼び出したとき
+					System.out.println("assigned all in loop");
 					for(Variable v : cs_loop.variables){
 						v.tmp_plus(cs_loop);
 					}

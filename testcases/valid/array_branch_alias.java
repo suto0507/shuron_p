@@ -18,7 +18,6 @@ class A{
 
     void test2(int x, int y, int[] arg){
         int i = 0;
-        int oldx = x;
         int[] local = new int[4]; 
         for( ;x > i; i = i+1){
             for( ;y > i; i = i+1){
@@ -26,7 +25,7 @@ class A{
             }
         }
         //x > iの時にlocalはエイリアスしたという扱い
-        if(oldx <= 0){
+        if(x <= 0){
             a = local;//これは許されるはず
         }
     }

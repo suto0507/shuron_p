@@ -580,14 +580,11 @@ public class postfix_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(cs.in_loop){
-						((Variable) method_arg_valuse.get(j).field).loop_alias = true;
+					
+					if(((Variable) method_arg_valuse.get(j).field).alias == null){
+						((Variable) method_arg_valuse.get(j).field).alias = pathcondition;
 					}else{
-						if(((Variable) method_arg_valuse.get(j).field).alias == null){
-							((Variable) method_arg_valuse.get(j).field).alias = pathcondition;
-						}else{
-							((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, pathcondition);
-						}
+						((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, pathcondition);
 					}
 					
 				}
@@ -601,14 +598,11 @@ public class postfix_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(cs.in_loop){
-						((Variable) v).loop_alias = true;
+					
+					if(((Variable) v).alias == null){
+						((Variable) v).alias = pathcondition;
 					}else{
-						if(((Variable) v).alias == null){
-							((Variable) v).alias = pathcondition;
-						}else{
-							((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, pathcondition);
-						}
+						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, pathcondition);
 					}
 				}
 			}

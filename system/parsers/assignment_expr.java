@@ -209,14 +209,10 @@ public class assignment_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(cs.in_loop){
-						((Variable) rc.field).loop_alias = true;
+					if(((Variable) rc.field).alias == null){
+						((Variable) rc.field).alias = pathcondition;
 					}else{
-						if(((Variable) rc.field).alias == null){
-							((Variable) rc.field).alias = pathcondition;
-						}else{
-							((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, pathcondition);
-						}
+						((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, pathcondition);
 					}
 				}
 				if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable && !(rc.field!=null && rc.field.new_array)){//ローカル変数
@@ -229,14 +225,11 @@ public class assignment_expr implements Parser<String>{
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 					
-					if(cs.in_loop){
-						((Variable) v).loop_alias = true;
+					
+					if(((Variable) v).alias == null){
+						((Variable) v).alias = pathcondition;
 					}else{
-						if(((Variable) v).alias == null){
-							((Variable) v).alias = pathcondition;
-						}else{
-							((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, pathcondition);
-						}
+						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, pathcondition);
 					}
 					
 				}else if(v!=null && v.dims>0 && v.dims_sum()==indexs.size() && v instanceof Variable){//篩型を持つ配列とエイリアスしたローカル配列は、要素の変更はできない

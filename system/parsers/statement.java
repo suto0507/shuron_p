@@ -198,7 +198,6 @@ import system.parsers.spec_case_seq.F_Assign;
 							v.temp_num++;
 						}
 						
-						v.loop_alias = v_then.loop_alias;
 						
 					}else{
 						Variable v_then = cs_then.get_variable(v.field_name);
@@ -211,7 +210,6 @@ import system.parsers.spec_case_seq.F_Assign;
 							v.temp_num++;
 						}
 						
-						v.loop_alias = v_then.loop_alias || v_else.loop_alias;
 					}
 				}
 				
@@ -548,18 +546,11 @@ import system.parsers.spec_case_seq.F_Assign;
 						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
 						v.temp_num++;
 					}
-					
 					//配列のエイリアス
-					if(v_loop.loop_alias){
-						if(cs.in_loop){
-							v.loop_alias = true;
-						}else{
-							if(((Variable) v).alias == null){
-								((Variable) v).alias = enter_loop_condition;
-							}else{
-								((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, enter_loop_condition);
-							}
-						}
+					if(((Variable) v).alias == null){
+						((Variable) v).alias = v_loop.alias;
+					}else{//v.alias!=nullならv_loop.alias!=nullであるはず
+						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, v_loop.alias);
 					}
 				}
 				
@@ -600,8 +591,6 @@ import system.parsers.spec_case_seq.F_Assign;
 					cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), new_v.get_Expr(cs)));
 					cs.variables.add(new_v);
 					
-					//配列のループ内でのエイリアスしたかどうかは引き継ぐ
-					new_v.loop_alias = v.loop_alias;
 					
 				}
 			}

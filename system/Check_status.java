@@ -63,7 +63,7 @@ public class Check_status {
 	public boolean in_jml_predicate;
 	public boolean use_only_helper_method;
 	
-	public boolean in_loop;//クローンしない
+	
 	
 	public boolean in_helper; //helperメソッドの中かどうか
 	

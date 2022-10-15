@@ -291,7 +291,7 @@ import system.parsers.spec_case_seq.F_Assign;
 				}else if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){
 					if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
 						
-						if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+						if(((Variable)rc.field).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
 						
 						Expr alias;
 						if(((Variable) rc.field).alias == null){
@@ -361,7 +361,6 @@ import system.parsers.spec_case_seq.F_Assign;
 				}
 				
 				
-				cs_loop_assign_check.in_loop = true;
 				
 				//ループ内での代入
 				Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean> assigned_fields = new Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>(new ArrayList<Pair<Field,List<List<IntExpr>>>>(), false);
@@ -419,7 +418,6 @@ import system.parsers.spec_case_seq.F_Assign;
 				//インスタンスの生成
 				Check_status cs_loop = cs.clone();
 				this.refresh_list(cs_loop);
-				cs_loop.in_loop = true;
 
 				//local_declarationの処理
 				Variable v_local=null;
@@ -492,6 +490,11 @@ import system.parsers.spec_case_seq.F_Assign;
 							fa.assign_fresh_value(cs_loop);
 						}
 					}
+				}
+				
+				//外で定義された変数
+				for(Variable v : cs_loop.variables){
+					v.out_loop_v = true;
 				}
 
 				

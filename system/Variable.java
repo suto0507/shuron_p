@@ -20,6 +20,7 @@ public class Variable extends Field{
 		
 	public BoolExpr alias;
 	public BoolExpr alias_refined;
+	public boolean out_loop_v;//ループの外で定義された変数
 	
 	public Field arg_field;//この変数がメソッド呼び出しの引数であるとき、引数として渡されたField
 	
@@ -46,6 +47,7 @@ public class Variable extends Field{
 		ret.temp_num = this.temp_num;
 		ret.alias = this.alias;
 		ret.alias_refined = this.alias_refined;
+		ret.out_loop_v = this.out_loop_v;
 		return ret;
 	}
 	

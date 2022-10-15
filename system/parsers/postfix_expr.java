@@ -510,7 +510,7 @@ public class postfix_expr implements Parser<String>{
 					method_arg_valuse.get(j).field.refinement_type_clause.equal_predicate(method_arg_valuse.get(j).indexs, method_arg_assign_field_expr, method_arg_valuse.get(j).field.class_object, method_arg_valuse.get(j).field.class_object.get_full_Expr(method_arg_valuse.get(j).indexs, cs), v.refinement_type_clause, indexs, v.get_Expr(cs), v.class_object, ex, cs);
 				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
 					
-					if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+					if(((Variable)v).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
 					
 					Expr alias;
 					if(((Variable) v).alias == null){
@@ -541,7 +541,7 @@ public class postfix_expr implements Parser<String>{
 			}else if(v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
 				if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field instanceof Variable){//ローカル変数
 					
-					if(cs.in_loop) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+					if(((Variable)method_arg_valuse.get(j).field).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
 					
 					Expr alias;
 					if(((Variable) method_arg_valuse.get(j).field).alias == null){

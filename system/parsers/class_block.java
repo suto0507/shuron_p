@@ -108,8 +108,7 @@ public class class_block implements Parser<String>{
 				cd = cd.super_class;
 			}
 			
-			csc.return_exprs = new ArrayList<Expr>();
-			csc.return_pathconditions = new ArrayList<BoolExpr>();
+			
 			method.check(csc, summery);
 		}
 	}

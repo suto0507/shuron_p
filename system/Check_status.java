@@ -9,7 +9,11 @@ import system.parsers.*;
 
 public class Check_status {
 	public Check_status_share Check_status_share;
+	
+	public method_decl md;
+	
 	public BoolExpr pathcondition;
+	public ArrayList<BoolExpr> return_conditions;//メソッド内で共有したいので、そのままcloneをする。メソッドの最初で初期化して上げる必要がある
 	public List<Variable> variables;
 	//List<Variable> before_if_variables;
 	public List<Field> fields;
@@ -37,10 +41,7 @@ public class Check_status {
 	//返り値
 	public Variable return_v;
 	public Expr return_expr;//事後条件用
-	public List<Expr> return_exprs;
 	public boolean after_return;
-	//BoolExpr return_pathcondition;
-	public List<BoolExpr> return_pathconditions;
 	public Check_status this_old_status;
 	
 	//assignable
@@ -75,8 +76,6 @@ public class Check_status {
 		this.solver = ctx.mkSolver();
 		this.local_refinements = new ArrayList<Pair<String, refinement_type>>();
 		this.fields = new ArrayList<Field>();
-		this.return_exprs = new ArrayList<Expr>();
-		this.return_pathconditions = new ArrayList<BoolExpr>();
 		//this.assignables = new ArrayList<Field>();
 		this.right_side_status = new Right_side_status();
 		quantifiers = new ArrayList<Pair<String, Expr>>();
@@ -180,6 +179,11 @@ public class Check_status {
 		}else{
 			expr = this.ctx.mkNot(arg_expr);
 		}
+		if(this.return_conditions.size()>0){
+			for(BoolExpr return_condition : this.return_conditions){
+				expr = this.ctx.mkAnd(expr, this.ctx.mkNot(return_condition));
+			}
+		}
 		System.out.println("assert " + expr);
 		
 
@@ -208,9 +212,11 @@ public class Check_status {
 	
 	public Check_status clone(){
 		Check_status cs = new Check_status();
+		cs.md = this.md;
 		cs.Check_status_share = this.Check_status_share;
 		cs.ctx = this.ctx;
 		cs.pathcondition = this.pathcondition;
+		cs.return_conditions = this.return_conditions;
 		cs.solver = this.solver;
 		cs.variables = new ArrayList<Variable>();
 		for(Variable v : this.variables){
@@ -237,9 +243,7 @@ public class Check_status {
 		
 		cs.return_v = this.return_v;
 		cs.return_expr = this.return_expr;
-		cs.return_exprs = this.return_exprs;
 		cs.after_return = this.after_return;
-		cs.return_pathconditions = this.return_pathconditions;
 		cs.this_old_status = this.this_old_status;
 		
 		cs.assinable_cnst_all = this.assinable_cnst_all;

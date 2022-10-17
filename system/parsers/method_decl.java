@@ -87,6 +87,10 @@ public class method_decl implements Parser<String>{
 		
 		System.out.println("Verify method " + this.ident);
 		
+		//初期化
+		cs.md = this;
+		cs.return_conditions = new ArrayList<BoolExpr>();
+		
 		if(this.modifiers.is_helper) cs.in_helper = true;
 		
 		
@@ -189,86 +193,12 @@ public class method_decl implements Parser<String>{
 			
 			cs.this_field.type = pre_class_type_name;
 			
-			//returnの処理
+			//returnしなかった場合の検証
+			if(cs.after_return==false && (this.type_spec==null||this.type_spec.type.type.equals("void"))){
+				this.check_post_condition(cs);
+			}
 			if(cs.after_return==false && !(this.type_spec==null||this.type_spec.type.type.equals("void"))){
 				throw new Exception("In some cases, \"return\" has not been done.");
-			}
-			if(!(this.type_spec==null||this.type_spec.type.type.equals("void"))){
-				cs.return_expr = cs.return_exprs.get(cs.return_exprs.size()-1);
-				for(int i = cs.return_exprs.size()-2; i>=0; i--){
-					cs.return_expr = cs.ctx.mkITE(cs.return_pathconditions.get(i), cs.return_exprs.get(i), cs.return_expr);
-				}
-			}
-			
-			
-			//事後条件
-			System.out.println("postcondition invariant");
-			BoolExpr post_invariant_expr = null;
-			if(cs.invariants!=null&&cs.invariants.size()>0 && !cs.in_helper){
-				for(invariant inv : cs.invariants){
-					if(inv.is_private==true){//可視性が同じものしか使えない
-						cs.ban_default_visibility = true;
-					}else{
-						cs.ban_private_visibility = true;
-					}
-					
-					if(post_invariant_expr == null){
-						post_invariant_expr = (BoolExpr) inv.check(cs);
-					}else{
-						post_invariant_expr = cs.ctx.mkAnd(post_invariant_expr, (BoolExpr)inv.check(cs));
-					}
-					
-					cs.ban_default_visibility = false;
-					cs.ban_private_visibility = false;
-				}
-				cs.assert_constraint(post_invariant_expr);
-			}
-			System.out.println("postcondition ensures");
-			BoolExpr ensures_expr = null;
-			if(this.method_specification!=null){
-				if(this.modifiers.is_privte==false){
-					cs.ban_private_visibility = true;
-				}
-				
-
-				ensures_expr = this.method_specification.ensures_expr(cs);
-
-				cs.assert_constraint(ensures_expr);
-				
-				cs.ban_private_visibility = false;
-			}
-			
-			
-			
-			//返り値のrefinement_type
-			if(this.type_spec!=null&&cs.return_v.refinement_type_clause!=null){
-				if(cs.return_v.refinement_type_clause.refinement_type!=null){
-					cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-				}else if(cs.return_v.refinement_type_clause.ident!=null){
-					refinement_type rt = cs.search_refinement_type(cs.return_v.class_object.type, cs.return_v.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-					}else{
-						throw new Exception("can't find refinement type " + cs.return_v.refinement_type_clause.ident);
-					}
-				}
-			}
-			
-			
-			
-			
-			if(cs.in_constructor){
-				//コンストラクタの最後での篩型のチェック
-				cs.constructor_refinement_check();
-				
-				//コンストラクタ内で初期化されていないfinalがないか
-				for(Field f : cs.fields){
-					if(f.modifiers!=null && f.modifiers.is_final){
-						if(f.class_object!=null && f.class_object.equals(cs.this_field) && f.final_initialized==false){
-							throw new Exception("final variable " + f.field_name + " was not initialized.");
-						}
-					}
-				}
 			}
 			
 			
@@ -279,10 +209,86 @@ public class method_decl implements Parser<String>{
 			System.out.println("!!!!!!!!!! method \"" + this.ident + "\" is invalid !!!!!!!!!!\n\n");
 			summery.invalids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + summery.file.toString());
 		}
-		
-		
-		
 	}
+	
+	
+	//事後条件の検証
+	public void check_post_condition(Check_status cs) throws Exception{
+		//returnの処理
+
+		
+		//事後条件
+		System.out.println("postcondition invariant");
+		BoolExpr post_invariant_expr = null;
+		if(cs.invariants!=null&&cs.invariants.size()>0 && !cs.in_helper){
+			for(invariant inv : cs.invariants){
+				if(inv.is_private==true){//可視性が同じものしか使えない
+					cs.ban_default_visibility = true;
+				}else{
+					cs.ban_private_visibility = true;
+				}
+				
+				if(post_invariant_expr == null){
+					post_invariant_expr = (BoolExpr) inv.check(cs);
+				}else{
+					post_invariant_expr = cs.ctx.mkAnd(post_invariant_expr, (BoolExpr)inv.check(cs));
+				}
+				
+				cs.ban_default_visibility = false;
+				cs.ban_private_visibility = false;
+			}
+			cs.assert_constraint(post_invariant_expr);
+		}
+		System.out.println("postcondition ensures");
+		BoolExpr ensures_expr = null;
+		if(this.method_specification!=null){
+			if(this.modifiers.is_privte==false){
+				cs.ban_private_visibility = true;
+			}
+			
+
+			ensures_expr = this.method_specification.ensures_expr(cs);
+
+			cs.assert_constraint(ensures_expr);
+			
+			cs.ban_private_visibility = false;
+		}
+		
+		
+		
+		//返り値のrefinement_type
+		if(this.type_spec!=null&&cs.return_v.refinement_type_clause!=null){
+			if(cs.return_v.refinement_type_clause.refinement_type!=null){
+				cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+			}else if(cs.return_v.refinement_type_clause.ident!=null){
+				refinement_type rt = cs.search_refinement_type(cs.return_v.class_object.type, cs.return_v.refinement_type_clause.ident);
+				if(rt!=null){
+					rt.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+				}else{
+					throw new Exception("can't find refinement type " + cs.return_v.refinement_type_clause.ident);
+				}
+			}
+		}
+		
+		
+		
+		
+		if(cs.in_constructor){
+			//コンストラクタの最後での篩型のチェック
+			cs.constructor_refinement_check();
+			
+			//コンストラクタ内で初期化されていないfinalがないか
+			for(Field f : cs.fields){
+				if(f.modifiers!=null && f.modifiers.is_final){
+					if(f.class_object!=null && f.class_object.equals(cs.this_field) && f.final_initialized==false){
+						throw new Exception("final variable " + f.field_name + " was not initialized.");
+					}
+				}
+			}
+		}
+	}
+	
+	
 
 	public void inheritance_refinement_types(class_declaration class_decl, compilation_unit cu) throws Exception{
 		System.out.println("check method type inheritance : " + this.ident);

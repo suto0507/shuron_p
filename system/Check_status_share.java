@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import system.parsers.compilation_unit;
-
+//•¡”‚Ìƒƒ\ƒbƒh‚ÌŒŸØ‚ğ’Ê‚µ‚Ä‹¤’Ê
 public class Check_status_share {
 	public int tmp_num;
 	public compilation_unit compilation_unit;

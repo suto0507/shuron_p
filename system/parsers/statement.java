@@ -311,12 +311,6 @@ import system.parsers.spec_case_seq.F_Assign;
 						
 						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 						
-						/*
-						if(((Variable) rc.field).alias_refined == null){
-							((Variable) rc.field).alias_refined = pathcondition;
-						}else{
-							((Variable) rc.field).alias_refined = cs.ctx.mkOr(((Variable) rc.field).alias_refined, pathcondition);
-						}*/
 					}else{//â¿Œ^‚ÌˆÀ‘S‚ğ•ÛØ‚Å‚«‚È‚¢‚æ‚¤‚È‘å“ü
 						throw new Exception("can not alias with refined array");
 					}	
@@ -329,20 +323,15 @@ import system.parsers.spec_case_seq.F_Assign;
 					}
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-					
-					/*
-					if(((Variable) rc.field).alias == null){
-						((Variable) rc.field).alias = pathcondition;
-					}else{
-						((Variable) rc.field).alias = cs.ctx.mkOr(((Variable) rc.field).alias, pathcondition);
-					}*/
 				}
 				
 				//•Ô‚·’l
-				cs.return_exprs.add(rc.expr);
-				cs.return_pathconditions.add(cs.pathcondition);
+				cs.return_expr = rc.expr;
+				//–ŒãğŒ‚ÌŒŸØ
+				cs.md.check_post_condition(cs);
 				
 				cs.after_return = true;
+				cs.return_conditions.add(pathcondition);
 			}else if(this.possibly_annotated_loop!=null){
 				
 				System.out.println("loop verification");

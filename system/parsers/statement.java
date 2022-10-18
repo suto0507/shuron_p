@@ -215,11 +215,27 @@ import system.parsers.spec_case_seq.F_Assign;
 				
 				//cs.fieldsに含まれないものがあれば追加する
 				for(Field f : cs_then.fields){
-					cs.search_field(f.field_name, f.class_object, cs);
+					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+						int pre_tmp_num = f.temp_num;
+						f.temp_num = 0;
+						Expr expr = f.get_Expr(cs);
+						f.temp_num = pre_tmp_num;
+						expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+						cs.add_constraint((BoolExpr) expr);
+					}
 				}
 				if(cs_else != null){
 					for(Field f : cs_else.fields){
-						cs.search_field(f.field_name, f.class_object, cs);
+						Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+						if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+							int pre_tmp_num = f.temp_num;
+							f.temp_num = 0;
+							Expr expr = f.get_Expr(cs);
+							f.temp_num = pre_tmp_num;
+							expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+							cs.add_constraint((BoolExpr) expr);
+						}
 					}
 				}
 				
@@ -265,6 +281,23 @@ import system.parsers.spec_case_seq.F_Assign;
 				if(cs_else!=null&& cs_then.after_return&&cs_else.after_return){
 					cs.after_return = true;
 				}
+				
+				//helperメソッドの代入されたフィールド
+				if(!cs_then.after_return){
+					for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field : cs_then.helper_assigned_fields){
+						if(!cs.helper_assigned_fields.contains(assigned_field)){
+							cs.helper_assigned_fields.add(assigned_field);
+						}
+					}
+				}
+				if(cs_else!=null&& !cs_else.after_return){
+					for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field : cs_else.helper_assigned_fields){
+						if(!cs.helper_assigned_fields.contains(assigned_field)){
+							cs.helper_assigned_fields.add(assigned_field);
+						}
+					}
+				}
+				
 				
 			}else if(this.compound_statement!=null){
 				this.compound_statement.check(cs);
@@ -324,7 +357,6 @@ import system.parsers.spec_case_seq.F_Assign;
 					
 					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
 				}
-				
 				//返す値
 				cs.return_expr = rc.expr;
 				//事後条件の検証
@@ -512,7 +544,15 @@ import system.parsers.spec_case_seq.F_Assign;
 				//変更されていたものは統合する
 				//cs.fieldsに含まれないものがあれば追加する
 				for(Field f : cs_loop.fields){
-					cs.search_field(f.field_name, f.class_object, cs);
+					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+						int pre_tmp_num = f.temp_num;
+						f.temp_num = 0;
+						Expr expr = f.get_Expr(cs);
+						f.temp_num = pre_tmp_num;
+						expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+						cs.add_constraint((BoolExpr) expr);
+					}
 				}
 				for(Field f : cs.fields){//フィールドに関して値を更新
 					Field f_loop = cs_loop.search_field(f.field_name,f.class_object, cs);

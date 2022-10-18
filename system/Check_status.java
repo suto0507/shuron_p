@@ -33,12 +33,13 @@ public class Check_status {
 	public Expr refined_Expr;
 	public String refinement_type_value;
 	
+	//メソッド呼び出し
 	public boolean in_method_call;
 	public List<Variable> called_method_args;
 	public Check_status old_status;
 	public Variable result;
 	
-	//返り値
+	//事後条件用
 	public Variable return_v;
 	public Expr return_expr;//事後条件用
 	public boolean after_return;
@@ -65,9 +66,8 @@ public class Check_status {
 	public boolean use_only_helper_method;
 	
 	
-	
 	public boolean in_helper; //helperメソッドの中かどうか
-	
+	public ArrayList<Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>>> helper_assigned_fields;
 	
 	public Check_status(compilation_unit cu){
 		variables = new ArrayList<Variable>();
@@ -79,6 +79,7 @@ public class Check_status {
 		//this.assignables = new ArrayList<Field>();
 		this.right_side_status = new Right_side_status();
 		quantifiers = new ArrayList<Pair<String, Expr>>();
+		helper_assigned_fields = new ArrayList<Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>>>();
 	}
 	
 	Check_status(){
@@ -129,6 +130,10 @@ public class Check_status {
 		f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkBool(false), indexs));
 		
 		this.fields.add(f);
+		
+		//初期値をold用のcsにも追加しておく
+		cs.this_old_status.fields.add(f.clone_e());
+		
 		return f;
 	}
 	
@@ -244,8 +249,9 @@ public class Check_status {
 		cs.return_v = this.return_v;
 		cs.return_expr = this.return_expr;
 		cs.after_return = this.after_return;
-		cs.this_old_status = this.this_old_status;
-		
+		if(this.this_old_status!=null){
+			cs.this_old_status = this.this_old_status.clone();
+		}
 		cs.assinable_cnst_all = this.assinable_cnst_all;
 		
 		cs.right_side_status = this.right_side_status;
@@ -268,7 +274,10 @@ public class Check_status {
 		
 		cs.in_helper = this.in_helper;
 			
-	
+		cs.helper_assigned_fields = new ArrayList<Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>>>();
+		for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field : this.helper_assigned_fields){
+			cs.helper_assigned_fields.add(assigned_field);
+		}
 		
 		return cs;
 	}

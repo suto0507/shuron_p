@@ -247,7 +247,10 @@ public class assignment_expr implements Parser<String>{
 			
 			
 			//篩型の検証
-			if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
+			if(v.refinement_type_clause!=null && cs.in_helper){//helperメソッドの中では、篩型の検証を後回しにする
+				Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field = new Pair(cs.pathcondition, new Pair(v, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum()))));
+				cs.helper_assigned_fields.add(assigned_field);
+			}else if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 				}else if(v.refinement_type_clause.ident!=null){

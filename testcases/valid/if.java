@@ -15,5 +15,13 @@ class A{
 		return y;
 	}
 	
-
+    //@ensures x == \old(x) + 1;
+    int test2(boolean b){
+        if(b){
+            x = x + 1;
+        }else{
+            x = x + 1;
+        }
+		return 3;
+	}
 }

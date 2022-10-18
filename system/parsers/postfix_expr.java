@@ -384,7 +384,7 @@ public class postfix_expr implements Parser<String>{
 					
 				}else if(ps.is_index){
 					IntExpr index = (IntExpr)ps.expression.check(cs).expr;
-					
+
 					//”z—ñ‚Ìbound check
 					int array_dim = f.dims_sum() - indexs.size();
 					String array_type;

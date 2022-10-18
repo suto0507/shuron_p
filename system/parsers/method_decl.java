@@ -114,6 +114,11 @@ public class method_decl implements Parser<String>{
 			
 			//ˆø”
 			this.formals.check(cs);
+			
+			//old—p
+			Check_status csc = cs.clone();
+			csc.clone_list();
+			cs.this_old_status = csc;
 
 			if(this.type_spec!=null){
 				
@@ -160,10 +165,7 @@ public class method_decl implements Parser<String>{
 				cs.ban_private_visibility = false;
 			}
 			
-			//old—p
-			Check_status csc = cs.clone();
-			csc.clone_list();
-			cs.this_old_status = csc;
+			
 		
 			
 

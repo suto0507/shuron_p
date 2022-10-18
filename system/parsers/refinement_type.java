@@ -84,7 +84,6 @@ public class refinement_type implements Parser<String>{
 		cs.instance_Field.type = this.class_type_name;
 		
 		BoolExpr expr = this.predicate.check(cs);
-		
 		cs.instance_Field.type = pre_class_type_name;
 		
 		cs.assert_constraint(expr);

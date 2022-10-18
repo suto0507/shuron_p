@@ -132,7 +132,10 @@ public class Check_status {
 		this.fields.add(f);
 		
 		//‰Šú’l‚ðold—p‚Ìcs‚É‚à’Ç‰Á‚µ‚Ä‚¨‚­
-		cs.this_old_status.fields.add(f.clone_e());
+		if(cs.this_old_status!=null){
+			cs.this_old_status.fields.add(f.clone_e());
+		}
+		
 		
 		return f;
 	}
@@ -184,7 +187,7 @@ public class Check_status {
 		}else{
 			expr = this.ctx.mkNot(arg_expr);
 		}
-		if(this.return_conditions.size()>0){
+		if(this.return_conditions!=null && this.return_conditions.size()>0){
 			for(BoolExpr return_condition : this.return_conditions){
 				expr = this.ctx.mkAnd(expr, this.ctx.mkNot(return_condition));
 			}

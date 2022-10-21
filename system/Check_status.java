@@ -43,7 +43,7 @@ public class Check_status {
 	public Variable return_v;
 	public Expr return_expr;//事後条件用
 	public boolean after_return;
-	public Check_status this_old_status;
+	public Check_status this_old_status; // this_old_statusのthis_old_statusにはこのインスタンスが入る
 	
 	//assignable
 	public BoolExpr assinable_cnst_all;//フィールドに代入できる条件
@@ -133,11 +133,32 @@ public class Check_status {
 		
 		//初期値をold用のcsにも追加しておく
 		if(cs.this_old_status!=null){
-			cs.this_old_status.fields.add(f.clone_e());
+			Field f_old = f.clone_e();
+			cs.this_old_status.fields.add(f_old);
+			f_old.class_object = search_internal_id(f.class_object.internal_id);
 		}
 		
 		
 		return f;
+	}
+	
+	public Field search_internal_id(int internal_id){
+		if(this.this_field.internal_id == internal_id){
+			return this.this_field;
+		}
+		for(Field f : this.fields){
+			if(f.internal_id == internal_id){
+				return f;
+			}
+		}
+		
+		for(Field v : this.variables){
+			if(v.internal_id == internal_id){
+				return v;
+			}
+		}
+		
+		return null;
 	}
 	
 	public boolean search_called_method_arg(String ident){
@@ -252,9 +273,9 @@ public class Check_status {
 		cs.return_v = this.return_v;
 		cs.return_expr = this.return_expr;
 		cs.after_return = this.after_return;
-		if(this.this_old_status!=null){
-			cs.this_old_status = this.this_old_status.clone();
-		}
+		
+		cs.this_old_status = this.this_old_status;
+				
 		cs.assinable_cnst_all = this.assinable_cnst_all;
 		
 		cs.right_side_status = this.right_side_status;

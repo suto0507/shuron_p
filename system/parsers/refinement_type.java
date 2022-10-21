@@ -57,7 +57,7 @@ public class refinement_type implements Parser<String>{
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
 	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
 		
-		if(cs.in_helper && !(refined_Field instanceof Variable))return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
+		
 		
 		//バックアップ
 	    Field pre_refined_Field = cs.refined_Field;
@@ -119,13 +119,18 @@ public class refinement_type implements Parser<String>{
 		cs.use_only_helper_method = pre_use_only_helper_method;
 	}
 	
+	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
+		add_refinement_constraint(cs, refined_Field, refined_Expr, class_Field, class_Expr, indexs, false);
+	}
 	
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
-	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
-		
-		if(cs.in_constructor){//コンストラクタ内では篩型は保証されない
-			return;
+	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
+	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
+		if(!add_once){
+			if(cs.in_helper && !(refined_Field instanceof Variable))return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
+			if(cs.in_constructor)return;//コンストラクタ内では篩型は保証されない
 		}
+		
 		
 		//バックアップ
 	    Field pre_refined_Field = cs.refined_Field;
@@ -170,7 +175,7 @@ public class refinement_type implements Parser<String>{
 		}else{
 			refinement_type rt = cs.search_refinement_type(this.class_type_name, type.type);
 			if(rt!=null){
-				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Field, class_Expr, indexs);
+				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Field, class_Expr, indexs, add_once);
 			}else{
 				throw new Exception("can't find refinement type " + type.type);
 			}

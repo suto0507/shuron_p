@@ -21,6 +21,7 @@ public class TestAll_invalid {
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_localarray_index_access.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_method_assign.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_loop_rt_local_alias.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_helper.java"));
 		
 		Summery summery = new Summery();
 		

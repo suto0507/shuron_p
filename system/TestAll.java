@@ -37,6 +37,7 @@ public class TestAll {
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\method_assign.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\loop_rt_local_alias.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\helper.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\method_in_helper.java"));
 		
 		Summery summery = new Summery();
 		
@@ -66,7 +67,7 @@ public class TestAll {
 				System.out.println(parsed + "is parsed");
 				s.is_parsed(summery);
 				cu.preprocessing(ps.extends_pairs, summery);
-				cu.check(10, summery);
+				cu.check(10, 10, summery);
 			}catch (Exception e){
 				System.out.println(e);
 				System.out.println("Exception!!!");

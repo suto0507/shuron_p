@@ -183,26 +183,26 @@ public class Field {
 	//自分と同じ型のフレッシュなExprを返す
 	public Expr get_Expr_tmp(Check_status cs) throws Exception{
 		if(this.type.equals("int")&&this.dims==0){
-			String ret = "tmpInt" + cs.Check_status_share.tmp_num;
+			String ret = "tmpInt" + cs.Check_status_share.get_tmp_num();
 			return cs.ctx.mkIntConst(ret);
 		}else if(this.type.equals("boolean")&&this.dims==0){
-			String ret = "tmpBool" + cs.Check_status_share.tmp_num;
+			String ret = "tmpBool" + cs.Check_status_share.get_tmp_num();
 			return cs.ctx.mkBoolConst(ret);
 		}else if(this.type.equals("void")){
 			//throw new Exception("void variable ?");
 			return null;
 		}else if(this.dims==0){
 			//クラス
-			String ret = "tmpRef" + cs.Check_status_share.tmp_num;;
+			String ret = "tmpRef" + cs.Check_status_share.get_tmp_num();;
 			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("Ref"));
 		}else if(this.type.equals("int")&&this.dims==1){ //配列
-			String ret = "tmpIntArray" + cs.Check_status_share.tmp_num;
+			String ret = "tmpIntArray" + cs.Check_status_share.get_tmp_num();
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkIntSort());
 		}else if(this.type.equals("boolean")&&this.dims==1){
-			String ret = "tmpBoolArray" + cs.Check_status_share.tmp_num;
+			String ret = "tmpBoolArray" + cs.Check_status_share.get_tmp_num();
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkBoolSort());
 		}else if(this.dims==1){
-			String ret = "tmpRefArray" + cs.Check_status_share.tmp_num;;
+			String ret = "tmpRefArray" + cs.Check_status_share.get_tmp_num();;
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), cs.ctx.mkUninterpretedSort("Ref"));
 		}
 		throw new Exception("unexpect variable");
@@ -223,20 +223,6 @@ public class Field {
 			return;
 		}
 		this.temp_num++;
-		//refinement_type
-		/* postfix_exprで出てきたタイミングでaddされるはずなので問題ないはず
-		Field f = this;
-		if(f.refinement_type_clause!=null){
-			if(f.refinement_type_clause.refinement_type!=null){
-				f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, f.get_Expr(cs));
-			}else{
-				refinement_type rt = cs.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
-				if(rt!=null){
-					rt.add_refinement_constraint(cs, f, f.get_Expr(cs));
-				}
-			}
-		}
-		*/
 	}
 	
 	public boolean is_this_field(){
@@ -268,6 +254,22 @@ public class Field {
 		}
 		
 		return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);
+	}
+	
+	//インデックスをフレッシュとして、class_objectのExpr用に作る
+	public Pair<Expr, ArrayList<IntExpr>> fresh_index_full_expr(Check_status cs) throws Exception{
+		Pair<Expr, ArrayList<IntExpr>> expr_indexs = this.class_object.fresh_index_full_expr(cs);
+		Expr expr = expr_indexs.fst;
+		ArrayList<IntExpr> indexs = expr_indexs.snd;
+		expr = cs.ctx.mkSelect(this.get_Expr(cs), expr);
+		for(int i = 0; i < this.dims; i++){
+			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
+			IntExpr index = cs.ctx.mkIntConst(ret);
+			indexs.add(index);
+			expr = cs.ctx.mkSelect(expr, index);
+		}
+		
+		return new Pair(expr, indexs);
 	}
 	
 

@@ -9,8 +9,8 @@ class A{
     
     //@helper
     void test1(){
-        x = x + 2;
         x = x - 1;
+        x = x + 2;
     }
 
     //@requires 0 < i1 && 0 < i2;
@@ -19,6 +19,6 @@ class A{
     void swap(int i1, int i2, int[]/*`@refinement_type DiffArray*/ array){
         int tmp = array[i1];
         array[i1] = array[i2];
-        array[i2] = array[i1];
+        array[i2] = tmp;
     }
 }

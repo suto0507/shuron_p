@@ -22,6 +22,7 @@ public class TestAll_invalid {
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_method_assign.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_loop_rt_local_alias.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_helper.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_method_in_helper.java"));
 		
 		Summery summery = new Summery();
 		
@@ -51,7 +52,7 @@ public class TestAll_invalid {
 				System.out.println(parsed + "is parsed");
 				s.is_parsed(summery);
 				cu.preprocessing(ps.extends_pairs, summery);
-				cu.check(10, summery);
+				cu.check(10, 10, summery);
 			}catch (Exception e){
 				System.out.println(e);
 				System.out.println("Exception!!!");

@@ -68,6 +68,7 @@ public class Check_status {
 	
 	public boolean in_helper; //helperÉÅÉ\ÉbÉhÇÃíÜÇ©Ç«Ç§Ç©
 	public ArrayList<Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>>> helper_assigned_fields;
+	public int field_deep_limmit;
 	
 	public Check_status(compilation_unit cu){
 		variables = new ArrayList<Variable>();
@@ -302,6 +303,7 @@ public class Check_status {
 		for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field : this.helper_assigned_fields){
 			cs.helper_assigned_fields.add(assigned_field);
 		}
+		cs.field_deep_limmit = this.field_deep_limmit;
 		
 		return cs;
 	}
@@ -414,5 +416,31 @@ public class Check_status {
 			if(refinement_type != null) return refinement_type; 
 		}
 		return null;
+	}
+	
+	public void assert_all_refinement_type() throws Exception{
+		System.out.println("check all refinement");
+		class_declaration cd = Check_status_share.compilation_unit.search_class(this_field.type);
+		ArrayList<Field> fields = cd.all_field(0, field_deep_limmit, this_field, this);
+		for(Field field : fields){
+			if(field.refinement_type_clause!=null){
+				Pair<Expr, ArrayList<IntExpr>> expr_indexs = field.class_object.fresh_index_full_expr(this);
+				Expr class_object_expr = expr_indexs.fst;
+				ArrayList<IntExpr> indexs = expr_indexs.snd;
+				Expr expr = this.ctx.mkSelect(field.get_Expr(this), class_object_expr);
+				
+				if(field.refinement_type_clause.refinement_type!=null){
+					
+					field.refinement_type_clause.refinement_type.assert_refinement(this, field, expr, field.class_object, class_object_expr, indexs);
+				}else{
+					refinement_type rt = this.search_refinement_type(field.class_object.type, field.refinement_type_clause.ident);
+					if(rt!=null){
+						rt.assert_refinement(this, field, expr, field.class_object, class_object_expr, indexs);
+					}else{
+						throw new Exception("can't find refinement type " + field.refinement_type_clause.ident);
+					}
+				}
+			}
+		}
 	}
 }

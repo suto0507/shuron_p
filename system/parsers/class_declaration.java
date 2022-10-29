@@ -1,6 +1,7 @@
 package system.parsers;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import system.Check_status;
 import system.Field;
@@ -57,6 +58,25 @@ public class class_declaration implements Parser<String>{
 		this.class_block.check(csc, summery, this);
 	}
 	
-	
+	//全てのフィールドと、そのフィールドまで返す
+	public ArrayList<Field> all_field(int deep, int deep_limmit, Field class_object, Check_status cs) throws Exception{
+		if(deep >= deep_limmit) return new ArrayList<Field>();
+		ArrayList<Field> fields = new ArrayList<Field>();
+		for(variable_definition vd : this.class_block.variable_definitions){
+			Field field = cs.search_field(vd.variable_decls.ident, class_object, cs);
+			fields.add(field);
+			if(!vd.variable_decls.type_spec.type.type.equals("int") && !vd.variable_decls.type_spec.type.type.equals("boolean")){
+				class_declaration cd = cs.Check_status_share.compilation_unit.search_class(vd.variable_decls.type_spec.type.type);
+				if(cd != null){
+					ArrayList<Field> field_fields = cd.all_field(deep+1, deep_limmit, field, cs);
+					fields.addAll(field_fields);
+				}else{
+					throw new Exception("class " + vd.variable_decls.type_spec.type.type + " don't exist.");
+				}
+			}
+		}
+		
+		return fields;
+	}
 	
 }

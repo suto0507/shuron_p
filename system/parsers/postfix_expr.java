@@ -462,6 +462,12 @@ public class postfix_expr implements Parser<String>{
 		boolean pre_in_helper = cs.in_helper;
 		cs.in_helper = md.modifiers.is_helper;
 		
+		//helperメソッドの中でhelperでないメソッドを呼んだ場合、全ての篩型を検証する
+		if(pre_in_helper && !cs.in_helper){
+			cs.assert_all_refinement_type();
+		}
+		
+		
 		//引数の処理
 		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){

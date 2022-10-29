@@ -127,7 +127,7 @@ public class refinement_type implements Parser<String>{
 	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
 	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
 		if(!add_once){
-			if(cs.in_helper && !(refined_Field instanceof Variable))return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
+			if(cs.in_helper)return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
 			if(cs.in_constructor)return;//コンストラクタ内では篩型は保証されない
 		}
 		

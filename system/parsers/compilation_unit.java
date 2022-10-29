@@ -152,11 +152,12 @@ public class compilation_unit implements Parser<String>{
 		}
 	}
 	
-	public void check(int deep_limit, Summery summery) throws Exception{
+	public void check(int refinement_deep_limmit, int field_deep_limmit, Summery summery) throws Exception{
 		for(class_declaration class_decl :classes){
 			try{
 				Check_status cs = new Check_status(this);
-				cs.refinement_deep_limmit = deep_limit;
+				cs.refinement_deep_limmit = refinement_deep_limmit;
+				cs.field_deep_limmit = field_deep_limmit;
 				class_decl.check(cs, summery);
 			}catch(Exception e){
 				System.out.println(e);

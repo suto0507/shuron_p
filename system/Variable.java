@@ -164,4 +164,18 @@ public class Variable extends Field{
 		}
 	}
 	
+	//インデックスをフレッシュとして、class_objectのExpr用に作る
+	public Pair<Expr, ArrayList<IntExpr>> fresh_index_full_expr(Check_status cs) throws Exception{
+		Expr expr = this.get_Expr(cs);
+		ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
+		for(int i = 0; i < this.dims; i++){
+			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
+			IntExpr index = cs.ctx.mkIntConst(ret);
+			indexs.add(index);
+			expr = cs.ctx.mkSelect(expr, index);
+		}
+		
+		return new Pair(expr, indexs);
+	}
+	
 }

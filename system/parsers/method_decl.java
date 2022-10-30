@@ -11,6 +11,7 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_status;
 import system.Field;
+import system.Helper_assigned_field;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -297,37 +298,36 @@ public class method_decl implements Parser<String>{
 			
 			//helperの最後での篩型のチェック
 			
-			for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_fields : cs.helper_assigned_fields){
+			for(Helper_assigned_field assigned_fields : cs.helper_assigned_fields){
 				cs.solver.push();
 				
-				cs.add_constraint(assigned_fields.fst);
-				Field v = assigned_fields.snd.fst;
-				Field old_v = cs.this_old_status.search_internal_id(assigned_fields.snd.fst.internal_id);
+				cs.add_constraint(assigned_fields.assigned_pathcondition);
+				Field v = assigned_fields.field;
+				Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
 				
-				Expr old_assign_field_expr = old_v.get_full_Expr((ArrayList<IntExpr>) assigned_fields.snd.snd.clone(), cs.this_old_status);
-				Expr old_v_class_object_expr = old_v.class_object.get_full_Expr((ArrayList<IntExpr>) assigned_fields.snd.snd.clone(), cs.this_old_status);
+				Expr v_class_object_expr = assigned_fields.class_object_expr;
 				
-				Expr assign_field_expr = v.get_full_Expr((ArrayList<IntExpr>) assigned_fields.snd.snd.clone(), cs);
-				Expr v_class_object_expr = v.class_object.get_full_Expr((ArrayList<IntExpr>) assigned_fields.snd.snd.clone(), cs);
+				Expr old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
+				Expr assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
 				
 				//メソッドの最初では篩型が満たしていることを仮定していい
 				if(old_v.refinement_type_clause.refinement_type!=null){
-					old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, old_v_class_object_expr, new ArrayList<IntExpr>(assigned_fields.snd.snd.subList(0, old_v.class_object_dims_sum())), true);
+					old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, assigned_fields.indexs, true);
 				}else if(old_v.refinement_type_clause.ident!=null){
 					refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, old_v_class_object_expr, new ArrayList<IntExpr>(assigned_fields.snd.snd.subList(0, old_v.class_object_dims_sum())), true);
+						rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, assigned_fields.indexs, true);
 					}else{
 		                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
 		            }
 				}
 				
 				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assigned_fields.snd.snd.subList(0, v.class_object_dims_sum())));
+					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, assigned_fields.indexs);
 				}else if(v.refinement_type_clause.ident!=null){
 					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
 					if(rt!=null){
-						rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assigned_fields.snd.snd.subList(0, v.class_object_dims_sum())));
+						rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, assigned_fields.indexs);
 					}else{
 		                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
 		            }

@@ -10,6 +10,7 @@ import com.microsoft.z3.IntExpr;
 import system.Check_return;
 import system.Check_status;
 import system.Field;
+import system.Helper_assigned_field;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -284,14 +285,14 @@ import system.parsers.spec_case_seq.F_Assign;
 				
 				//helperメソッドの代入されたフィールド
 				if(!cs_then.after_return){
-					for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field : cs_then.helper_assigned_fields){
+					for(Helper_assigned_field assigned_field : cs_then.helper_assigned_fields){
 						if(!cs.helper_assigned_fields.contains(assigned_field)){
 							cs.helper_assigned_fields.add(assigned_field);
 						}
 					}
 				}
 				if(cs_else!=null&& !cs_else.after_return){
-					for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field : cs_else.helper_assigned_fields){
+					for(Helper_assigned_field assigned_field : cs_else.helper_assigned_fields){
 						if(!cs.helper_assigned_fields.contains(assigned_field)){
 							cs.helper_assigned_fields.add(assigned_field);
 						}
@@ -586,6 +587,17 @@ import system.parsers.spec_case_seq.F_Assign;
 					}
 				}
 				
+				
+				//helperメソッドの代入されたフィールド
+				if(!cs_loop.after_return){
+					for(Helper_assigned_field assigned_field : cs_loop.helper_assigned_fields){
+						if(!cs.helper_assigned_fields.contains(assigned_field)){
+							cs.helper_assigned_fields.add(assigned_field);
+						}
+					}
+				}
+				
+				
 				//ループ出た後の条件
 				BoolExpr post_loop = cs.ctx.mkNot((BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr);
 				
@@ -598,6 +610,8 @@ import system.parsers.spec_case_seq.F_Assign;
 				}
 				
 				cs.pathcondition = pre_pathcondition;
+				
+				
 				
 				cs.add_constraint(cs.ctx.mkImplies(enter_loop_condition, post_loop));
 				

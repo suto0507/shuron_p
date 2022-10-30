@@ -130,6 +130,12 @@ public class Field {
 	}
 	
 	public Expr get_full_Expr_assign(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
+		if(this == cs.instance_Field){//helper、メソッドの篩型の検証などでは、そのまま辿るのとinstancs_exprが同じにならない
+			for(int i=0; i<this.dims_sum()&&indexs.size()>0; i++){
+				indexs.remove(0);
+			}
+			return cs.instance_expr;
+		}
 		Expr ex = this.get_Expr_assign(cs);
 		Expr class_ex = this.class_object.get_full_Expr(indexs, cs);
 		Expr full_ex;

@@ -67,7 +67,7 @@ public class Check_status {
 	
 	
 	public boolean in_helper; //helperƒƒ\ƒbƒh‚Ì’†‚©‚Ç‚¤‚©
-	public ArrayList<Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>>> helper_assigned_fields;
+	public ArrayList<Helper_assigned_field> helper_assigned_fields;
 	public int field_deep_limmit;
 	
 	public Check_status(compilation_unit cu){
@@ -80,7 +80,7 @@ public class Check_status {
 		//this.assignables = new ArrayList<Field>();
 		this.right_side_status = new Right_side_status();
 		quantifiers = new ArrayList<Pair<String, Expr>>();
-		helper_assigned_fields = new ArrayList<Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>>>();
+		helper_assigned_fields = new ArrayList<Helper_assigned_field>();
 	}
 	
 	Check_status(){
@@ -299,8 +299,8 @@ public class Check_status {
 		
 		cs.in_helper = this.in_helper;
 			
-		cs.helper_assigned_fields = new ArrayList<Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>>>();
-		for(Pair<BoolExpr, Pair<Field, ArrayList<IntExpr>>> assigned_field : this.helper_assigned_fields){
+		cs.helper_assigned_fields = new ArrayList<Helper_assigned_field>();
+		for(Helper_assigned_field assigned_field : this.helper_assigned_fields){
 			cs.helper_assigned_fields.add(assigned_field);
 		}
 		cs.field_deep_limmit = this.field_deep_limmit;

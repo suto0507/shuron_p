@@ -9,6 +9,7 @@ import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Status;
 
+import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Pair;
@@ -127,7 +128,7 @@ public class new_expr implements Parser<String>{
 			
 
 			return ret;
-		}else if(this.new_suffix.expression_list!=null){
+		}else if(this.new_suffix.expression_list!=null){//コンストラクタ
 			//String ident = 
 			//Field f;
 			//Expr ex
@@ -150,10 +151,28 @@ public class new_expr implements Parser<String>{
 			}
 			cs.in_method_call = true;
 			//引数の処理
-			cs.called_method_args = new ArrayList<Variable>();
 			if(md.formals.param_declarations.size()!=ps.expression_list.expressions.size()){
 				throw new Exception("wrong number of arguments");
 			}
+			
+			boolean pre_in_helper = cs.in_helper;
+			cs.in_helper = md.modifiers.is_helper;
+			
+			//helperメソッドの中でhelperでないメソッドを呼んだ場合、全ての篩型を検証する
+			if(pre_in_helper && !cs.in_helper){
+				cs.assert_all_refinement_type();
+			}
+			
+			//引数の処理
+			List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
+			for(int j = 0; j < md.formals.param_declarations.size(); j++){
+				method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
+			}
+			
+			//関数内の処理
+			cs.in_method_call = true;
+			
+			cs.called_method_args = new ArrayList<Variable>();
 
 			
 			//返り値
@@ -170,6 +189,8 @@ public class new_expr implements Parser<String>{
 			cs.instance_indexs = new ArrayList<IntExpr>();
 
 			
+			ArrayList<Variable> assignable_args = new ArrayList<Variable>();
+			
 			for(int j = 0; j < md.formals.param_declarations.size(); j++){
 				param_declaration pd = md.formals.param_declarations.get(j);
 				modifiers m = new modifiers();
@@ -179,6 +200,20 @@ public class new_expr implements Parser<String>{
 				v.temp_num = 0;
 				//引数に値を紐づける
 				cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), ps.expression_list.expressions.get(j).check(cs).expr));
+				v.arg_field =  method_arg_valuse.get(j).field;
+				if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
+				if((v.type.equals("int") || v.type.equals("boolean"))) assignable_args.add(v);
+				
+				//配列の篩型が安全かどうか
+				Expr method_arg_assign_field_expr = null;
+				Expr method_arg_class_field_expr = null;
+				if(method_arg_valuse.get(j).field!=null){
+					method_arg_assign_field_expr = method_arg_valuse.get(j).field.get_full_Expr(new ArrayList<IntExpr>(method_arg_valuse.get(j).indexs.subList(0, method_arg_valuse.get(j).field.class_object_dims_sum())), cs);
+					method_arg_class_field_expr = method_arg_valuse.get(j).field.class_object.get_full_Expr((ArrayList<IntExpr>) method_arg_valuse.get(j).indexs.clone(), cs);
+				}
+				cs.check_array_alias(v, v.get_Expr(cs), cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), method_arg_valuse.get(j).field, method_arg_assign_field_expr, method_arg_class_field_expr, method_arg_valuse.get(j).indexs);
+				
+				
 				//篩型
 				if(v.refinement_type_clause!=null){
 					if(v.refinement_type_clause.refinement_type!=null){
@@ -224,16 +259,24 @@ public class new_expr implements Parser<String>{
 				
 				Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 				for(F_Assign fa : assign_cnsts.fst){
+
 					BoolExpr assign_expr = null;
+					
+					//引数のフィールドに代入する場合には、紐づけられたフィールドに代入する
+					if(fa.field instanceof Variable && ((Variable)fa.field).arg_field!=null && !((fa.field.type.equals("int") || fa.field.type.equals("boolean")) && fa.field.dims==0)){
+						fa.field = ((Variable)fa.field).arg_field;
+					}
+					
 					//配列の要素に代入できる制約
 					if(fa.cnst_array.size()>0){
-						for(int i = 1; i <= fa.field.dims; i++){//各次元に関して
+						for(int i = 0; i <= fa.field.dims; i++){//各次元に関して
 							List<IntExpr> index_expr = new ArrayList<IntExpr>();
 							for(int j = 0; j < i; j++){
 								index_expr.add(cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num));
 							}
 							BoolExpr call_assign_expr = fa.assign_index_expr(index_expr, cs);
 							BoolExpr field_assign_expr = fa.field.assign_index_expr(index_expr, cs);
+							
 							if(assign_expr == null){
 								assign_expr = cs.ctx.mkImplies(call_assign_expr, field_assign_expr);
 							}else{
@@ -256,77 +299,43 @@ public class new_expr implements Parser<String>{
 					//配列の要素に代入
 					//そのフィールドにたどり着くまでに配列アクセスをしていた場合も
 					if(fa.cnst_array.size()>0){
-						for(int i = 0; i <= fa.field.dims; i++){//各次元に関して
-							ArrayList<IntExpr> index_expr = new ArrayList<IntExpr>();
-							for(int j = 0; j < fa.field.class_object_dims_sum(); j++){//そのフィールドまでの配列のindex
-								index_expr.add(cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num()));
-							}
-							Expr old_element = fa.field.get_full_Expr((ArrayList)index_expr.clone(), cs);
-							Expr new_element = fa.field.get_full_Expr_assign((ArrayList)index_expr.clone(), cs);
-							for(int j = 0; j < i; j++){//その配列に対するindex
-								
-								//長さに関する制約
-								int array_dim = fa.field.dims - j;
-								String array_type;
-								if(fa.field.type.equals("int")){
-									array_type = "int";
-								}else if(fa.field.type.equals("boolean")){
-									array_type = "boolean";
-								}else{
-									array_type = "ref";
-								}
-								if(j == 0 && fa.field.class_object_dims_sum()==0){
-									IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, old_element.getSort(), cs.ctx.mkIntSort()), old_element);
-									IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, new_element.getSort(), cs.ctx.mkIntSort()), new_element);
-									
-									cs.add_constraint(cs.ctx.mkEq(length, length_assign));
-								}else{
-									IntExpr[] index_tmps = new IntExpr[index_expr.size()];
-									for(int k = 0; k < index_expr.size(); k++){
-										index_tmps[k] = index_expr.get(k);
-									}
-									
-									IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, old_element.getSort(), cs.ctx.mkIntSort()), old_element);
-									IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, new_element.getSort(), cs.ctx.mkIntSort()), new_element);
-									
-									cs.add_constraint(cs.ctx.mkForall(index_tmps, cs.ctx.mkEq(length, length_assign), 1, null, null, null, null));
-								}	
-
-								
-								
-								
-								IntExpr index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
-								index_expr.add(index);
-								old_element = cs.ctx.mkSelect((ArrayExpr) old_element, index);
-								new_element = cs.ctx.mkSelect((ArrayExpr) new_element, index);
-							}
-							
-							
-							
-							BoolExpr expr = cs.ctx.mkImplies(cs.ctx.mkNot(cs.ctx.mkOr(fa.assign_index_expr(index_expr, cs), cs.assinable_cnst_all)), cs.ctx.mkEq(old_element, new_element));
-							
-							if(index_expr.size()>0){
-								Expr[] index_exprs_array = new Expr[index_expr.size()];
-								for(int j = 0; j < index_expr.size(); j++){
-									index_exprs_array[j] = index_expr.get(j);
-								}
-								
-								
-								cs.add_constraint(cs.ctx.mkForall(index_exprs_array, expr, 1, null, null, null, null));
-								fa.field.temp_num++;
-							}else{
-								cs.add_constraint(expr);
-							}
-						}
+						fa.assign_fresh_value(cs);
 						
 					}
 					
+					
+				}
+				
+				
+				//assign_cnsts.fstに含まれないものは、assign_cnsts.sndのときに代入を行う
+				cs.assert_constraint(cs.ctx.mkImplies(assign_cnsts.snd, cs.assinable_cnst_all));
+				for(Field field : cs.fields){//ローカル変数には関係ないはず local.xはxがfield
+					boolean in_assign = false;
+					for(F_Assign fa : assign_cnsts.fst){
+						if(fa.field == field){
+							in_assign = true;
+							break;
+						}
+					}
+					if(!in_assign){
+						List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+						List<List<IntExpr>> assign_list = new ArrayList<List<IntExpr>>();
+						assign_list.add(new ArrayList<IntExpr>());
+						b_is.add(new Pair(assign_cnsts.snd, assign_list));//全てに代入する時には、
+						F_Assign fa = new spec_case_seq().new F_Assign(field, b_is);
+						fa.assign_fresh_value(cs);
+					}
 				}
 			}else{
 				//assignableを含めた任意の仕様が書かれていない関数
 				for(Field f_a : cs.fields){
 					f_a.temp_num++;
 				}
+			}
+			
+			//引数自体には,intやbooleanであれば無条件に代入できる
+			for(Variable v : assignable_args){
+				v.temp_num++;
 			}
 			
 			
@@ -356,6 +365,8 @@ public class new_expr implements Parser<String>{
 			
 			cs.can_not_use_mutable = pre_can_not_use_mutable;
 			cs.in_refinement_predicate = pre_in_refinement_predicate;
+			
+			cs.in_helper = pre_in_helper;
 			
 			return result;
 		}else{

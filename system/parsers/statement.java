@@ -305,65 +305,32 @@ import system.parsers.spec_case_seq.F_Assign;
 			}else if(this.def_type_clause!=null){
 				cs.local_refinements.add(new Pair<String,refinement_type>(this.def_type_clause.ident,this.def_type_clause.refinement_type));
 			}else if(this.is_return){
+
+				Check_return rc = this.expression.check(cs);
 				
 				//配列の篩型が安全かどうか
-				BoolExpr pathcondition;
-				if(cs.pathcondition==null){
-					pathcondition = cs.ctx.mkBool(true);
-				}else{
-					pathcondition = cs.pathcondition;
+				Expr rc_assign_field_expr = null;
+				Expr rc_class_field_expr = null;
+				if(rc.field!=null){
+					rc_assign_field_expr = rc.field.get_full_Expr(new ArrayList<IntExpr>(rc.indexs.subList(0, rc.field.class_object_dims_sum())), cs);
+					rc_class_field_expr = rc.field.class_object.get_full_Expr((ArrayList<IntExpr>) rc.indexs.clone(), cs);
 				}
-				Check_return rc = this.expression.check(cs);
-				if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
-					if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){//どっちも篩型を持つ配列
-						Expr rc_assign_field_expr = rc.field.get_full_Expr(new ArrayList<IntExpr>(rc.indexs.subList(0, rc.field.class_object_dims_sum())), cs);
-						//rc.exprをcomparative_assign_field_exprとして突っ込んでしまってもいいはず
-						rc.field.refinement_type_clause.equal_predicate(rc.indexs, rc_assign_field_expr, rc.field.class_object, rc.field.class_object.get_full_Expr(rc.indexs, cs), cs.return_v.refinement_type_clause, new ArrayList<IntExpr>(), rc.expr, cs.return_v.class_object, cs.this_field.get_Expr(cs), cs);
-					}else{//篩型の安全を保証できないような大入
-						throw new Exception("can not alias with refined array");
-					}
-				}else if(cs.return_v.dims>0 && cs.return_v.refinement_type_clause!=null && cs.return_v.refinement_type_clause.have_index_access(cs.return_v.class_object.type, cs)){
-					if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
-						
-						if(((Variable)rc.field).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
-						
-						Expr alias;
-						if(((Variable) rc.field).alias == null){
-							alias = cs.ctx.mkBool(false);
-						}else{
-							alias = ((Variable) rc.field).alias;
-						}
-						
-						cs.assert_constraint(cs.ctx.mkNot(alias));
-						
-						Expr alias_refined;
-						if(((Variable) rc.field).alias_refined == null){
-							alias_refined = cs.ctx.mkBool(false);
-						}else{
-							alias_refined = ((Variable) rc.field).alias_refined;
-						}
-						
-						cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-						
-					}else{//篩型の安全を保証できないような大入
-						throw new Exception("can not alias with refined array");
-					}	
-				}else if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field instanceof Variable){//ローカル変数
-					Expr alias_refined;
-					if(((Variable) rc.field).alias_refined == null){
-						alias_refined = cs.ctx.mkBool(false);
-					}else{
-						alias_refined = ((Variable) rc.field).alias_refined;
-					}
-					
-					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-				}
+				cs.check_array_alias(cs.return_v, rc.expr, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), rc.field, rc_assign_field_expr, rc_class_field_expr, rc.indexs);
+				
+				
 				//返す値
 				cs.return_expr = rc.expr;
 				//事後条件の検証
 				cs.md.check_post_condition(cs);
 				
 				cs.after_return = true;
+				
+				BoolExpr pathcondition;
+				if(cs.pathcondition==null){
+					pathcondition = cs.ctx.mkBool(true);
+				}else{
+					pathcondition = cs.pathcondition;
+				}
 				cs.return_conditions.add(pathcondition);
 			}else if(this.possibly_annotated_loop!=null){
 				

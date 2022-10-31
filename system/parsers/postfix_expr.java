@@ -501,117 +501,16 @@ public class postfix_expr implements Parser<String>{
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
 			v.arg_field =  method_arg_valuse.get(j).field;
 			if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
-			if((v.type.equals("int") || v.type.equals("boolean")) && v.dims>0) assignable_args.add(v);
+			if((v.type.equals("int") || v.type.equals("boolean"))) assignable_args.add(v);
 			
 			//配列の篩型が安全かどうか
-			BoolExpr pathcondition;
-			if(cs.pathcondition==null){
-				pathcondition = cs.ctx.mkBool(true);
-			}else{
-				pathcondition = cs.pathcondition;
+			Expr method_arg_assign_field_expr = null;
+			Expr method_arg_class_field_expr = null;
+			if(method_arg_valuse.get(j).field!=null){
+				method_arg_assign_field_expr = method_arg_valuse.get(j).field.get_full_Expr(new ArrayList<IntExpr>(method_arg_valuse.get(j).indexs.subList(0, method_arg_valuse.get(j).field.class_object_dims_sum())), cs);
+				method_arg_class_field_expr = method_arg_valuse.get(j).field.class_object.get_full_Expr((ArrayList<IntExpr>) method_arg_valuse.get(j).indexs.clone(), cs);
 			}
-			if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field.refinement_type_clause!=null && method_arg_valuse.get(j).field.refinement_type_clause.have_index_access(method_arg_valuse.get(j).field.class_object.type, cs)){
-				if(v.dims>0 && v.dims_sum()!=indexs.size() && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//どっちも篩型を持つ配列
-					Expr method_arg_assign_field_expr = method_arg_valuse.get(j).field.get_full_Expr(new ArrayList<IntExpr>(method_arg_valuse.get(j).indexs.subList(0, method_arg_valuse.get(j).field.class_object_dims_sum())), cs);
-					method_arg_valuse.get(j).field.refinement_type_clause.equal_predicate(method_arg_valuse.get(j).indexs, method_arg_assign_field_expr, method_arg_valuse.get(j).field.class_object, method_arg_valuse.get(j).field.class_object.get_full_Expr(method_arg_valuse.get(j).indexs, cs), v.refinement_type_clause, indexs, v.get_Expr(cs), v.class_object, ex, cs);
-				}else if(v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable){//ローカル変数
-					
-					if(((Variable)v).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
-					
-					Expr alias;
-					if(((Variable) v).alias == null){
-						alias = cs.ctx.mkBool(false);
-					}else{
-						alias = ((Variable) v).alias;
-					}
-					
-					cs.assert_constraint(cs.ctx.mkNot(alias));
-					
-					Expr alias_refined;
-					if(((Variable) v).alias_refined == null){
-						alias_refined = cs.ctx.mkBool(false);
-					}else{
-						alias_refined = ((Variable) v).alias_refined;
-					}
-					
-					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-					
-					if(((Variable) v).alias_refined == null){
-						((Variable) v).alias_refined = pathcondition;
-					}else{
-						((Variable) v).alias_refined = cs.ctx.mkOr(((Variable) v).alias_refined, pathcondition);
-					}
-				}else{//篩型の安全を保証できないような大入
-					throw new Exception("can not alias with refined array");
-				}
-			}else if(v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){
-				if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field instanceof Variable){//ローカル変数
-					
-					if(((Variable)method_arg_valuse.get(j).field).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
-					
-					Expr alias;
-					if(((Variable) method_arg_valuse.get(j).field).alias == null){
-						alias = cs.ctx.mkBool(false);
-					}else{
-						alias = ((Variable) method_arg_valuse.get(j).field).alias;
-					}
-					
-					cs.assert_constraint(cs.ctx.mkNot(alias));
-					
-					Expr alias_refined;
-					if(((Variable) method_arg_valuse.get(j).field).alias_refined == null){
-						alias_refined = cs.ctx.mkBool(false);
-					}else{
-						alias_refined = ((Variable) method_arg_valuse.get(j).field).alias_refined;
-					}
-					
-					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-					
-					if(((Variable) method_arg_valuse.get(j).field).alias_refined == null){
-						((Variable) method_arg_valuse.get(j).field).alias_refined = pathcondition;
-					}else{
-						((Variable) method_arg_valuse.get(j).field).alias_refined = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias_refined, pathcondition);
-					}
-				}else{//篩型の安全を保証できないような大入
-					throw new Exception("can not alias with refined array");
-				}	
-			}else{
-				if(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.dims>0 && method_arg_valuse.get(j).field.dims_sum()!=method_arg_valuse.get(j).indexs.size() && method_arg_valuse.get(j).field instanceof Variable && !(v!=null && v.new_array)){//ローカル変数
-					Expr alias_refined;
-					if(((Variable) method_arg_valuse.get(j).field).alias_refined == null){
-						alias_refined = cs.ctx.mkBool(false);
-					}else{
-						alias_refined = ((Variable) method_arg_valuse.get(j).field).alias_refined;
-					}
-					
-					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-					
-					
-					if(((Variable) method_arg_valuse.get(j).field).alias == null){
-						((Variable) method_arg_valuse.get(j).field).alias = pathcondition;
-					}else{
-						((Variable) method_arg_valuse.get(j).field).alias = cs.ctx.mkOr(((Variable) method_arg_valuse.get(j).field).alias, pathcondition);
-					}
-					
-				}
-				if(v!=null && v.dims>0 && v.dims_sum()!=indexs.size() && v instanceof Variable && !(method_arg_valuse.get(j).field!=null && method_arg_valuse.get(j).field.new_array)){//ローカル変数
-					Expr alias_refined;
-					if(((Variable) v).alias_refined == null){
-						alias_refined = cs.ctx.mkBool(false);
-					}else{
-						alias_refined = ((Variable) v).alias_refined;
-					}
-					
-					cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-					
-					
-					if(((Variable) v).alias == null){
-						((Variable) v).alias = pathcondition;
-					}else{
-						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, pathcondition);
-					}
-				}
-			}
+			cs.check_array_alias(v, v.get_Expr(cs), ex, indexs, method_arg_valuse.get(j).field, method_arg_assign_field_expr, method_arg_class_field_expr, method_arg_valuse.get(j).indexs);
 			
 			
 			//篩型の検証

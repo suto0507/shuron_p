@@ -100,6 +100,7 @@ public class method_decl implements Parser<String>{
 		try{//returnの準備
 			if(this.type_spec!=null){
 				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field);
+				cs.return_v.alias = cs.ctx.mkBool(true);
 			}else{
 				//コンストラクタでの初期化
 				
@@ -306,9 +307,16 @@ public class method_decl implements Parser<String>{
 				Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
 				
 				Expr v_class_object_expr = assigned_fields.class_object_expr;
-				
-				Expr old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
-				Expr assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
+
+				Expr old_assign_field_expr = null;
+				Expr assign_field_expr = null;
+				if(v instanceof Variable){
+					old_assign_field_expr = old_v.get_Expr(cs);
+					assign_field_expr = v.get_Expr(cs);
+				}else{
+					old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
+					assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
+				}
 				
 				//メソッドの最初では篩型が満たしていることを仮定していい
 				if(old_v.refinement_type_clause.refinement_type!=null){

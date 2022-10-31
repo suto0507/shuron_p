@@ -443,4 +443,113 @@ public class Check_status {
 			}
 		}
 	}
+	
+	public void check_array_alias(Field f1, Expr f1_expr, Expr f1_class_object_expr, ArrayList<IntExpr> f1_indexs, Field f2, Expr f2_expr, Expr f2_class_object_expr, ArrayList<IntExpr> f2_indexs) throws Exception{
+		//配列の篩型が安全かどうか
+		BoolExpr pathcondition;
+		if(this.pathcondition==null){
+			pathcondition = this.ctx.mkBool(true);
+		}else{
+			pathcondition = this.pathcondition;
+		}
+		if(f2!=null && f2.dims>0 && f2.dims_sum()!=f2_indexs.size() && f2.refinement_type_clause!=null && f2.refinement_type_clause.have_index_access(f2.class_object.type, this)){
+			if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size() && f1.refinement_type_clause!=null && f1.refinement_type_clause.have_index_access(f1.class_object.type, this)){//どっちも篩型を持つ配列
+				f2.refinement_type_clause.equal_predicate(f2_indexs, f2_expr, f2.class_object, f2_class_object_expr, f1.refinement_type_clause, f1_indexs, f1_expr, f1.class_object, f1_class_object_expr, this);
+			}else if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size() && f1 instanceof Variable){//ローカル変数
+				if(((Variable) f1).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+				
+				Expr alias;
+				if(((Variable) f1).alias == null){
+					alias = this.ctx.mkBool(false);
+				}else{
+					alias = ((Variable) f1).alias;
+				}
+				
+				this.assert_constraint(this.ctx.mkNot(alias));
+				
+				Expr alias_refined;
+				if(((Variable) f1).alias_refined == null){
+					alias_refined = this.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) f1).alias_refined;
+				}
+				
+				this.assert_constraint(this.ctx.mkNot(alias_refined));
+				
+				if(((Variable) f1).alias_refined == null){
+					((Variable) f1).alias_refined = pathcondition;
+				}else{
+					((Variable) f1).alias_refined = this.ctx.mkOr(((Variable) f1).alias_refined, pathcondition);
+				}
+			}else{//篩型の安全を保証できないような大入
+				throw new Exception("can not alias with refined array");
+			}
+		}else if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size()  && f1.refinement_type_clause!=null && f1.refinement_type_clause.have_index_access(f1.class_object.type, this)){
+			if(f2!=null && f2.dims>0 && f2.dims_sum()!=f2_indexs.size() && f2 instanceof Variable){//ローカル変数
+				
+				if(((Variable)f2).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+				
+				Expr alias;
+				if(((Variable) f2).alias == null){
+					alias = this.ctx.mkBool(false);
+				}else{
+					alias = ((Variable) f2).alias;
+				}
+				
+				this.assert_constraint(this.ctx.mkNot(alias));
+				
+				Expr alias_refined;
+				if(((Variable) f2).alias_refined == null){
+					alias_refined = this.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) f2).alias_refined;
+				}
+				
+				this.assert_constraint(this.ctx.mkNot(alias_refined));
+				
+				if(((Variable) f2).alias_refined == null){
+					((Variable) f2).alias_refined = pathcondition;
+				}else{
+					((Variable) f2).alias_refined = this.ctx.mkOr(((Variable) f2).alias_refined, pathcondition);
+				}
+			}else{//篩型の安全を保証できないような大入
+				throw new Exception("can not alias with refined array");
+			}	
+		}else{ 
+			if(f2!=null && f2.dims>0 && f2.dims_sum()!=f2_indexs.size() && f2 instanceof Variable && !(f1 != null && f1.new_array)){//ローカル変数
+				Expr alias_refined;
+				if(((Variable) f2).alias_refined == null){
+					alias_refined = this.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) f2).alias_refined;
+				}
+				
+				this.assert_constraint(this.ctx.mkNot(alias_refined));
+				
+				if(((Variable) f2).alias == null){
+					((Variable) f2).alias = pathcondition;
+				}else{
+					((Variable) f2).alias = this.ctx.mkOr(((Variable) f2).alias, pathcondition);
+				}
+			}
+			if(f1!=null && f1.dims>0 && f1.dims_sum()!=f1_indexs.size() && f1 instanceof Variable && !(f2!=null && f2.new_array)){//ローカル変数
+				Expr alias_refined;
+				if(((Variable) f1).alias_refined == null){
+					alias_refined = this.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) f1).alias_refined;
+				}
+				
+				this.assert_constraint(this.ctx.mkNot(alias_refined));
+				
+				
+				if(((Variable) f1).alias == null){
+					((Variable) f1).alias = pathcondition;
+				}else{
+					((Variable) f1).alias = this.ctx.mkOr(((Variable) f1).alias, pathcondition);
+				}
+				
+			}
+		}
+	}
 }

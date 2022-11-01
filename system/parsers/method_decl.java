@@ -319,15 +319,18 @@ public class method_decl implements Parser<String>{
 				}
 				
 				//メソッドの最初では篩型が満たしていることを仮定していい
-				if(old_v.refinement_type_clause.refinement_type!=null){
-					old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, assigned_fields.indexs, true);
-				}else if(old_v.refinement_type_clause.ident!=null){
-					refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, assigned_fields.indexs, true);
-					}else{
-		                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
-		            }
+				//フィールドだけ
+				if(!(v instanceof Variable)){
+					if(old_v.refinement_type_clause.refinement_type!=null){
+						old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, assigned_fields.indexs, true);
+					}else if(old_v.refinement_type_clause.ident!=null){
+						refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
+						if(rt!=null){
+							rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, assigned_fields.indexs, true);
+						}else{
+			                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
+			            }
+					}
 				}
 				
 				if(v.refinement_type_clause.refinement_type!=null){

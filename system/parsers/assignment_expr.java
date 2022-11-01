@@ -137,6 +137,7 @@ public class assignment_expr implements Parser<String>{
 			cs.check_array_alias(v, assign_field_expr, v_class_object_expr, indexs, rc.field, rc_assign_field_expr, rc_class_field_expr, rc.indexs);
 			
 			
+			
 			//篩型を持つ配列とエイリアスしたローカル配列は、要素の変更はできない
 			if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)
 					&& v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)
@@ -162,7 +163,7 @@ public class assignment_expr implements Parser<String>{
 			if(v.refinement_type_clause!=null && cs.in_helper){//helperメソッドの中では、篩型の検証を後回しにする
 				Helper_assigned_field assigned_field = new Helper_assigned_field(pathcondition, v, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 				cs.helper_assigned_fields.add(assigned_field);
-			}else if(v.refinement_type_clause!=null && !(cs.in_constructor&&v.class_object.equals(cs.this_field, cs))){
+			}else if(v.refinement_type_clause!=null && !(cs.in_constructor && !(v instanceof Variable) && v.class_object.equals(cs.this_field, cs))){
 				if(v.refinement_type_clause.refinement_type!=null){
 					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 				}else if(v.refinement_type_clause.ident!=null){

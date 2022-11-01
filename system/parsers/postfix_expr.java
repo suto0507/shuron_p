@@ -180,7 +180,7 @@ public class postfix_expr implements Parser<String>{
 			//return null;
 		}
 		
-		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false && !(cs.in_constructor && f.class_object != null && f.class_object.equals(cs.this_field, cs))){//⿌^
+		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false){//⿌^
 			
 			add_refinement_constraint(cs, f, ex, cs.instance_Field, cs.instance_Field.get_Expr(cs), cs.instance_indexs);
 			
@@ -224,7 +224,7 @@ public class postfix_expr implements Parser<String>{
 						throw new Exception(f.type + " don't have " + ps.ident);
 					}
 					
-					if(f.refinement_type_clause!=null&& !(cs.in_constructor && f.class_object != null && f.class_object.equals(cs.this_field, cs))){//⿌^
+					if(f.refinement_type_clause!=null){//⿌^
 						add_refinement_constraint(cs, f, ex, pre_f, pre_ex, (ArrayList<IntExpr>) indexs);
 					}
 					

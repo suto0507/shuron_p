@@ -128,7 +128,7 @@ public class refinement_type implements Parser<String>{
 	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
 		if(!add_once){
 			if(cs.in_helper)return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
-			if(cs.in_constructor)return;//コンストラクタ内では篩型は保証されない
+			if((cs.in_constructor && !(refined_Field instanceof Variable) && refined_Field.class_object != null && refined_Field.class_object.equals(cs.this_field, cs)))return;//コンストラクタ内では篩型は保証されない
 		}
 		
 		
@@ -287,14 +287,14 @@ public class refinement_type implements Parser<String>{
 		System.out.println("check refinement type equality 1");
 		cs.solver.push();
 		
-		this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));
+		this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())), true);
 		
 		if(comparative_v_indexs.size() == 0){
 			cs.add_constraint(cs.ctx.mkEq(comparative_v.get_Expr(cs), v.get_full_Expr((ArrayList<IntExpr>) v_indexs.clone(), cs)));
 			
 			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
 		}else{
-			comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
+			comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())), true);
 			cs.add_constraint(cs.ctx.mkEq(comparative_v.get_Expr_assign(cs), comparative_v.assign_value(comparative_v_indexs, v.get_full_Expr((ArrayList<IntExpr>) v_indexs.clone(), cs), cs)));
 			
 			comparative_refinement_type.assert_refinement(cs, comparative_v, comparative_v.get_Expr_assign(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
@@ -307,14 +307,14 @@ public class refinement_type implements Parser<String>{
 		System.out.println("check refinement type equality 2");
 		cs.solver.push();
 		
-		comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())));
+		comparative_refinement_type.add_refinement_constraint(cs, comparative_v, comparative_v.get_Expr(cs), comparative_class_Field, comparative_class_Expr, new ArrayList<IntExpr>(comparative_indexs.subList(0, comparative_class_Field.dims_sum())), true);
 		
 		if(v_indexs.size() == 0){
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), comparative_v.get_full_Expr((ArrayList<IntExpr>) comparative_v_indexs.clone(), cs)));
 			
 			this.assert_refinement(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));
 		}else{
-			this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));
+			this.add_refinement_constraint(cs, v, v.get_Expr(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())), true);
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr_assign(cs), v.assign_value(v_indexs, comparative_v.get_full_Expr((ArrayList<IntExpr>) comparative_v_indexs.clone(), cs), cs)));
 			
 			this.assert_refinement(cs, v, v.get_Expr_assign(cs), class_Field, class_Expr, new ArrayList<IntExpr>(indexs.subList(0, class_Field.dims_sum())));

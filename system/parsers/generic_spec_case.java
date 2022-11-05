@@ -3,6 +3,9 @@ package system.parsers;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.microsoft.z3.BoolExpr;
+
+import system.Check_status;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
@@ -77,6 +80,41 @@ public class generic_spec_case implements Parser<String>{
 		}else{
 			return null;
 		}
+	}
+	
+public BoolExpr requires_expr(Check_status cs) throws Exception{
+		
+		BoolExpr expr = null;
+			
+			
+		String pre_class_type_name = cs.instance_Field.type;
+		cs.instance_Field.type = this.class_type_name;
+		
+		List<requires_clause> rcs = this.get_requires();
+		if(rcs == null || rcs.size()==0){
+			expr = cs.ctx.mkBool(true);
+		}else{
+			BoolExpr pre_pathcondition = cs.pathcondition;
+			for(requires_clause rc : rcs){
+				rc.set_expr((BoolExpr) rc.check(cs), cs);
+				BoolExpr rc_expr = rc.get_expr(cs);
+				if(expr == null){
+					expr = rc_expr;
+				}else{
+					expr = cs.ctx.mkAnd(expr, rc_expr);
+				}
+				cs.add_path_condition_tmp(rc_expr);
+			}
+			cs.pathcondition = pre_pathcondition;
+		}
+		
+		
+		cs.instance_Field.type = pre_class_type_name;
+		
+		
+		if(expr == null) expr = cs.ctx.mkBool(true);
+		
+		return expr;
 	}
 
 }

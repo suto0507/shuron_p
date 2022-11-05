@@ -94,9 +94,13 @@ public class class_block implements Parser<String>{
 			//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため
 			while(cd!=null){
 				class_block cb = cd.class_block;
+				
+				BoolExpr alias_2d = cs.ctx.mkBool(false);
+				if(method.type_spec==null) alias_2d = cs.ctx.mkBool(true);//コンストラクタ
+				
 				for(variable_definition vd : cb.variable_definitions){
 					Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
-							, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type);
+							, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type, alias_2d);
 					
 					//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
 					List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();

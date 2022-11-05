@@ -35,8 +35,11 @@ public class Field {
 	//宣言されたクラスの名前
 	public String class_type_name;
 	
+	//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+	public BoolExpr alias_2d;
 	
-	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name) throws Exception{
+	
+	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_2d) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = 0;
@@ -49,19 +52,21 @@ public class Field {
 		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
+		this.alias_2d = alias_2d;
 	}
 	
 	public Field(){}
 	
 	
 	public Field clone_e() throws Exception{
-		Field ret = new Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name);
+		Field ret = new Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_2d);
 		ret.temp_num = this.temp_num;
 		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		ret.index = this.index;
 		
 		ret.final_initialized = final_initialized;
+		ret.alias_2d = this.alias_2d;
 		return ret;
 	}
 	

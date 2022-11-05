@@ -87,6 +87,11 @@ public class Check_status {
 		
 	}
 	
+	public BoolExpr get_pathcondition(){
+		if(this.pathcondition!=null) return this.pathcondition;
+		return this.ctx.mkBool(true);
+	}
+	
 	public boolean search_variable(String ident){
 		boolean ret = false;
 		for(Variable v :variables){
@@ -123,7 +128,7 @@ public class Check_status {
 			}
 		}
 		
-		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name);
+		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true));
 		
 		//新しく追加したフィールドはassinable節で触れられていない
 		List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
@@ -139,6 +144,11 @@ public class Check_status {
 			f_old.class_object = search_internal_id(f.class_object.internal_id);
 		}
 		
+		
+		//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+		if(f.dims >= 2){
+			
+		}
 		
 		return f;
 	}
@@ -232,8 +242,8 @@ public class Check_status {
 		this.solver.pop();
 	}
 	
-	public Variable add_variable(String variable, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers) throws Exception{
-		Variable v = new Variable(this.Check_status_share.get_tmp_num(), variable, type, dims, refinement_type_clause, modifiers, this.this_field);
+	public Variable add_variable(String variable, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, BoolExpr alias_2d) throws Exception{
+		Variable v = new Variable(this.Check_status_share.get_tmp_num(), variable, type, dims, refinement_type_clause, modifiers, this.this_field, alias_2d);
 		this.variables.add(v);
 		return v;
 	}

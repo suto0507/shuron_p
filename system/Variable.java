@@ -26,7 +26,7 @@ public class Variable extends Field{
 	
 	
 	
-	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object) throws Exception{
+	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, BoolExpr alias_2d) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = - 1;
@@ -37,17 +37,19 @@ public class Variable extends Field{
 		this.modifiers = modifiers;
 		this.class_object = class_object;
 		this.new_array = false;
+		this.alias_2d = alias_2d;
 	}
 	
 	public Variable(){}
 	
 	@Override
 	public Variable clone_e() throws Exception{
-		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object);
+		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, alias_2d);
 		ret.temp_num = this.temp_num;
 		ret.alias = this.alias;
 		ret.alias_refined = this.alias_refined;
 		ret.out_loop_v = this.out_loop_v;
+		ret.alias_2d = this.alias_2d;
 		return ret;
 	}
 	

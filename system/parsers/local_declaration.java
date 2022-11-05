@@ -43,7 +43,7 @@ public class local_declaration implements Parser<String>{
 	public Variable check(Check_status cs) throws Exception{
 		System.out.println("/////// " + st);
 		if(cs.search_variable(this.variable_decls.ident)==false){
-			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null);
+			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null, cs.ctx.mkBool(false));
 			if(this.implies_expr != null){
 				ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 				
@@ -52,6 +52,7 @@ public class local_declaration implements Parser<String>{
 				BoolExpr expr = cs.ctx.mkEq(cs.get_variable(this.variable_decls.ident).get_Expr_assign(cs), rc.expr);
 				cs.add_constraint(expr);
 				cs.get_variable(this.variable_decls.ident).temp_num++;
+				
 				
 				
 				//îzóÒÇÃ‚øå^Ç™à¿ëSÇ©Ç«Ç§Ç©
@@ -64,16 +65,35 @@ public class local_declaration implements Parser<String>{
 				cs.check_array_alias(v, v.get_Expr(cs), v.class_object.get_Expr(cs), indexs, rc.field, rc_assign_field_expr, rc_class_field_expr, rc.indexs);
 				
 				
-				//‚øå^
-				if(v.refinement_type_clause!=null){
-					if(v.refinement_type_clause.refinement_type!=null){
-						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-					}else if(v.refinement_type_clause.ident!=null){
-						refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-						if(rt!=null){
-							rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-						}else{
-							throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
+				//2éüå≥à»è„ÇÃîzóÒÇ∆ÇµÇƒÉGÉCÉäÉAÉXÇµÇΩèÍçáÇ…ÇÕÅAÇªÇÍà»ç~‚øå^ÇñûÇΩÇ≥Ç»ÇØÇÍÇŒÇ¢ÇØÇ»Ç¢
+				if(cs.in_helper && v.refinement_type_clause!=null && v.dims_sum() >= 2 && rc.field != null && !rc.field.new_array){
+					if(v instanceof Variable)v.alias_2d = cs.ctx.mkOr(cs.get_pathcondition());
+					if(rc.field instanceof Variable)rc.field.alias_2d = cs.ctx.mkOr(rc.field.alias_2d, cs.get_pathcondition());
+					//‚øå^ÇÃåüèÿ
+					if(v.refinement_type_clause!=null){
+						if(v.refinement_type_clause.refinement_type!=null){
+							v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+						}else if(v.refinement_type_clause.ident!=null){
+							refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
+							if(rt!=null){
+								rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+							}else{
+								throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
+							}
+						}
+					}
+				}else if(!cs.in_helper){
+					//‚øå^ÇÃåüèÿ
+					if(v.refinement_type_clause!=null){
+						if(v.refinement_type_clause.refinement_type!=null){
+							v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+						}else if(v.refinement_type_clause.ident!=null){
+							refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
+							if(rt!=null){
+								rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+							}else{
+								throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
+							}
 						}
 					}
 				}
@@ -91,7 +111,7 @@ public class local_declaration implements Parser<String>{
 	
 	public Variable loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
 		if(cs.search_variable(this.variable_decls.ident)==false){
-			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null);
+			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null, cs.ctx.mkBool(false));
 			if(this.implies_expr != null){
 				ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 				

@@ -199,7 +199,8 @@ import system.parsers.spec_case_seq.F_Assign;
 							v.temp_num++;
 						}
 						
-						
+						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+						v.alias_2d = v_then.alias_2d;
 					}else{
 						Variable v_then = cs_then.get_variable(v.field_name);
 						Variable v_else = cs_else.get_variable(v.field_name);
@@ -211,6 +212,8 @@ import system.parsers.spec_case_seq.F_Assign;
 							v.temp_num++;
 						}
 						
+						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+						v.alias_2d = cs.ctx.mkOr(v_then.alias_2d, v_else.alias_2d);
 					}
 				}
 				
@@ -255,6 +258,9 @@ import system.parsers.spec_case_seq.F_Assign;
 								throw new Exception("shuold initialize in both of then and else.");
 							}
 						}
+						
+						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+						f.alias_2d = f_then.alias_2d;
 					}else{
 						System.out.println(f.class_object);
 						Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
@@ -275,6 +281,9 @@ import system.parsers.spec_case_seq.F_Assign;
 								}
 							}
 						}
+						
+						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+						f.alias_2d = cs.ctx.mkOr(f_then.alias_2d, f_else.alias_2d);
 					}
 				}
 				
@@ -384,6 +393,10 @@ import system.parsers.spec_case_seq.F_Assign;
 							v.temp_num++;
 							cs.add_constraint(cs.ctx.mkEq(pre_expr, v.get_Expr(cs_loop_assign_check)));
 						}
+
+						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+						Field cs_v = cs.search_internal_id(v.internal_id);
+						cs_v.alias_2d = v.alias_2d;
 					}
 					
 					for(Field f : cs_loop_assign_check.fields){
@@ -399,6 +412,10 @@ import system.parsers.spec_case_seq.F_Assign;
 							f.temp_num++;
 							cs.add_constraint(cs.ctx.mkEq(pre_expr, f.get_Expr(cs_loop_assign_check)));
 						}
+						
+						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+						Field cs_f = cs.search_internal_id(f.internal_id);
+						cs_f.alias_2d = f.alias_2d;
 					}
 				}
 				
@@ -536,6 +553,9 @@ import system.parsers.spec_case_seq.F_Assign;
 						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
 						f.temp_num++;
 					}
+					
+					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+					f.alias_2d = f_loop.alias_2d;
 				}
 				for(Variable v :cs.variables){//ローカル変数に関して値を更新
 					Variable v_loop = cs_loop.get_variable(v.field_name);
@@ -552,6 +572,9 @@ import system.parsers.spec_case_seq.F_Assign;
 					}else{//v.alias!=nullならv_loop.alias!=nullであるはず
 						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, v_loop.alias);
 					}
+					
+					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+					v.alias_2d = v_loop.alias_2d;
 				}
 				
 				
@@ -649,8 +672,19 @@ import system.parsers.spec_case_seq.F_Assign;
 			}else if(this.assert_statement!=null){
 				//なにもしない
 			}else if(this.is_if){
+				BoolExpr pc = (BoolExpr)this.expression.check(cs).expr;
+				
+				BoolExpr pre_pathcondition = cs.pathcondition;
+				cs.add_path_condition_tmp(pc);
 				this.true_statement.loop_assign(assigned_fields,cs);
-				this.false_statement.loop_assign(assigned_fields,cs);
+				cs.pathcondition = pre_pathcondition;
+				
+				if(this.false_statement!=null){
+					cs.add_path_condition_tmp(cs.ctx.mkNot(pc));
+					this.false_statement.loop_assign(assigned_fields,cs);
+					cs.pathcondition = pre_pathcondition;
+				}
+				
 			}else if(this.compound_statement!=null){
 				for(statement statement : this.compound_statement.statements){
 					statement.loop_assign(assigned_fields,cs);
@@ -660,12 +694,23 @@ import system.parsers.spec_case_seq.F_Assign;
 			}else if(this.is_return){
 				//なにもしない
 			}else if(this.possibly_annotated_loop!=null){
+				BoolExpr enter_loop_condition = null;
+				if(this.possibly_annotated_loop.loop_stmt.expression!=null){
+					enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs).expr;
+				}else{
+					enter_loop_condition = cs.ctx.mkBool(true);
+				}
+				BoolExpr pre_pathcondition = cs.pathcondition;
+				cs.add_path_condition_tmp(enter_loop_condition);
+				
 				this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs);
 				if(this.possibly_annotated_loop.loop_stmt.expression_list!=null){
 					for(expression expression : this.possibly_annotated_loop.loop_stmt.expression_list.expressions){
 						expression.loop_assign(assigned_fields, cs);
 					}
 				}
+				
+				cs.pathcondition = pre_pathcondition;
 			}
 		}
 	

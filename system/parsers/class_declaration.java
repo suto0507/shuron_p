@@ -46,7 +46,7 @@ public class class_declaration implements Parser<String>{
 		Check_status csc =  cs.clone();
 		modifiers m = new modifiers();
 		m.is_final = true;
-		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", this.class_name, 0, null, m, null );
+		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", this.class_name, 0, null, m, null, cs.ctx.mkBool(false));
 		this_field.temp_num = 0;
 		//csc.fields.add(this_field);
 		csc.this_field = this_field;

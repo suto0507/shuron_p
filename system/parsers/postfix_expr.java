@@ -494,7 +494,7 @@ public class postfix_expr implements Parser<String>{
 			param_declaration pd = md.formals.param_declarations.get(j);
 			modifiers m = new modifiers();
 			m.is_final = pd.is_final;
-			Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, f);
+			Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, f, cs.ctx.mkBool(true));
 			cs.called_method_args.add(v);
 			v.temp_num = 0;
 			//引数に値を紐づける
@@ -556,6 +556,82 @@ public class postfix_expr implements Parser<String>{
 			
 			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 			for(F_Assign fa : assign_cnsts.fst){
+				
+				//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
+				if(cs.in_helper || (cs.in_constructor && !(fa.field instanceof Variable) && fa.field.class_object != null && fa.field.class_object.equals(cs.this_field, cs))){
+					for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
+						for(List<IntExpr> assign_indexs : b_indexs.snd){
+							if(fa.field.refinement_type_clause!=null && assign_indexs.size() < fa.field.dims_sum()){
+								cs.solver.push();
+								
+								cs.add_constraint(b_indexs.fst);
+								Field v = fa.field;
+								Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
+								
+								Expr v_class_object_expr = v.class_object.get_full_Expr(new ArrayList<IntExpr>(assign_indexs), csc);
+			
+								Expr old_assign_field_expr = null;
+								Expr assign_field_expr = null;
+								if(v instanceof Variable){
+									old_assign_field_expr = old_v.get_Expr(cs);
+									assign_field_expr = v.get_Expr(cs);
+								}else{
+									old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
+									assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
+								}
+								
+								//メソッドの最初では篩型が満たしていることを仮定していい
+								//フィールドだけ
+								if(cs.in_helper && !(v instanceof Variable)){
+									if(old_v.refinement_type_clause.refinement_type!=null){
+										old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())), true);
+									}else if(old_v.refinement_type_clause.ident!=null){
+										refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
+										if(rt!=null){
+											rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())), true);
+										}else{
+							                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
+							            }
+									}
+								}
+								
+								if(v.refinement_type_clause.refinement_type!=null){
+									v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())));
+								}else if(v.refinement_type_clause.ident!=null){
+									refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
+									if(rt!=null){
+										rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())));
+									}else{
+						                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
+						            }
+								}
+								
+								cs.solver.pop();
+							}
+						}
+					}
+				}
+				
+				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+				for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
+					for(List<IntExpr> assign_indexs : b_indexs.snd){
+						if(assign_indexs.size()+2 <= fa.field.dims_sum()){
+							if(cs.in_helper){
+								for(Variable v : cs.called_method_args){
+									if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
+									}
+								}
+							}else if(cs.in_constructor){
+								for(Field v : cs.fields){
+									if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
+									}
+								}
+							}
+						}
+					}
+				}
 
 				BoolExpr assign_expr = null;
 				
@@ -623,10 +699,40 @@ public class postfix_expr implements Parser<String>{
 					fa.assign_fresh_value(cs);
 				}
 			}
+			
+			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+			if(cs.in_helper){
+				for(Variable v : cs.called_method_args){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
+					}
+				}
+			}else if(cs.in_constructor){
+				for(Field v : cs.fields){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
+					}
+				}
+			}
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
 			for(Field f_a : cs.fields){
 				f_a.temp_num++;
+			}
+			
+			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+			if(cs.in_helper){
+				for(Variable v : cs.called_method_args){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
+					}
+				}
+			}else if(cs.in_constructor){
+				for(Field v : cs.fields){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
+					}
+				}
 			}
 		}
 		
@@ -638,7 +744,7 @@ public class postfix_expr implements Parser<String>{
 		
 		//返り値
 		modifiers m_tmp = new modifiers();
-		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, f);
+		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, f, cs.ctx.mkBool(true));
 		result.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
 		result.temp_num++;
 		cs.result = result;
@@ -867,11 +973,12 @@ public class postfix_expr implements Parser<String>{
 			param_declaration pd = md.formals.param_declarations.get(j);
 			modifiers m = new modifiers();
 			m.is_final = pd.is_final;
-			Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, f);
+			Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, f, cs.ctx.mkBool(true));
 			cs.called_method_args.add(v);
 			v.temp_num = 0;
 			//引数に値を紐づける
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
+			v.arg_field =  method_arg_valuse.get(j).field;
 			
 			
 		}
@@ -881,9 +988,24 @@ public class postfix_expr implements Parser<String>{
 		if(md.method_specification != null){
 			
 			for(generic_spec_case gsc : md.method_specification.spec_case_seq.generic_spec_cases){
+				BoolExpr require_expr = gsc.requires_expr(cs);
 				List<assignable_clause> assignables = gsc.get_assignable();
 				if(assignables == null){//何でも代入していい
 					assigned_fields.snd = true;
+					//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+					if(cs.in_helper){
+						for(Variable v : cs.called_method_args){
+							if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+								v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
+							}
+						}
+					}else if(cs.in_constructor){
+						for(Field v : cs.fields){
+							if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+								v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
+							}
+						}
+					}
 				}else{
 					for(assignable_clause ac : assignables){
 						
@@ -905,6 +1027,23 @@ public class postfix_expr implements Parser<String>{
 								Pair<Field,List<List<IntExpr>>> f_i = new Pair<Field,List<List<IntExpr>>>(f_indexs.fst, f_indexs_snd);
 								assigned_fields.fst.add(f_i);
 							}
+							
+							//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+							if(f_indexs.snd.size()+2 <= f_indexs.fst.dims_sum()){
+								if(cs.in_helper){
+									for(Variable v : cs.called_method_args){
+										if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+											v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
+										}
+									}
+								}else if(cs.in_constructor){
+									for(Field v : cs.fields){
+										if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+											v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -912,11 +1051,26 @@ public class postfix_expr implements Parser<String>{
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
 			assigned_fields.snd = true;
+			
+			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+			if(cs.in_helper){
+				for(Variable v : cs.called_method_args){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
+					}
+				}
+			}else if(cs.in_constructor){
+				for(Field v : cs.fields){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
+					}
+				}
+			}
 		}
 		
 		//返り値
 		modifiers m_tmp = new modifiers();
-		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, f);
+		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, f, cs.ctx.mkBool(true));
 
 		cs.in_method_call = false;
 		

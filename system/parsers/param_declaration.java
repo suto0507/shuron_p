@@ -47,7 +47,7 @@ public class param_declaration implements Parser<String>{
 			modi.is_final = this.is_final;
 			modi.is_privte = false;
 			modi.is_spec_public = false;
-			Variable v = cs.add_variable(this.ident, this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, modi);
+			Variable v = cs.add_variable(this.ident, this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, modi, cs.ctx.mkBool(true));
 			v.temp_num=0;
 			if(v.refinement_type_clause!=null){
 				if(v.refinement_type_clause.refinement_type!=null){

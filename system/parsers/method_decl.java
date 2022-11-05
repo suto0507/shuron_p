@@ -99,7 +99,7 @@ public class method_decl implements Parser<String>{
 		//色々の処理を後で追加
 		try{//returnの準備
 			if(this.type_spec!=null){
-				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field);
+				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field, cs.ctx.mkBool(false));
 				cs.return_v.alias = cs.ctx.mkBool(true);
 			}else{
 				//コンストラクタでの初期化
@@ -433,11 +433,11 @@ public class method_decl implements Parser<String>{
 		Check_status cs = new Check_status(cu);
 		modifiers m = new modifiers();
 		m.is_final = true;
-		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", class_decl.class_name, 0, null, m, null );
+		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", class_decl.class_name, 0, null, m, null, cs.ctx.mkBool(false));
 		this_field.temp_num = 0;
 		cs.this_field = this_field;
 		
-		Field super_this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", super_class.class_name, 0, null, m, null );
+		Field super_this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", super_class.class_name, 0, null, m, null, cs.ctx.mkBool(false));
 		super_this_field.temp_num = 0;
 		
 		//初期化
@@ -458,7 +458,7 @@ public class method_decl implements Parser<String>{
 			modi.is_spec_public = false;
 			//↓のvに篩型をつけなくても動く(制約は追加していくので)
 			Variable v = cs.add_variable(this.formals.param_declarations.get(i).ident, this.formals.param_declarations.get(i).type_spec.type.type
-					, this.formals.param_declarations.get(i).type_spec.dims, null, modi);
+					, this.formals.param_declarations.get(i).type_spec.dims, null, modi, cs.ctx.mkBool(true));
 			
 			v.temp_num=0;
 			

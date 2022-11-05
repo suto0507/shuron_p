@@ -229,12 +229,12 @@ public class refinement_type implements Parser<String>{
 	public void equal_predicate(ArrayList<IntExpr> indexs, Expr assign_field_expr, Field class_Field, Expr class_Expr, refinement_type comparative_refinement_type, ArrayList<IntExpr> comparative_indexs, Expr comparative_assign_field_expr, Field comparative_class_Field, Expr comparative_class_Expr, Check_status cs) throws Exception{
 		String type = this.base_type(cs.Check_status_share.compilation_unit).fst;
 		int dims = this.base_type(cs.Check_status_share.compilation_unit).snd;
-		Variable v = new Variable(cs.Check_status_share.get_tmp_num(), "tmp", type, dims, null, new modifiers(), class_Field );
+		Variable v = new Variable(cs.Check_status_share.get_tmp_num(), "tmp", type, dims, null, new modifiers(), class_Field, cs.ctx.mkBool(true));
 		v.temp_num++;
 		
 		String  comparative_type = comparative_refinement_type.base_type(cs.Check_status_share.compilation_unit).fst;
 		int  comparative_dims = comparative_refinement_type.base_type(cs.Check_status_share.compilation_unit).snd;
-		Variable comparative_v = new Variable(cs.Check_status_share.get_tmp_num(), "comparative_tmp", comparative_type, comparative_dims, null, new modifiers(), comparative_class_Field );
+		Variable comparative_v = new Variable(cs.Check_status_share.get_tmp_num(), "comparative_tmp", comparative_type, comparative_dims, null, new modifiers(), comparative_class_Field, cs.ctx.mkBool(true));
 		comparative_v.temp_num++;
 		
 		ArrayList<IntExpr> v_indexs = new ArrayList<IntExpr>(indexs.subList(class_Field.dims_sum(), indexs.size()));

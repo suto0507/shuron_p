@@ -40,7 +40,7 @@ public class new_expr implements Parser<String>{
 	public Variable check(Check_status cs) throws Exception{
 		if(this.new_suffix.is_index){
 			Variable ret = null;
-			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, this.new_suffix.array_decl.dims, null, new modifiers(), cs.this_field);
+			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, this.new_suffix.array_decl.dims, null, new modifiers(), cs.this_field, cs.ctx.mkBool(false));
 			ret.temp_num++;
 			ret.new_array = true;
 			
@@ -176,7 +176,7 @@ public class new_expr implements Parser<String>{
 
 			
 			//ï‘ÇËíl
-			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type.type + "_constructor_tmp", this.type.type, 0, null, md.modifiers, cs.this_field);
+			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type.type + "_constructor_tmp", this.type.type, 0, null, md.modifiers, cs.this_field, cs.ctx.mkBool(false));
 			result.temp_num++;
 			cs.result = result;
 			
@@ -195,7 +195,7 @@ public class new_expr implements Parser<String>{
 				param_declaration pd = md.formals.param_declarations.get(j);
 				modifiers m = new modifiers();
 				m.is_final = pd.is_final;
-				Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, result);
+				Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, result, cs.ctx.mkBool(true));
 				cs.called_method_args.add(v);
 				v.temp_num = 0;
 				//à¯êîÇ…ílÇïRÇ√ÇØÇÈ

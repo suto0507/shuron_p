@@ -761,7 +761,6 @@ public class postfix_expr implements Parser<String>{
 			}
 		}
 		
-		
 		//Ž–ŒãðŒ
 		BoolExpr post_invariant_expr = null;
 		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0 && !cs.in_helper){
@@ -1071,7 +1070,8 @@ public class postfix_expr implements Parser<String>{
 		//•Ô‚è’l
 		modifiers m_tmp = new modifiers();
 		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, f, cs.ctx.mkBool(true));
-
+		result.temp_num++;
+		
 		cs.in_method_call = false;
 		
 		cs.instance_expr = pre_instance_expr;

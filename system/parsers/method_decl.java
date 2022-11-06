@@ -303,7 +303,7 @@ public class method_decl implements Parser<String>{
 				cs.solver.push();
 				
 				cs.add_constraint(assigned_fields.assigned_pathcondition);
-				Field v = assigned_fields.field;
+				Field v = cs.search_internal_id(assigned_fields.field.internal_id);
 				Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
 				
 				Expr v_class_object_expr = assigned_fields.class_object_expr;

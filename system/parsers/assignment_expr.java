@@ -108,7 +108,7 @@ public class assignment_expr implements Parser<String>{
 						expr = v.get_Expr(cs);
 					}else{
 						old_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
-						assign_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
+						expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
 					}
 					
 					//メソッドの最初では篩型が満たしていることを仮定していい
@@ -125,6 +125,7 @@ public class assignment_expr implements Parser<String>{
 				            }
 						}
 					}
+					
 					
 					if(v.refinement_type_clause.refinement_type!=null){
 						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
@@ -190,6 +191,17 @@ public class assignment_expr implements Parser<String>{
 			
 			
 			//refinement_type
+			//篩型を持つ配列とエイリアスしたローカル配列は、要素の変更はできない
+			if(v.dims>0 && !(v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs))
+					 && v.dims_sum()==indexs.size() && v instanceof Variable){
+				Expr alias_refined;
+				if(((Variable) v).alias_refined == null){
+					alias_refined = cs.ctx.mkBool(false);
+				}else{
+					alias_refined = ((Variable) v).alias_refined;
+				}
+				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
+			}
 			
 			//配列の篩型が安全かどうか
 			Expr rc_assign_field_expr = null;
@@ -202,19 +214,7 @@ public class assignment_expr implements Parser<String>{
 			
 			
 			
-			//篩型を持つ配列とエイリアスしたローカル配列は、要素の変更はできない
-			if(rc.field!=null && rc.field.dims>0 && rc.field.dims_sum()!=rc.indexs.size() && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)
-					&& v.dims>0 && v.dims_sum()!=indexs.size()  && v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs)
-					&& v!=null && v.dims>0 && v.dims_sum()==indexs.size() && v instanceof Variable){
-				Expr alias_refined;
-				if(((Variable) v).alias_refined == null){
-					alias_refined = cs.ctx.mkBool(false);
-				}else{
-					alias_refined = ((Variable) v).alias_refined;
-				}
-				
-				cs.assert_constraint(cs.ctx.mkNot(alias_refined));
-			}
+			
 			
 
 			BoolExpr pathcondition;
@@ -308,12 +308,12 @@ public class assignment_expr implements Parser<String>{
 			
 		}
 		
+
 		
 		Check_return cr_r =  this.implies_expr.loop_assign(assigned_fields, cs);
-		
 		if(this.postfix_expr!=null){
 			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-			if(cr_l.field.refinement_type_clause!=null && cr_l.indexs.size()+2 <= cr_l.field.dims_sum() && cr_r.field != null && !cr_r.field.new_array){//右辺がnewだったらcr_r.field == null
+			if(cr_l.field.refinement_type_clause!=null && cr_l.indexs.size()+2 <= cr_l.field.dims_sum() && cr_r.field != null){//右辺がnewだったらcr_r.field == null
 				if(cs.in_helper){
 					if(cr_l.field instanceof Variable)cr_l.field.alias_2d = cs.ctx.mkOr(cr_l.field.alias_2d, cs.get_pathcondition());
 					if(cr_r.field instanceof Variable)cr_r.field.alias_2d = cs.ctx.mkOr(cr_r.field.alias_2d, cs.get_pathcondition());

@@ -378,14 +378,28 @@ import system.parsers.spec_case_seq.F_Assign;
 					}
 				}
 				
+				//cs.fieldsに含まれないものがあれば追加する
+				for(Field f : cs_loop_assign_check.fields){
+					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+						int pre_tmp_num = f.temp_num;
+						f.temp_num = 0;
+						Expr expr = f.get_Expr(cs);
+						f.temp_num = pre_tmp_num;
+						expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+						cs.add_constraint((BoolExpr) expr);
+					}
+				}
 				//assigned_fieldsに含まれないものが同じ程度のことは保証する
 				if(!assigned_fields.snd){
+					System.out.println("no assign fields in loop");
 					for(Variable v : cs_loop_assign_check.variables){
 						boolean assigned = false;
 						for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
-							assigned_field.fst.equals(v, cs);
-							assigned = true;
-							break;
+							if(assigned_field.fst.equals(v, cs)){
+								assigned = true;
+								break;
+							}
 						}
 						if(!assigned){
 							v.temp_num--;
@@ -393,18 +407,15 @@ import system.parsers.spec_case_seq.F_Assign;
 							v.temp_num++;
 							cs.add_constraint(cs.ctx.mkEq(pre_expr, v.get_Expr(cs_loop_assign_check)));
 						}
-
-						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-						Field cs_v = cs.search_internal_id(v.internal_id);
-						cs_v.alias_2d = v.alias_2d;
 					}
 					
 					for(Field f : cs_loop_assign_check.fields){
 						boolean assigned = false;
 						for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
-							assigned_field.fst.equals(f, cs);
-							assigned = true;
-							break;
+							if(assigned_field.fst.equals(f, cs)){
+								assigned = true;
+								break;
+							}
 						}
 						if(!assigned){
 							f.temp_num--;
@@ -412,12 +423,18 @@ import system.parsers.spec_case_seq.F_Assign;
 							f.temp_num++;
 							cs.add_constraint(cs.ctx.mkEq(pre_expr, f.get_Expr(cs_loop_assign_check)));
 						}
-						
-						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-						Field cs_f = cs.search_internal_id(f.internal_id);
-						cs_f.alias_2d = f.alias_2d;
 					}
 				}
+				//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+				for(Variable v : cs_loop_assign_check.variables){
+					Field cs_v = cs.search_internal_id(v.internal_id);
+					if(cs_v!=null)cs_v.alias_2d = v.alias_2d;//ループ内で追加されたローカル変数の場合はnullになる
+				}
+				for(Field f : cs_loop_assign_check.fields){
+					Field cs_f = cs.search_internal_id(f.internal_id);
+					cs_f.alias_2d = f.alias_2d;
+				}
+				
 				
 				////////////ここからが本番の検証
 				System.out.println("check loop");

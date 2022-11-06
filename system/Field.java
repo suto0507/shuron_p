@@ -247,7 +247,9 @@ public class Field {
 		for(Pair<BoolExpr,List<List<IntExpr>>> assinable_cnst_index :assinable_cnst_indexs){
 			BoolExpr equal = cs.ctx.mkBool(false);
 			for(List<IntExpr> index : assinable_cnst_index.snd){
-				if(index.size()>0 && index.size() == index_expr.size()){
+				if(index.size()==0 && index.size() == index_expr.size()){
+					equal = cs.ctx.mkBool(true);
+				}else if(index.size()>0 && index.size() == index_expr.size()){
 					BoolExpr index_equal = null;
 					for(int i = 0; i<index.size(); i++){
 						if(index_equal == null){

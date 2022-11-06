@@ -226,6 +226,7 @@ public class Check_status {
 		}
 		System.out.println("assert " + expr);
 		
+		
 
 		this.solver.push();
 		this.solver.add(expr);

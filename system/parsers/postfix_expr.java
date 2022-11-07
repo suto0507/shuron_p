@@ -991,20 +991,6 @@ public class postfix_expr implements Parser<String>{
 				List<assignable_clause> assignables = gsc.get_assignable();
 				if(assignables == null){//何でも代入していい
 					assigned_fields.snd = true;
-					//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-					if(cs.in_helper){
-						for(Variable v : cs.called_method_args){
-							if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-								v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
-							}
-						}
-					}else if(cs.in_constructor){
-						for(Field v : cs.fields){
-							if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-								v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
-							}
-						}
-					}
 				}else{
 					for(assignable_clause ac : assignables){
 						
@@ -1026,24 +1012,47 @@ public class postfix_expr implements Parser<String>{
 								Pair<Field,List<List<IntExpr>>> f_i = new Pair<Field,List<List<IntExpr>>>(f_indexs.fst, f_indexs_snd);
 								assigned_fields.fst.add(f_i);
 							}
-							
-							//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-							if(f_indexs.snd.size()+2 <= f_indexs.fst.dims_sum()){
-								if(cs.in_helper){
-									for(Variable v : cs.called_method_args){
-										if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-											v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
-										}
+						}
+					}
+				}
+			}
+			
+			
+			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+			////それぞれのフィールド
+			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
+			for(F_Assign fa : assign_cnsts.fst){
+				for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
+					for(List<IntExpr> assign_indexs : b_indexs.snd){
+						if(assign_indexs.size()+2 <= fa.field.dims_sum()){
+							if(cs.in_helper){
+								for(Variable v : cs.called_method_args){
+									if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
 									}
-								}else if(cs.in_constructor){
-									for(Field v : cs.fields){
-										if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-											v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(require_expr, cs.get_pathcondition()));
-										}
+								}
+							}else if(cs.in_constructor){
+								for(Field v : cs.fields){
+									if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
 									}
 								}
 							}
 						}
+					}
+				}
+			}
+			//何でも代入できる
+			if(cs.in_helper){
+				for(Variable v : cs.called_method_args){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
+					}
+				}
+			}else if(cs.in_constructor){
+				for(Field v : cs.fields){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
+						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
 					}
 				}
 			}
@@ -1066,6 +1075,8 @@ public class postfix_expr implements Parser<String>{
 				}
 			}
 		}
+
+		
 		
 		//返り値
 		modifiers m_tmp = new modifiers();

@@ -467,6 +467,9 @@ public class postfix_expr implements Parser<String>{
 			cs.assert_all_refinement_type();
 		}
 		
+		boolean pre_in_constructor = cs.in_helper;
+		cs.in_helper = false;
+		
 		
 		//引数の処理
 		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
@@ -563,6 +566,9 @@ public class postfix_expr implements Parser<String>{
 						for(List<IntExpr> assign_indexs : b_indexs.snd){
 							if(fa.field.refinement_type_clause!=null && assign_indexs.size() < fa.field.dims_sum()){
 								cs.solver.push();
+
+								//エイリアスしているときだけでいい
+								cs.add_constraint(fa.field.alias_in_helper_or_consutructor);
 								
 								cs.add_constraint(b_indexs.fst);
 								Field v = fa.field;
@@ -611,24 +617,11 @@ public class postfix_expr implements Parser<String>{
 					}
 				}
 				
-				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+				
 				for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
 					for(List<IntExpr> assign_indexs : b_indexs.snd){
-						if(assign_indexs.size()+2 <= fa.field.dims_sum()){
-							if(cs.in_helper){
-								for(Variable v : cs.called_method_args){
-									if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-										v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
-									}
-								}
-							}else if(cs.in_constructor){
-								for(Field v : cs.fields){
-									if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
-									}
-								}
-							}
-						}
+						//helperメソッドやコンストラクターにおける配列のエイリアス
+						update_alias_in_helper_or_constructor(fa.field.dims_sum() - assign_indexs.size() , cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()), cs, pre_in_helper, pre_in_constructor);
 					}
 				}
 
@@ -699,40 +692,17 @@ public class postfix_expr implements Parser<String>{
 				}
 			}
 			
-			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-			if(cs.in_helper){
-				for(Variable v : cs.called_method_args){
-					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
-					}
-				}
-			}else if(cs.in_constructor){
-				for(Field v : cs.fields){
-					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
-					}
-				}
-			}
+			//helperメソッドやコンストラクターにおける配列のエイリアス
+			update_alias_in_helper_or_constructor(9999999, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()), cs, pre_in_helper, pre_in_constructor);
+			
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
 			for(Field f_a : cs.fields){
 				f_a.temp_num++;
 			}
 			
-			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-			if(cs.in_helper){
-				for(Variable v : cs.called_method_args){
-					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.get_pathcondition());
-					}
-				}
-			}else if(cs.in_constructor){
-				for(Field v : cs.fields){
-					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
-					}
-				}
-			}
+			//helperメソッドやコンストラクターにおける配列のエイリアス
+			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, pre_in_helper, pre_in_constructor);
 		}
 		
 		//引数自体には,intやbooleanであれば無条件に代入できる
@@ -749,11 +719,11 @@ public class postfix_expr implements Parser<String>{
 		cs.result = result;
 		if(result.refinement_type_clause!=null){
 			if(result.refinement_type_clause.refinement_type!=null){
-				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs);
+				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs, true);
 			}else{
 				refinement_type rt = cs.search_refinement_type(result.class_object.type, result.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs);
+					rt.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs, true);
 				}else{
 					throw new Exception("can't find refinement type " + result.refinement_type_clause.ident);
 				}
@@ -789,6 +759,7 @@ public class postfix_expr implements Parser<String>{
 		cs.in_refinement_predicate = pre_in_refinement_predicate;
 		
 		cs.in_helper = pre_in_helper;
+		cs.in_helper = pre_in_constructor;
 		
 		return result;
 	}
@@ -1023,56 +994,26 @@ public class postfix_expr implements Parser<String>{
 			for(F_Assign fa : assign_cnsts.fst){
 				for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
 					for(List<IntExpr> assign_indexs : b_indexs.snd){
-						if(assign_indexs.size()+2 <= fa.field.dims_sum()){
-							if(cs.in_helper){
-								for(Variable v : cs.called_method_args){
-									if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-										v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
-									}
-								}
-							}else if(cs.in_constructor){
-								for(Field v : cs.fields){
-									if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
-									}
-								}
-							}
-						}
+							
+						//helperメソッドやコンストラクターにおける配列のエイリアス
+						//loop_assign_methodではpre_in_helperなどは用意しない
+						update_alias_in_helper_or_constructor(fa.field.dims_sum() - assign_indexs.size(), cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()), cs, cs.in_helper, cs.in_constructor);
+					
 					}
 				}
 			}
 			//何でも代入できる
-			if(cs.in_helper){
-				for(Variable v : cs.called_method_args){
-					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
-					}
-				}
-			}else if(cs.in_constructor){
-				for(Field v : cs.fields){
-					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
-					}
-				}
-			}
+			
+			//helperメソッドやコンストラクターにおける配列のエイリアス
+			//loop_assign_methodではpre_in_helperなどは用意しない
+			update_alias_in_helper_or_constructor(9999999, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()), cs, cs.in_helper, cs.in_constructor);
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
 			assigned_fields.snd = true;
 			
-			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-			if(cs.in_helper){
-				for(Variable v : cs.called_method_args){
-					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.get_pathcondition());
-					}
-				}
-			}else if(cs.in_constructor){
-				for(Field v : cs.fields){
-					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
-					}
-				}
-			}
+			//helperメソッドやコンストラクターにおける配列のエイリアス
+			//loop_assign_methodではpre_in_helperなどは用意しない
+			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
 		}
 
 		
@@ -1089,6 +1030,43 @@ public class postfix_expr implements Parser<String>{
 		cs.instance_indexs = pre_instance_indexs;
 		
 		return result;
+	}
+	
+	//メソッド呼び出しの際にalias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorを更新する
+	//cs.in_helperとかは呼び出しているメソッドのもの　呼び出し元のメソッドがどうなのかが必要なので引数として渡す
+	public void update_alias_in_helper_or_constructor(int dim, BoolExpr condition, Check_status cs, boolean in_helper, boolean in_constructor){
+		//1次元以上の配列としてエイリアスした場合には、それ以降配列を代入する前に篩型の検証を行わなければならない
+		if(1 <= dim){
+			if(in_helper){
+				for(Variable v : cs.called_method_args){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=1 && v.refinement_type_clause!=null){
+						v.arg_field.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.arg_field.alias_in_helper_or_consutructor, condition);
+					}
+				}
+			}else if(in_constructor){
+				for(Field v : cs.fields){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=1 && v.refinement_type_clause!=null){
+						v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_in_helper_or_consutructor, condition);
+					}
+				}
+			}
+		}
+		//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+		if(2 <= dim){
+			if(in_helper){
+				for(Variable v : cs.called_method_args){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2 && v.refinement_type_clause!=null){
+						v.arg_field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.arg_field.alias_2d_in_helper_or_consutructor, condition);
+					}
+				}
+			}else if(in_constructor){
+				for(Field v : cs.fields){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2 && v.refinement_type_clause!=null){
+						v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_2d_in_helper_or_consutructor, condition);
+					}
+				}
+			}
+		}
 	}
 
 	

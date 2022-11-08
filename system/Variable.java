@@ -25,8 +25,8 @@ public class Variable extends Field{
 	public Field arg_field;//この変数がメソッド呼び出しの引数であるとき、引数として渡されたField
 	
 	
-	
-	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, BoolExpr alias_2d) throws Exception{
+	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, BoolExpr alias_in_helper_or_consutructor) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = - 1;
@@ -37,19 +37,21 @@ public class Variable extends Field{
 		this.modifiers = modifiers;
 		this.class_object = class_object;
 		this.new_array = false;
-		this.alias_2d = alias_2d;
+
+		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
 	}
 	
 	public Variable(){}
 	
 	@Override
 	public Variable clone_e() throws Exception{
-		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, alias_2d);
+		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, this.alias_in_helper_or_consutructor);
 		ret.temp_num = this.temp_num;
 		ret.alias = this.alias;
 		ret.alias_refined = this.alias_refined;
 		ret.out_loop_v = this.out_loop_v;
-		ret.alias_2d = this.alias_2d;
+		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 		return ret;
 	}
 	

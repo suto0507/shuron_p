@@ -36,10 +36,11 @@ public class Field {
 	public String class_type_name;
 	
 	//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-	public BoolExpr alias_2d;
+	public BoolExpr alias_in_helper_or_consutructor;
+	public BoolExpr alias_2d_in_helper_or_consutructor;
 	
-	
-	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_2d) throws Exception{
+	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = 0;
@@ -52,21 +53,22 @@ public class Field {
 		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
-		this.alias_2d = alias_2d;
+		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
 	}
 	
 	public Field(){}
 	
 	
 	public Field clone_e() throws Exception{
-		Field ret = new Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_2d);
+		Field ret = new Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor);
 		ret.temp_num = this.temp_num;
 		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		ret.index = this.index;
 		
 		ret.final_initialized = final_initialized;
-		ret.alias_2d = this.alias_2d;
+		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 		return ret;
 	}
 	

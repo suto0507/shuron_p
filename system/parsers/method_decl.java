@@ -311,7 +311,6 @@ public class method_decl implements Parser<String>{
 				Expr old_assign_field_expr = null;
 				Expr assign_field_expr = null;
 				if(v instanceof Variable){
-					old_assign_field_expr = old_v.get_Expr(cs);
 					assign_field_expr = v.get_Expr(cs);
 				}else{
 					old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);

@@ -95,8 +95,8 @@ public class class_block implements Parser<String>{
 			while(cd!=null){
 				class_block cb = cd.class_block;
 				
-				BoolExpr alias_2d = cs.ctx.mkBool(false);
-				if(method.type_spec==null) alias_2d = cs.ctx.mkBool(true);//コンストラクタ
+				BoolExpr alias_2d = cs.ctx.mkBool(true);
+				if(method.type_spec==null) alias_2d = cs.ctx.mkBool(false);//コンストラクタ
 				
 				for(variable_definition vd : cb.variable_definitions){
 					Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type

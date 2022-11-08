@@ -104,7 +104,6 @@ public class assignment_expr implements Parser<String>{
 					Expr old_expr = null;
 					Expr expr = null;
 					if(v instanceof Variable){
-						old_expr = old_v.get_Expr(cs);
 						expr = v.get_Expr(cs);
 					}else{
 						old_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);

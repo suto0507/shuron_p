@@ -573,7 +573,6 @@ public class postfix_expr implements Parser<String>{
 								Expr old_assign_field_expr = null;
 								Expr assign_field_expr = null;
 								if(v instanceof Variable){
-									old_assign_field_expr = old_v.get_Expr(cs);
 									assign_field_expr = v.get_Expr(cs);
 								}else{
 									old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
@@ -619,7 +618,7 @@ public class postfix_expr implements Parser<String>{
 							if(cs.in_helper){
 								for(Variable v : cs.called_method_args){
 									if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
+										v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
 									}
 								}
 							}else if(cs.in_constructor){
@@ -704,7 +703,7 @@ public class postfix_expr implements Parser<String>{
 			if(cs.in_helper){
 				for(Variable v : cs.called_method_args){
 					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
+						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
 					}
 				}
 			}else if(cs.in_constructor){
@@ -724,7 +723,7 @@ public class postfix_expr implements Parser<String>{
 			if(cs.in_helper){
 				for(Variable v : cs.called_method_args){
 					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
+						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.get_pathcondition());
 					}
 				}
 			}else if(cs.in_constructor){
@@ -1028,7 +1027,7 @@ public class postfix_expr implements Parser<String>{
 							if(cs.in_helper){
 								for(Variable v : cs.called_method_args){
 									if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-										v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
+										v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()));
 									}
 								}
 							}else if(cs.in_constructor){
@@ -1046,7 +1045,7 @@ public class postfix_expr implements Parser<String>{
 			if(cs.in_helper){
 				for(Variable v : cs.called_method_args){
 					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
+						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()));
 					}
 				}
 			}else if(cs.in_constructor){
@@ -1064,7 +1063,7 @@ public class postfix_expr implements Parser<String>{
 			if(cs.in_helper){
 				for(Variable v : cs.called_method_args){
 					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2){
-						v.alias_2d = cs.ctx.mkOr(v.alias_2d, cs.get_pathcondition());
+						v.arg_field.alias_2d = cs.ctx.mkOr(v.arg_field.alias_2d, cs.get_pathcondition());
 					}
 				}
 			}else if(cs.in_constructor){

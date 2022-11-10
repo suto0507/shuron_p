@@ -67,8 +67,8 @@ public class local_declaration implements Parser<String>{
 				
 				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
 				if(cs.in_helper && v.refinement_type_clause!=null && v.dims_sum() >= 2 && rc.field != null && !rc.field.new_array){
-					if(v instanceof Variable)v.alias_2d = cs.ctx.mkOr(cs.get_pathcondition());
-					if(rc.field instanceof Variable)rc.field.alias_2d = cs.ctx.mkOr(rc.field.alias_2d, cs.get_pathcondition());
+					if(v instanceof Variable)v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(cs.get_pathcondition());
+					if(rc.field instanceof Variable)rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
 					//篩型の検証
 					if(v.refinement_type_clause!=null){
 						if(v.refinement_type_clause.refinement_type!=null){

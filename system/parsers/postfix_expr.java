@@ -500,9 +500,10 @@ public class postfix_expr implements Parser<String>{
 			Variable v = new Variable(cs.Check_status_share.get_tmp_num(), pd.ident, pd.type_spec.type.type, pd.type_spec.dims, pd.type_spec.refinement_type_clause, m, f, cs.ctx.mkBool(true));
 			cs.called_method_args.add(v);
 			v.temp_num = 0;
+			v.alias = cs.ctx.mkBool(true);
 			//引数に値を紐づける
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
-			v.arg_field =  method_arg_valuse.get(j).field;
+			if(!((v.type.equals("int") || v.type.equals("boolean")) && v.dims==0))v.arg_field =  method_arg_valuse.get(j).field;
 			if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
 			if((v.type.equals("int") || v.type.equals("boolean"))) assignable_args.add(v);
 			
@@ -558,72 +559,36 @@ public class postfix_expr implements Parser<String>{
 		if(md.method_specification != null){
 			
 			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
-			for(F_Assign fa : assign_cnsts.fst){
-				
-				//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
-				if(cs.in_helper || (cs.in_constructor && !(fa.field instanceof Variable) && fa.field.class_object != null && fa.field.class_object.equals(cs.this_field, cs))){
-					for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
-						for(List<IntExpr> assign_indexs : b_indexs.snd){
-							if(fa.field.refinement_type_clause!=null && assign_indexs.size() < fa.field.dims_sum()){
-								cs.solver.push();
-
-								//エイリアスしているときだけでいい
-								cs.add_constraint(fa.field.alias_in_helper_or_consutructor);
-								
-								cs.add_constraint(b_indexs.fst);
-								Field v = fa.field;
-								Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
-								
-								Expr v_class_object_expr = v.class_object.get_full_Expr(new ArrayList<IntExpr>(assign_indexs), csc);
 			
-								Expr old_assign_field_expr = null;
-								Expr assign_field_expr = null;
-								if(v instanceof Variable){
-									assign_field_expr = v.get_Expr(cs);
-								}else{
-									old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
-									assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
-								}
-								
-								//メソッドの最初では篩型が満たしていることを仮定していい
-								//フィールドだけ
-								if(cs.in_helper && !(v instanceof Variable)){
-									if(old_v.refinement_type_clause.refinement_type!=null){
-										old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())), true);
-									}else if(old_v.refinement_type_clause.ident!=null){
-										refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
-										if(rt!=null){
-											rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())), true);
-										}else{
-							                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
-							            }
-									}
-								}
-								
-								if(v.refinement_type_clause.refinement_type!=null){
-									v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())));
-								}else if(v.refinement_type_clause.ident!=null){
-									refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-									if(rt!=null){
-										rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(assign_indexs.subList(0, v.class_object_dims_sum())));
-									}else{
-						                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-						            }
-								}
-								
-								cs.solver.pop();
-							}
+			//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
+			for(F_Assign fa : assign_cnsts.fst){
+				for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
+					for(List<IntExpr> assign_indexs : b_indexs.snd){
+						if(assign_indexs.size() < fa.field.dims_sum()){
+							check_array_assign_in_helper_or_constructor(fa.field, assign_indexs, b_indexs.fst, pre_in_helper, pre_in_constructor, cs);
 						}
 					}
 				}
-				
-				
-				for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
-					for(List<IntExpr> assign_indexs : b_indexs.snd){
-						//helperメソッドやコンストラクターにおける配列のエイリアス
-						update_alias_in_helper_or_constructor(fa.field.dims_sum() - assign_indexs.size() , cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()), cs, pre_in_helper, pre_in_constructor);
-					}
+			}
+			//何でも代入できる場合
+			for(Field field : cs.fields){
+				check_array_assign_in_helper_or_constructor(field, field.class_object.fresh_index_full_expr(cs).snd, assign_cnsts.snd, pre_in_helper, pre_in_constructor, cs);
+			}
+			for(Variable variable : cs.called_method_args){//引数
+				Field field = null;
+				if(variable.arg_field != null){
+					field = variable.arg_field;
+				}else{
+					field = variable;
 				}
+				if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+					check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), assign_cnsts.snd, pre_in_helper, pre_in_constructor, cs);
+				}
+			}
+			
+			
+			
+			for(F_Assign fa : assign_cnsts.fst){
 
 				BoolExpr assign_expr = null;
 				
@@ -657,6 +622,8 @@ public class postfix_expr implements Parser<String>{
 				System.out.println("check assign");
 				cs.assert_constraint(assign_expr);
 				
+				
+				
 				//実際に代入する制約を追加する
 				System.out.println("assign " + fa.field.field_name);
 				
@@ -674,42 +641,58 @@ public class postfix_expr implements Parser<String>{
 			
 			//assign_cnsts.fstに含まれないものは、assign_cnsts.sndのときに代入を行う
 			cs.assert_constraint(cs.ctx.mkImplies(assign_cnsts.snd, cs.assinable_cnst_all));
-			for(Field field : cs.fields){//ローカル変数には関係ないはず local.xはxがfield
-				boolean in_assign = false;
-				for(F_Assign fa : assign_cnsts.fst){
-					if(fa.field == field){
-						in_assign = true;
-						break;
-					}
+			for(Field field : cs.fields){
+				cs.add_constraint(cs.ctx.mkImplies(cs.ctx.mkNot(assign_cnsts.snd), cs.ctx.mkEq(field.get_Expr_assign(cs), field.get_Expr_assign(cs))));
+				field.temp_num++;
+			}
+			for(Variable variable : cs.called_method_args){//引数
+				Field field = null;
+				if(variable.arg_field != null){
+					field = variable.arg_field;
+				}else{
+					field = variable;
 				}
-				if(!in_assign){
-					List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
-					List<List<IntExpr>> assign_list = new ArrayList<List<IntExpr>>();
-					assign_list.add(new ArrayList<IntExpr>());
-					b_is.add(new Pair(assign_cnsts.snd, assign_list));//全てに代入する時には、
-					F_Assign fa = new spec_case_seq().new F_Assign(field, b_is);
-					fa.assign_fresh_value(cs);
+				if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+					cs.add_constraint(cs.ctx.mkImplies(cs.ctx.mkNot(assign_cnsts.snd), cs.ctx.mkEq(field.get_Expr_assign(cs), field.get_Expr_assign(cs))));
+					field.temp_num++;
 				}
 			}
 			
-			//helperメソッドやコンストラクターにおける配列のエイリアス
-			update_alias_in_helper_or_constructor(9999999, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()), cs, pre_in_helper, pre_in_constructor);
+		}else{//assignableを含めた任意の仕様が書かれていない関数
 			
-		}else{
-			//assignableを含めた任意の仕様が書かれていない関数
+			//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
+			//何でも代入できる場合
+			for(Field field : cs.fields){
+				check_array_assign_in_helper_or_constructor(field, field.class_object.fresh_index_full_expr(cs).snd, cs.ctx.mkBool(true), pre_in_helper, pre_in_constructor, cs);
+			}
+			for(Variable variable : cs.called_method_args){//引数
+				Field field = null;
+				if(variable.arg_field != null){
+					field = variable.arg_field;
+				}else{
+					field = variable;
+				}
+				if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+					check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), cs.ctx.mkBool(true), pre_in_helper, pre_in_constructor, cs);
+				}
+			}
+
+			
 			for(Field f_a : cs.fields){
 				f_a.temp_num++;
 			}
 			
-			//helperメソッドやコンストラクターにおける配列のエイリアス
-			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, pre_in_helper, pre_in_constructor);
 		}
+		
 		
 		//引数自体には,intやbooleanであれば無条件に代入できる
 		for(Variable v : assignable_args){
 			v.temp_num++;
 		}
 		
+		//helperメソッドやコンストラクターにおける配列のエイリアス
+		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, pre_in_helper, pre_in_constructor);
+				
 		
 		//返り値
 		modifiers m_tmp = new modifiers();
@@ -947,8 +930,8 @@ public class postfix_expr implements Parser<String>{
 			v.temp_num = 0;
 			//引数に値を紐づける
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
-			v.arg_field =  method_arg_valuse.get(j).field;
-			
+			if(!((v.type.equals("int") || v.type.equals("boolean")) && v.dims==0))v.arg_field =  method_arg_valuse.get(j).field;
+			if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
 			
 		}
 		
@@ -988,33 +971,15 @@ public class postfix_expr implements Parser<String>{
 			}
 			
 			
-			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-			////それぞれのフィールド
-			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
-			for(F_Assign fa : assign_cnsts.fst){
-				for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
-					for(List<IntExpr> assign_indexs : b_indexs.snd){
-							
-						//helperメソッドやコンストラクターにおける配列のエイリアス
-						//loop_assign_methodではpre_in_helperなどは用意しない
-						update_alias_in_helper_or_constructor(fa.field.dims_sum() - assign_indexs.size(), cs.ctx.mkAnd(b_indexs.fst, cs.get_pathcondition()), cs, cs.in_helper, cs.in_constructor);
-					
-					}
-				}
-			}
-			//何でも代入できる
 			
-			//helperメソッドやコンストラクターにおける配列のエイリアス
-			//loop_assign_methodではpre_in_helperなどは用意しない
-			update_alias_in_helper_or_constructor(9999999, cs.ctx.mkAnd(assign_cnsts.snd, cs.get_pathcondition()), cs, cs.in_helper, cs.in_constructor);
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
 			assigned_fields.snd = true;
-			
-			//helperメソッドやコンストラクターにおける配列のエイリアス
-			//loop_assign_methodではpre_in_helperなどは用意しない
-			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
 		}
+		
+		//helperメソッドやコンストラクターにおける配列のエイリアス
+		//loop_assign_methodではpre_in_helperなどは用意しない
+		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
 
 		
 		
@@ -1066,6 +1031,60 @@ public class postfix_expr implements Parser<String>{
 					}
 				}
 			}
+		}
+	}
+	
+	//helperメソッドやコンストラクタで、メソッド呼び出しにおいて、配列を代入する可能性がある場合の篩型のチェック
+	public void check_array_assign_in_helper_or_constructor(Field field, List<IntExpr> indexs, BoolExpr condition, boolean in_helper, boolean in_constructor, Check_status cs) throws Exception{
+		if(field.refinement_type_clause!=null  && 
+				(cs.in_helper || (cs.in_constructor && !(field instanceof Variable) && field.class_object != null && field.class_object.equals(cs.this_field, cs)))){
+			cs.solver.push();
+	
+			//エイリアスしているときだけでいい
+			cs.add_constraint(field.alias_in_helper_or_consutructor);
+			
+			cs.add_constraint(condition);
+			Field v = field;
+			Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
+			
+			Expr v_class_object_expr = v.class_object.get_full_Expr(new ArrayList<IntExpr>(indexs), cs);
+	
+			Expr old_assign_field_expr = null;
+			Expr assign_field_expr = null;
+			if(v instanceof Variable){
+				assign_field_expr = v.get_Expr(cs);
+			}else{
+				old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
+				assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
+			}
+			
+			//メソッドの最初では篩型が満たしていることを仮定していい
+			//フィールドだけ
+			if(in_helper && !(v instanceof Variable)){
+				if(old_v.refinement_type_clause.refinement_type!=null){
+					old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
+				}else if(old_v.refinement_type_clause.ident!=null){
+					refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
+					if(rt!=null){
+						rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
+					}else{
+		                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
+		            }
+				}
+			}
+			
+			if(v.refinement_type_clause.refinement_type!=null){
+				v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
+			}else if(v.refinement_type_clause.ident!=null){
+				refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
+				if(rt!=null){
+					rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
+				}else{
+	                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
+	            }
+			}
+			
+			cs.solver.pop();
 		}
 	}
 

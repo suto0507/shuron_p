@@ -200,7 +200,7 @@ import system.parsers.spec_case_seq.F_Assign;
 						}
 						
 						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-						v.alias_2d = v_then.alias_2d;
+						v.alias_2d_in_helper_or_consutructor = v_then.alias_2d_in_helper_or_consutructor;
 					}else{
 						Variable v_then = cs_then.get_variable(v.field_name);
 						Variable v_else = cs_else.get_variable(v.field_name);
@@ -213,7 +213,7 @@ import system.parsers.spec_case_seq.F_Assign;
 						}
 						
 						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-						v.alias_2d = cs.ctx.mkOr(v_then.alias_2d, v_else.alias_2d);
+						v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_2d_in_helper_or_consutructor, v_else.alias_2d_in_helper_or_consutructor);
 					}
 				}
 				
@@ -260,7 +260,7 @@ import system.parsers.spec_case_seq.F_Assign;
 						}
 						
 						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-						f.alias_2d = f_then.alias_2d;
+						f.alias_2d_in_helper_or_consutructor = f_then.alias_2d_in_helper_or_consutructor;
 					}else{
 						System.out.println(f.class_object);
 						Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
@@ -283,7 +283,7 @@ import system.parsers.spec_case_seq.F_Assign;
 						}
 						
 						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-						f.alias_2d = cs.ctx.mkOr(f_then.alias_2d, f_else.alias_2d);
+						f.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_2d_in_helper_or_consutructor, f_else.alias_2d_in_helper_or_consutructor);
 					}
 				}
 				
@@ -428,11 +428,11 @@ import system.parsers.spec_case_seq.F_Assign;
 				//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
 				for(Variable v : cs_loop_assign_check.variables){
 					Field cs_v = cs.search_internal_id(v.internal_id);
-					if(cs_v!=null)cs_v.alias_2d = v.alias_2d;//ループ内で追加されたローカル変数の場合はnullになる
+					if(cs_v!=null)cs_v.alias_2d_in_helper_or_consutructor = v.alias_2d_in_helper_or_consutructor;//ループ内で追加されたローカル変数の場合はnullになる
 				}
 				for(Field f : cs_loop_assign_check.fields){
 					Field cs_f = cs.search_internal_id(f.internal_id);
-					cs_f.alias_2d = f.alias_2d;
+					cs_f.alias_2d_in_helper_or_consutructor = f.alias_2d_in_helper_or_consutructor;
 				}
 				
 				
@@ -572,7 +572,7 @@ import system.parsers.spec_case_seq.F_Assign;
 					}
 					
 					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-					f.alias_2d = f_loop.alias_2d;
+					f.alias_2d_in_helper_or_consutructor = f_loop.alias_2d_in_helper_or_consutructor;
 				}
 				for(Variable v :cs.variables){//ローカル変数に関して値を更新
 					Variable v_loop = cs_loop.get_variable(v.field_name);
@@ -591,7 +591,7 @@ import system.parsers.spec_case_seq.F_Assign;
 					}
 					
 					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-					v.alias_2d = v_loop.alias_2d;
+					v.alias_2d_in_helper_or_consutructor = v_loop.alias_2d_in_helper_or_consutructor;
 				}
 				
 				

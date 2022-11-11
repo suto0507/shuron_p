@@ -46,7 +46,7 @@ public class Variable extends Field{
 	
 	@Override
 	public Variable clone_e() throws Exception{
-		Variable ret = new  Variable(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, this.alias_in_helper_or_consutructor);
+		Variable ret = new  Variable(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, this.alias_in_helper_or_consutructor);
 		ret.temp_num = this.temp_num;
 		ret.alias = this.alias;
 		ret.alias_refined = this.alias_refined;

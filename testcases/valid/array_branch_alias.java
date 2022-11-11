@@ -19,13 +19,15 @@ class A{
     void test2(int x, int y, int[] arg){
         int i = 0;
         int[] local = new int[4]; 
+        //@maintaining i >= 0;
         for( ;x > i; i = i+1){
+            //@maintaining i >= 0;
             for( ;y > i; i = i+1){
                 local = arg;
             }
         }
         //x > iの時にlocalはエイリアスしたという扱い
-        if(x <= 0){
+        if(x <= 0 || y <= 0){
             a = local;//これは許されるはず
         }
     }

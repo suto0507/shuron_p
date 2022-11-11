@@ -155,17 +155,12 @@ public class new_expr implements Parser<String>{
 				throw new Exception("wrong number of arguments");
 			}
 			
-			boolean pre_in_helper = cs.in_helper;
-			cs.in_helper = md.modifiers.is_helper;
 			
 			//helperメソッドの中でhelperでないメソッドを呼んだ場合、全ての篩型を検証する
-			if(pre_in_helper && !cs.in_helper){
+			if(cs.in_helper && !cs.in_helper){
 				cs.assert_all_refinement_type();
 			}
 			
-
-			boolean pre_in_constructor = cs.in_helper;
-			cs.in_helper = false;//コンストラクタの中身は見ないので、falseでいいはず
 			
 			//引数の処理
 			List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
@@ -247,7 +242,9 @@ public class new_expr implements Parser<String>{
 			cs.old_status = csc;
 			
 			//assign
-			if(md.method_specification != null){
+			if(md.modifiers.is_pure){
+				//何もしない
+			}else if(md.method_specification != null){
 				
 				Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 				
@@ -256,14 +253,14 @@ public class new_expr implements Parser<String>{
 					for(Pair<BoolExpr,List<List<IntExpr>>> b_indexs : fa.cnst_array){
 						for(List<IntExpr> assign_indexs : b_indexs.snd){
 							if(assign_indexs.size() < fa.field.dims_sum()){
-								check_array_assign_in_helper_or_constructor(fa.field, assign_indexs, b_indexs.fst, pre_in_helper, pre_in_constructor, cs);
+								check_array_assign_in_helper_or_constructor(fa.field, assign_indexs, b_indexs.fst, cs.in_helper, cs.in_constructor, cs);
 							}
 						}
 					}
 				}
 				//何でも代入できる場合
 				for(Field field : cs.fields){
-					check_array_assign_in_helper_or_constructor(field, field.class_object.fresh_index_full_expr(cs).snd, assign_cnsts.snd, pre_in_helper, pre_in_constructor, cs);
+					check_array_assign_in_helper_or_constructor(field, field.class_object.fresh_index_full_expr(cs).snd, assign_cnsts.snd, cs.in_helper, cs.in_constructor, cs);
 				}
 				for(Variable variable : cs.called_method_args){//引数
 					Field field = null;
@@ -273,7 +270,7 @@ public class new_expr implements Parser<String>{
 						field = variable;
 					}
 					if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
-						check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), assign_cnsts.snd, pre_in_helper, pre_in_constructor, cs);
+						check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), assign_cnsts.snd, cs.in_helper, cs.in_constructor, cs);
 					}
 				}
 				
@@ -349,7 +346,7 @@ public class new_expr implements Parser<String>{
 				//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
 				//何でも代入できる場合
 				for(Field field : cs.fields){
-					check_array_assign_in_helper_or_constructor(field, field.class_object.fresh_index_full_expr(cs).snd, cs.ctx.mkBool(true), pre_in_helper, pre_in_constructor, cs);
+					check_array_assign_in_helper_or_constructor(field, field.class_object.fresh_index_full_expr(cs).snd, cs.ctx.mkBool(true), cs.in_helper, cs.in_constructor, cs);
 				}
 				for(Variable variable : cs.called_method_args){//引数
 					Field field = null;
@@ -359,7 +356,7 @@ public class new_expr implements Parser<String>{
 						field = variable;
 					}
 					if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
-						check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), cs.ctx.mkBool(true), pre_in_helper, pre_in_constructor, cs);
+						check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), cs.ctx.mkBool(true), cs.in_helper, cs.in_constructor, cs);
 					}
 				}
 				
@@ -375,7 +372,7 @@ public class new_expr implements Parser<String>{
 			}
 			
 			//helperメソッドやコンストラクターにおける配列のエイリアス
-			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, pre_in_helper, pre_in_constructor);
+			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
 			
 			
 			//事後条件
@@ -404,8 +401,6 @@ public class new_expr implements Parser<String>{
 			cs.can_not_use_mutable = pre_can_not_use_mutable;
 			cs.in_refinement_predicate = pre_in_refinement_predicate;
 			
-			cs.in_helper = pre_in_helper;
-			cs.in_helper = pre_in_constructor;
 			
 			return result;
 		}else{
@@ -574,7 +569,7 @@ public class new_expr implements Parser<String>{
 		
 		//helperメソッドやコンストラクタで、メソッド呼び出しにおいて、配列を代入する可能性がある場合の篩型のチェック
 		public void check_array_assign_in_helper_or_constructor(Field field, List<IntExpr> indexs, BoolExpr condition, boolean in_helper, boolean in_constructor, Check_status cs) throws Exception{
-			if(field.refinement_type_clause!=null  && 
+			if(field.dims >= 1 && field.refinement_type_clause!=null  && 
 					(cs.in_helper || (cs.in_constructor && !(field instanceof Variable) && field.class_object != null && field.class_object.equals(cs.this_field, cs)))){
 				cs.solver.push();
 		

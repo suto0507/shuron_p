@@ -53,6 +53,23 @@ class A{
         if(x > 0)nat_array[0] = 1;
     }
 
+    //@helper
+    void test4(int[]/*`@ refinement_type NatArray*/ arg_array){
+        int[]/*`@ refinement_type NatArray*/ local = new int[3];
+        local[0] = -1;
+        local = arg_array;
+        local[0] = -1;
+        local = arg_array;
+    }
+
+    //@helper
+    void test4_m(int[]/*`@ refinement_type NatArray*/ arg_array){
+        int[]/*`@ refinement_type NatArray*/ local = new int[3];
+        hoge(local);
+        local[0] = -1;
+        local = arg_array;
+    }
+
     //@requires x < 0;
     //@assignable \nothing;
     //@also
@@ -65,6 +82,12 @@ class A{
         if(x >= 0){
             nat_array = new int[5];
         }
+        //@assert false;
+    }
+
+    //@helper pure
+    void hoge(int[]/*`@ refinement_type NatArray*/ arg){
+        int x = 3;
         //@assert false;
     }
 }

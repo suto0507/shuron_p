@@ -304,6 +304,7 @@ public class method_decl implements Parser<String>{
 				
 				cs.add_constraint(assigned_fields.assigned_pathcondition);
 				Field v = cs.search_internal_id(assigned_fields.field.internal_id);
+				if(v == null)v = assigned_fields.field;//if内、ループ内で定義された変数　これも最終的に篩型を満たすかの検証を行う必要がある
 				Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
 				
 				Expr v_class_object_expr = assigned_fields.class_object_expr;
@@ -503,7 +504,7 @@ public class method_decl implements Parser<String>{
 	
 	
 	public void pure_modifier(){
-		if(this.modifiers.is_pure){
+		if(this.modifiers.is_pure && this.method_specification!=null){
 			for(generic_spec_case gsc : this.method_specification.spec_case_seq.generic_spec_cases){
 				gsc.simple_spec_body.assignable_nothing = true;
 			}

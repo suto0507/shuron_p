@@ -13,6 +13,7 @@ class A{
     }
 
     //@ensures a.x == 1;
+    //@assignable a.x;
     void m1(A a){
         a.x = 1;
     }

@@ -10,6 +10,7 @@ import com.microsoft.z3.IntExpr;
 import system.Check_return;
 import system.Check_status;
 import system.Field;
+import system.Helper_assigned_field;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -65,24 +66,52 @@ public class local_declaration implements Parser<String>{
 				cs.check_array_alias(v, v.get_Expr(cs), v.class_object.get_Expr(cs), indexs, rc.field, rc_assign_field_expr, rc_class_field_expr, rc.indexs);
 				
 				
-				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-				if(cs.in_helper && v.refinement_type_clause!=null && v.dims_sum() >= 2 && rc.field != null && !rc.field.new_array){
-					if(v instanceof Variable)v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(cs.get_pathcondition());
-					if(rc.field instanceof Variable)rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
-					//篩型の検証
-					if(v.refinement_type_clause!=null){
-						if(v.refinement_type_clause.refinement_type!=null){
-							v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-						}else if(v.refinement_type_clause.ident!=null){
-							refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-							if(rt!=null){
-								rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-							}else{
-								throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-							}
+				
+				//1次元以上の配列としてエイリアスした場合には、それ以降配列を代入する前に篩型の検証を行わなければならない
+				if(v.refinement_type_clause!=null && rc.field != null && rc.field.refinement_type_clause!=null && indexs.size()+1 <= v.dims_sum() ){
+					if(cs.in_helper){
+						if(v instanceof Variable)v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_in_helper_or_consutructor, cs.get_pathcondition());
+						if(rc.field instanceof Variable)rc.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
+					}else if(cs.in_constructor){
+						if(!(v instanceof Variable) && v.class_object != null && v.class_object.equals(cs.this_field, cs)){
+							v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_in_helper_or_consutructor, cs.get_pathcondition());
+						}
+						if(!(rc.field instanceof Variable) && rc.field.class_object != null && rc.field.class_object.equals(cs.this_field, cs)){
+							rc.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
 						}
 					}
-				}else if(!cs.in_helper){
+				}
+				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
+				if(v.refinement_type_clause!=null && rc.field != null && rc.field.refinement_type_clause!=null && indexs.size()+2 <= v.dims_sum() ){
+					if(cs.in_helper){
+						if(v instanceof Variable)v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
+						if(rc.field instanceof Variable)rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
+						
+						//篩型の検証
+						if(v.refinement_type_clause!=null){
+							if(v.refinement_type_clause.refinement_type!=null){
+								v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+							}else if(v.refinement_type_clause.ident!=null){
+								refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
+								if(rt!=null){
+									rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+								}else{
+									throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
+								}
+							}
+						}
+					}else if(cs.in_constructor){
+						if(!(v instanceof Variable) && v.class_object != null && v.class_object.equals(cs.this_field, cs)){
+							v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
+						}
+						if(!(rc.field instanceof Variable) && rc.field.class_object != null && rc.field.class_object.equals(cs.this_field, cs)){
+							rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
+						}
+					}
+				}
+				
+
+				if(!cs.in_helper){
 					//篩型の検証
 					if(v.refinement_type_clause!=null){
 						if(v.refinement_type_clause.refinement_type!=null){
@@ -98,7 +127,10 @@ public class local_declaration implements Parser<String>{
 					}
 				}
 			}
-
+			if(v.refinement_type_clause!=null && cs.in_helper){
+				Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), v, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+				cs.helper_assigned_fields.add(assigned_field);
+			}
 			
 			return v;
 			

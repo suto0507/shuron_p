@@ -145,10 +145,6 @@ public class Check_status {
 		}
 		
 		
-		//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-		if(f.dims >= 2){
-			
-		}
 		
 		return f;
 	}

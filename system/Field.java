@@ -61,7 +61,7 @@ public class Field {
 	
 	
 	public Field clone_e() throws Exception{
-		Field ret = new Field(this.id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor);
+		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor);
 		ret.temp_num = this.temp_num;
 		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;

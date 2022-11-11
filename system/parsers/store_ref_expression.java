@@ -93,14 +93,15 @@ public class store_ref_expression implements Parser<String>{
 					}
 				}
 				
-				Field searched_field = cs.search_field(this.store_ref_name.ident, cs.instance_Field, cs);
-				
-				if(searched_field != null){
-					f = searched_field;
-					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
-					f.class_object_expr = cs.this_field.get_Expr(cs);
-				}else{
-					throw new Exception(cs.this_field.type + " don't have " + this.store_ref_name.ident);
+				if(f==null){
+					Field searched_field = cs.search_field(this.store_ref_name.ident, cs.instance_Field, cs);
+					if(searched_field != null){
+						f = searched_field;
+						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
+						f.class_object_expr = cs.this_field.get_Expr(cs);
+					}else{
+						throw new Exception(cs.this_field.type + " don't have " + this.store_ref_name.ident);
+					}
 				}
 				
 			}

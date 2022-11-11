@@ -40,12 +40,26 @@ class A{
     void test3_m(int x){
         if(x < 0)nat_array[0] = -1;
         //@maintaining nat_array.length == 5;
-        //@maintaining x >= 0 ==> (\forall int i; 0 <= i && i < nat_array.length; nat_array[i] >= 0);
-        //@maintaining x < 0 ==> (\forall int i; 1 <= i && i < nat_array.length; nat_array[i] >= 0);
+        //@maintaining (\forall int i; 0 <= i && i < nat_array.length; nat_array[i] >= 0);
         for(int i = 0; i < x; i = i+1){
             assign(x);
         }
         if(x < 0)nat_array[0] = 1;
+    }
+
+    //@helper
+    void test4(int[]/*`@ refinement_type NatArray*/ arg_array){
+        int[]/*`@ refinement_type NatArray*/ local = new int[3];
+        local[0] = -1;
+        local = arg_array;
+    }
+
+    //@helper
+    void test4_m(int[]/*`@ refinement_type NatArray*/ arg_array){
+        int[]/*`@ refinement_type NatArray*/ local = new int[3];
+        hoge(arg_array);
+        local[0] = -1;
+        local = arg_array;
     }
 
     //@requires x < 0;
@@ -60,5 +74,11 @@ class A{
         if(x >= 0){
             nat_array = new int[5];
         }
+    }
+
+    //@helper pure
+    void hoge(int[]/*`@ refinement_type NatArray*/ arg){
+        int x = 3;
+        //@assert true;
     }
 }

@@ -96,7 +96,7 @@ public class assignment_expr implements Parser<String>{
 			
 			if(cs.in_helper || (cs.in_constructor && !(v instanceof Variable) && v.class_object != null && v.class_object.equals(cs.this_field, cs))){
 				//helperメソッド、コンストラクタでは、配列を代入前に検証が必要な場合がある
-				if(v.refinement_type_clause!=null && indexs.size() < v.dims_sum()){
+				if(v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs) && indexs.size() < v.dims_sum()){
 					cs.solver.push();
 					
 					//エイリアスしているときだけでいい
@@ -243,7 +243,7 @@ public class assignment_expr implements Parser<String>{
 			//篩型の検証
 			if((v.refinement_type_clause!=null && cs.in_helper)
 					|| (v.refinement_type_clause!=null && (cs.in_constructor && !(v instanceof Variable) && v.class_object.equals(cs.this_field, cs)))){//helperメソッド、コンストラクタの中では、篩型の検証を後回しにする
-				if(v.dims >= 2){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
+				if(v.dims >= 2 && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
 					cs.solver.push();
 					cs.add_constraint(v.alias_2d_in_helper_or_consutructor);
 					if(v.refinement_type_clause.refinement_type!=null){

@@ -40,10 +40,10 @@ class A{
         //@maintaining nat_array2[0][0] >= 0;
         //@maintaining local2[0][0] >= 0;
         for(int i = -100; i < x; i = i+1){
-            if(x <= 0)local2[0][0] = 1;
+            if(x <= 0)local2[0][0] = -1;
             if(x >= 0)assign(x, local2);
         }
-        if(x <= 0)local2[0][0] = -1;
+        if(x <= 0)local2[0][0] = 1;
     }
 
     //@requires nat_array2.length == 5;

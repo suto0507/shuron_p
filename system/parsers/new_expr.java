@@ -569,8 +569,8 @@ public class new_expr implements Parser<String>{
 		
 		//helperメソッドやコンストラクタで、メソッド呼び出しにおいて、配列を代入する可能性がある場合の篩型のチェック
 		public void check_array_assign_in_helper_or_constructor(Field field, List<IntExpr> indexs, BoolExpr condition, boolean in_helper, boolean in_constructor, Check_status cs) throws Exception{
-			if(field.dims >= 1 && field.refinement_type_clause!=null  && 
-					(cs.in_helper || (cs.in_constructor && !(field instanceof Variable) && field.class_object != null && field.class_object.equals(cs.this_field, cs)))){
+			if(field.dims >= 1 && field.refinement_type_clause!=null && field.refinement_type_clause.have_index_access(field.class_object.type, cs) 
+					&& (cs.in_helper || (cs.in_constructor && !(field instanceof Variable) && field.class_object != null && field.class_object.equals(cs.this_field, cs)))){
 				cs.solver.push();
 		
 				//エイリアスしているときだけでいい

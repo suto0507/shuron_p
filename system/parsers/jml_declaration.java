@@ -19,9 +19,26 @@ public class jml_declaration implements Parser<Parser>{
 				new jml_anotation_newLine(supp).parse(s,ps);
 				p = supp.return_p();
 			}catch (Exception e2){
-				s.revert(s_backup);
-				p = new override_refinement_type_clause();
-				new my_jml_anotation_newLine(p).parse(s,ps);
+				try{
+					s.revert(s_backup);
+					Source s_backup2 = s.clone();
+					boolean is_private = false;
+					try{
+						new string("private").parse(s,ps);
+						new spaces().parse(s,ps);
+						is_private = true;
+						
+					}catch (Exception e4){
+						s.revert(s_backup2);
+					}
+					represents_clause rep = new represents_clause();
+					rep.is_private = is_private;
+					p = rep;
+				}catch (Exception e3){
+					s.revert(s_backup);
+					p = new override_refinement_type_clause();
+					new my_jml_anotation_newLine(p).parse(s,ps);
+				}
 			}
 		}
 		return p;

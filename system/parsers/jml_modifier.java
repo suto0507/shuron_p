@@ -14,10 +14,15 @@ public class jml_modifier implements Parser<String>{
 		}catch (Exception e){
 			try{
 				s.revert(s_backup);
-				st = new string("pure").parse(s,ps);
+				st = new string("model").parse(s,ps);
 			}catch (Exception e2){
-				s.revert(s_backup);
-				st = new string("helper").parse(s,ps);
+				try{
+					s.revert(s_backup);
+					st = new string("pure").parse(s,ps);
+				}catch (Exception e3){
+					s.revert(s_backup);
+					st = new string("helper").parse(s,ps);
+				}
 			}
 		}
 		return st;

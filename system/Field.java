@@ -192,6 +192,43 @@ public class Field {
 		return cs.ctx.mkStore(this.get_Expr(cs), this.class_object.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs), expr);
 	}
 	
+	//class_object_expr固定の場合
+	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Expr class_object_expr, Check_status cs) throws Exception{
+		Expr expr = value;
+		for(int i = indexs.size()-1; i >= this.class_object_dims_sum(); i--){
+			IntExpr index = indexs.get(i);
+			
+			ArrayList<IntExpr> indexs_sub = new ArrayList<IntExpr>(indexs.subList(this.class_object_dims_sum(), i));
+			ArrayExpr array = (ArrayExpr) cs.ctx.mkSelect(this.get_Expr(cs), class_object_expr);
+			ArrayExpr array_assign = (ArrayExpr) cs.ctx.mkSelect(this.get_Expr_assign(cs), class_object_expr);
+			for(IntExpr index_sub : indexs_sub){
+				array = (ArrayExpr) cs.ctx.mkSelect(array, index_sub);
+				array_assign = (ArrayExpr) cs.ctx.mkSelect(array_assign, index_sub);
+			}
+			
+			
+			expr = cs.ctx.mkStore(array, index, expr);
+			
+			//長さに関する制約
+			int array_dim = this.dims_sum() - i;
+			String array_type;
+			if(this.type.equals("int")){
+				array_type = "int";
+			}else if(this.type.equals("boolean")){
+				array_type = "boolean";
+			}else{
+				array_type = "ref";
+			}
+			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array.getSort(), cs.ctx.mkIntSort()), array);
+			IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array_assign.getSort(), cs.ctx.mkIntSort()), array_assign);
+			
+			cs.add_constraint(cs.ctx.mkEq(length, length_assign));
+		}
+		
+		
+		return cs.ctx.mkStore(this.get_Expr(cs), this.class_object.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs), expr);
+	}
+	
 	
 	//自分と同じ型のフレッシュなExprを返す
 	public Expr get_Expr_tmp(Check_status cs) throws Exception{
@@ -285,6 +322,80 @@ public class Field {
 		}
 		
 		return new Pair(expr, indexs);
+	}
+	
+	public void add_refinement_constraint(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
+		add_refinement_constraint(cs, class_Expr, indexs, false);
+	}
+	
+	//class_Fieldは篩型を持つフィールド、変数を持つクラス
+	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
+	public void add_refinement_constraint(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
+		
+		Expr ex = null;
+		if(this instanceof Variable){
+			ex = get_Expr(cs);
+		}else{
+			ex = cs.ctx.mkSelect(get_Expr(cs), class_Expr);
+		}
+		
+		if(this.refinement_type_clause.refinement_type!=null){
+			this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+		}else if(this.refinement_type_clause.ident!=null){
+			refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+			if(rt!=null){
+				rt.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+			}else{
+                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+            }
+		}
+		
+	}
+	
+	public void assert_refinement(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
+		
+		Expr ex = null;
+		if(this instanceof Variable){
+			ex = get_Expr(cs);
+		}else{
+			ex = cs.ctx.mkSelect(get_Expr(cs), class_Expr);
+		}
+		
+		if(this.refinement_type_clause.refinement_type!=null){
+			this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+		}else if(this.refinement_type_clause.ident!=null){
+			refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+			if(rt!=null){
+				rt.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+			}else{
+                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+            }
+		}
+		
+	}
+	
+	public boolean hava_refinement_type(){
+		if(this.refinement_type_clause!=null){
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean have_index_access(Check_status cs) throws Exception{
+		boolean have = false;
+		
+		if(this.refinement_type_clause.refinement_type!=null){
+			have = have || this.refinement_type_clause.refinement_type.have_index_access(cs);
+		}else if(this.refinement_type_clause.ident!=null){
+			refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+			if(rt!=null){
+				have = have || rt.have_index_access(cs);
+			}else{
+                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+            }
+		}
+
+		return have;
 	}
 	
 

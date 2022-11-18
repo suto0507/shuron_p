@@ -152,6 +152,11 @@ public class Variable extends Field{
 		return expr;
 	}
 	
+	//class_object_exprŒÅ’è‚Ìê‡
+	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Expr class_object_expr, Check_status cs) throws Exception{
+		return assign_value(indexs, value, cs);//ƒ[ƒJƒ‹•Ï”‚Í‹C‚É‚µ‚È‚­‚Ä‚¢‚¢
+	}
+	
 	@Override
 	public Expr get_Expr_assign(Check_status cs) throws Exception{
 		this.temp_num ++;

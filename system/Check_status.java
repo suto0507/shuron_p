@@ -560,4 +560,180 @@ public class Check_status {
 			}
 		}
 	}
+
+	//配列の篩型同士の比較
+	//assign_field_exprは長さに関する制約で使う
+	public void equal_predicate(Field field_1, ArrayList<IntExpr> indexs_1, Expr class_Expr_1, Field field_2, ArrayList<IntExpr> indexs_2, Expr class_Expr_2) throws Exception{
+		Expr field_1_alias_expr = null;
+		if(field_1 instanceof Variable){
+			field_1_alias_expr = field_1.get_Expr(this);
+		}else{
+			field_1_alias_expr = this.ctx.mkSelect(field_1.get_Expr(this), class_Expr_1);
+		}
+		
+		Expr field_2_alias_expr = null;
+		if(field_2 instanceof Variable){
+			field_2_alias_expr = field_2.get_Expr(this);
+		}else{
+			field_2_alias_expr = this.ctx.mkSelect(field_2.get_Expr(this), class_Expr_2);
+		}
+		
+		
+		
+		ArrayList<IntExpr> field_1_indexs = new ArrayList<IntExpr>(indexs_1.subList(field_1.class_object_dims_sum(), indexs_1.size()));
+		ArrayList<IntExpr> field_2_indexs = new ArrayList<IntExpr>(indexs_2.subList(field_2.class_object_dims_sum(), indexs_2.size()));
+		
+		//変数は全て値をフレッシュにする
+		this.solver.push();
+		ArrayList<Field> refresh_fields = new ArrayList<Field>();
+		for(Field f : this.fields){
+			if(!f.modifiers.is_final){
+				f.temp_num += 9999;//9999を足す。別に被ってもpushpopによって問題ないので、今後9999回代入されてもいい
+				refresh_fields.add(f);
+			}
+		}
+		for(Variable v : this.variables){
+			if(!v.modifiers.is_final){
+				v.temp_num += 9999;
+				refresh_fields.add(v);
+			}
+		}
+		
+		//エイリアスする部分に関する配列の長さは変わらない
+		String array_type;
+		if(field_1.type.equals("int")){
+			array_type = "int";
+		}else if(field_1.type.equals("boolean")){
+			array_type = "boolean";
+		}else{
+			array_type = "ref";
+		}
+		
+		
+		for(int i = 0; i <= field_1_indexs.size(); i++){
+			Expr alias_ex = field_1_alias_expr;
+			if(i>0){
+				for(IntExpr index : field_1_indexs.subList(0, i)){
+					alias_ex = this.ctx.mkSelect(alias_ex, index);
+				}
+			}
+			Expr ex = this.ctx.mkSelect(field_1.get_Expr(this), class_Expr_1);
+			
+			//長さに関する制約
+			int array_dim = field_1.dims - i;
+			
+			IntExpr length1 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, alias_ex.getSort(), this.ctx.mkIntSort()), alias_ex);
+			IntExpr length2 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), this.ctx.mkIntSort()), ex);
+			this.add_constraint(this.ctx.mkEq(length1, length2));
+		}
+		for(int i = 0; i <= field_2_indexs.size(); i++){
+			Expr alias_ex = field_2_alias_expr;
+			if(i>0){
+				for(IntExpr index : field_2_indexs.subList(0, i)){
+					alias_ex = this.ctx.mkSelect(alias_ex, index);
+				}
+			}
+			Expr ex = this.ctx.mkSelect(field_2.get_Expr(this), class_Expr_2);
+			
+			//長さに関する制約
+			int array_dim = field_2.dims - i;
+			
+			IntExpr length1 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, alias_ex.getSort(), this.ctx.mkIntSort()), alias_ex);
+			IntExpr length2 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), this.ctx.mkIntSort()), ex);
+			this.add_constraint(this.ctx.mkEq(length1, length2));
+		}
+		
+		
+		
+		//この型を持つ変数の値が変わっても他方の述語は満たされる
+		System.out.println("check refinement type equality 1");
+		this.solver.push();
+		
+		field_1.add_refinement_constraint(this, class_Expr_1, new ArrayList<IntExpr>(indexs_1.subList(0, field_1.class_object_dims_sum())), true);
+		
+		Expr field_2_expr = null;
+		if(field_2 instanceof Variable){
+			field_2_expr = field_2.get_Expr(this);
+		}else{
+			field_2_expr = this.ctx.mkSelect(field_2.get_Expr(this), class_Expr_2);
+		}
+		
+		Expr expr_1 = null;
+		if(field_1 instanceof Variable){
+			expr_1 = field_1.get_Expr(this);
+		}else{
+			expr_1 = this.ctx.mkSelect(field_1.get_Expr(this), class_Expr_1);
+		}
+		for(IntExpr index : field_1_indexs){
+			expr_1 = this.ctx.mkSelect(expr_1, index);
+		}
+		
+		if(field_2_indexs.size() == 0){
+			this.add_constraint(this.ctx.mkEq(field_2_expr, expr_1));
+			
+			field_2.assert_refinement(this, class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, field_2.class_object_dims_sum())));
+		}else{
+			field_2.add_refinement_constraint(this, class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, field_2.class_object_dims_sum())), true);
+			
+			
+			this.add_constraint(this.ctx.mkEq(field_2.get_Expr_assign(this), field_2.assign_value(indexs_2, expr_1, class_Expr_2, this)));
+			
+			field_2.temp_num++;
+
+			field_2.assert_refinement(this, class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, field_2.class_object_dims_sum())));
+			
+			field_2.temp_num--;
+		}
+		
+		this.solver.pop();
+		
+		//他方の篩型を持つ変数の値が変わってもこの型の述語は満たされる
+		System.out.println("check refinement type equality 2");
+		this.solver.push();
+		
+		field_2.add_refinement_constraint(this, class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, field_2.class_object_dims_sum())), true);
+		
+		Expr field_1_expr = null;
+		if(field_1 instanceof Variable){
+			field_1_expr = field_1.get_Expr(this);
+		}else{
+			field_1_expr = this.ctx.mkSelect(field_1.get_Expr(this), class_Expr_1);
+		}
+		
+		Expr expr_2 = null;
+		if(field_2 instanceof Variable){
+			expr_2 = field_2.get_Expr(this);
+		}else{
+			expr_2 = this.ctx.mkSelect(field_2.get_Expr(this), class_Expr_2);
+		}
+		for(IntExpr index : field_2_indexs){
+			expr_2 = this.ctx.mkSelect(expr_2, index);
+		}
+		
+		if(field_1_indexs.size() == 0){
+			this.add_constraint(this.ctx.mkEq(field_1_expr, expr_2));
+			
+			field_1.assert_refinement(this, class_Expr_1, new ArrayList<IntExpr>(indexs_1.subList(0, field_1.class_object_dims_sum())));
+		}else{
+			field_1.add_refinement_constraint(this, class_Expr_1, new ArrayList<IntExpr>(indexs_1.subList(0, field_1.class_object_dims_sum())), true);
+			
+			
+			this.add_constraint(this.ctx.mkEq(field_1.get_Expr_assign(this), field_1.assign_value(indexs_1, expr_2, class_Expr_1, this)));
+			
+			field_1.temp_num++;
+
+			field_1.assert_refinement(this, class_Expr_1, new ArrayList<IntExpr>(indexs_1.subList(0, field_1.class_object_dims_sum())));
+			
+			field_1.temp_num--;
+		}
+		
+		this.solver.pop();
+		
+		//リフレッシュした値は元に戻す
+		this.solver.pop();
+		for(Field f : refresh_fields){
+			f.temp_num -= 9999;
+		}
+
+	}
 }

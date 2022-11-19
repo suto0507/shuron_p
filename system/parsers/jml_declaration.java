@@ -32,6 +32,7 @@ public class jml_declaration implements Parser<Parser>{
 						s.revert(s_backup2);
 					}
 					represents_clause rep = new represents_clause();
+					rep.parse(s, ps);
 					rep.is_private = is_private;
 					p = rep;
 				}catch (Exception e3){

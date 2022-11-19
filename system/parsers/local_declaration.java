@@ -55,8 +55,8 @@ public class local_declaration implements Parser<String>{
 				
 				
 				//1次元以上の配列としてエイリアスした場合には、それ以降配列を代入する前に篩型の検証を行わなければならない
-				if(v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs) 
-						&& rc.field != null && rc.field.refinement_type_clause!=null && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs) && indexs.size()+1 <= v.dims_sum() ){
+				if(v.hava_refinement_type() && v.have_index_access(cs) 
+						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) && indexs.size()+1 <= v.dims_sum() ){
 					if(cs.in_helper){
 						if(v instanceof Variable)v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_in_helper_or_consutructor, cs.get_pathcondition());
 						if(rc.field instanceof Variable)rc.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
@@ -67,41 +67,23 @@ public class local_declaration implements Parser<String>{
 					}
 				}
 				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-				if(v.refinement_type_clause!=null
-						&& rc.field != null && rc.field.refinement_type_clause!=null && indexs.size()+2 <= v.dims_sum() ){
+				if(v.hava_refinement_type() && v.have_index_access(cs) 
+						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) && indexs.size()+2 <= v.dims_sum() ){
 					if(cs.in_helper){
 						if(v instanceof Variable)v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
 						if(rc.field instanceof Variable)rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
 						
 						//篩型の検証値は代入した後なので、どちらを検証しても同じ
-						if(v.refinement_type_clause.have_index_access(v.class_object.type, cs) && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
-							if(v.refinement_type_clause.refinement_type!=null){
-								v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-							}else if(v.refinement_type_clause.ident!=null){
-								refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-								if(rt!=null){
-									rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-								}else{
-									throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-								}
-							}
+						if(v.have_index_access(cs) && rc.field.have_index_access(cs)){
+							v.assert_refinement(cs, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 						}
 					}else if(cs.in_constructor){
 						if(!(rc.field instanceof Variable) && rc.field.class_object != null && rc.field.class_object.equals(cs.this_field, cs)){
 							rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
 							
 							//篩型の検証値は代入した後なので、どちらを検証しても同じ
-							if(v.refinement_type_clause.have_index_access(v.class_object.type, cs) && rc.field.refinement_type_clause.have_index_access(rc.field.class_object.type, cs)){
-								if(v.refinement_type_clause.refinement_type!=null){
-									v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-								}else if(v.refinement_type_clause.ident!=null){
-									refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-									if(rt!=null){
-										rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-									}else{
-										throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-									}
-								}
+							if(v.have_index_access(cs) && rc.field.have_index_access(cs)){
+								v.assert_refinement(cs, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 							}
 						}
 					}
@@ -110,21 +92,12 @@ public class local_declaration implements Parser<String>{
 
 				if(!cs.in_helper){
 					//篩型の検証
-					if(v.refinement_type_clause!=null){
-						if(v.refinement_type_clause.refinement_type!=null){
-							v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-						}else if(v.refinement_type_clause.ident!=null){
-							refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-							if(rt!=null){
-								rt.assert_refinement(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-							}else{
-								throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-							}
-						}
+					if(v.hava_refinement_type()){
+						v.assert_refinement(cs, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 					}
 				}
 			}
-			if(v.refinement_type_clause!=null && cs.in_helper){
+			if(v.hava_refinement_type() && cs.in_helper){
 				Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), v, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
 				cs.helper_assigned_fields.add(assigned_field);
 			}

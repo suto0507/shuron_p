@@ -96,7 +96,7 @@ public class assignment_expr implements Parser<String>{
 			
 			if(cs.in_helper || (cs.in_constructor && !(v instanceof Variable) && v.class_object != null && v.class_object.equals(cs.this_field, cs))){
 				//helperメソッド、コンストラクタでは、配列を代入前に検証が必要な場合がある
-				if(v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs) && indexs.size() < v.dims_sum()){
+				if(v.hava_refinement_type() && v.have_index_access(cs) && indexs.size() < v.dims_sum()){
 					cs.solver.push();
 					
 					//エイリアスしているときだけでいい
@@ -116,29 +116,10 @@ public class assignment_expr implements Parser<String>{
 					//メソッドの最初では篩型が満たしていることを仮定していい
 					//フィールドだけ
 					if(cs.in_helper && !(v instanceof Variable)){
-						if(old_v.refinement_type_clause.refinement_type!=null){
-							old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
-						}else if(old_v.refinement_type_clause.ident!=null){
-							refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
-							if(rt!=null){
-								rt.add_refinement_constraint(cs.this_old_status, old_v, old_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
-							}else{
-				                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
-				            }
-						}
+						old_v.add_refinement_constraint(cs, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
 					}
 					
-					
-					if(v.refinement_type_clause.refinement_type!=null){
-						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
-					}else if(v.refinement_type_clause.ident!=null){
-						refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-						if(rt!=null){
-							rt.assert_refinement(cs, v, expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
-						}else{
-			                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-			            }
-					}
+					v.assert_refinement(cs, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
 					
 					cs.solver.pop();
 				}
@@ -154,7 +135,7 @@ public class assignment_expr implements Parser<String>{
 		
 		if(this.postfix_expr != null){
 			//1次元以上の配列としてエイリアスした場合には、それ以降配列を代入する前に篩型の検証を行わなければならない
-			if(v.refinement_type_clause!=null && rc.field != null && rc.field.refinement_type_clause!=null && indexs.size()+1 <= v.dims_sum() ){
+			if(v.hava_refinement_type() && rc.field != null && rc.field.hava_refinement_type() && indexs.size()+1 <= v.dims_sum() ){
 				if(cs.in_helper){
 					if(v instanceof Variable)v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_in_helper_or_consutructor, cs.get_pathcondition());
 					if(rc.field instanceof Variable)rc.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
@@ -168,7 +149,7 @@ public class assignment_expr implements Parser<String>{
 				}
 			}
 			//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-			if(v.refinement_type_clause!=null && rc.field != null && rc.field.refinement_type_clause!=null && indexs.size()+2 <= v.dims_sum() ){
+			if(v.hava_refinement_type() && rc.field != null && rc.field.hava_refinement_type() && indexs.size()+2 <= v.dims_sum() ){
 				if(cs.in_helper){
 					if(v instanceof Variable)v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
 					if(rc.field instanceof Variable)rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
@@ -206,7 +187,7 @@ public class assignment_expr implements Parser<String>{
 			
 			//refinement_type
 			//篩型を持つ配列とエイリアスしたローカル配列は、要素の変更はできない
-			if(v.dims>0 && !(v.refinement_type_clause!=null && v.refinement_type_clause.have_index_access(v.class_object.type, cs))
+			if(v.dims>0 && !(v.hava_refinement_type() && v.have_index_access(cs))
 					 && v.dims_sum()==indexs.size() && v instanceof Variable){
 				Expr alias_refined;
 				if(((Variable) v).alias_refined == null){
@@ -241,38 +222,21 @@ public class assignment_expr implements Parser<String>{
 			
 			
 			//篩型の検証
-			if((v.refinement_type_clause!=null && cs.in_helper)
-					|| (v.refinement_type_clause!=null && (cs.in_constructor && !(v instanceof Variable) && v.class_object.equals(cs.this_field, cs)))){//helperメソッド、コンストラクタの中では、篩型の検証を後回しにする
-				if(v.dims >= 2 && v.refinement_type_clause.have_index_access(v.class_object.type, cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
+			if((v.hava_refinement_type() && cs.in_helper)
+					|| (v.hava_refinement_type() && (cs.in_constructor && !(v instanceof Variable) && v.class_object.equals(cs.this_field, cs)))){//helperメソッド、コンストラクタの中では、篩型の検証を後回しにする
+				if(v.dims >= 2 && v.have_index_access(cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
 					cs.solver.push();
 					cs.add_constraint(v.alias_2d_in_helper_or_consutructor);
-					if(v.refinement_type_clause.refinement_type!=null){
-						v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
-					}else if(v.refinement_type_clause.ident!=null){
-						refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-						if(rt!=null){
-							rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
-						}else{
-			                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-			            }
-					}
+
+					v.assert_refinement(cs, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 					cs.solver.pop();
 				}
 				if(cs.in_helper){
 					Helper_assigned_field assigned_field = new Helper_assigned_field(pathcondition, v, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 					cs.helper_assigned_fields.add(assigned_field);
 				}
-			}else if(v.refinement_type_clause!=null){
-				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
-				}else if(v.refinement_type_clause.ident!=null){
-					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
-					}else{
-		                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-		            }
-				}
+			}else if(v.hava_refinement_type()){
+				v.assert_refinement(cs, v_class_object_expr, new ArrayList<IntExpr>(v.index.subList(0, v.class_object_dims_sum())));
 			}
 			
 			return new Check_return(assign_expr_full, v, indexs);
@@ -316,7 +280,7 @@ public class assignment_expr implements Parser<String>{
 			if(cs.in_constructor || cs.in_helper){
 				
 				//1次元以上の配列としてエイリアスした場合には、それ以降配列を代入する前に篩型の検証を行わなければならない
-				if(cr_l.field.refinement_type_clause!=null && cr_r.field != null && cr_r.field.refinement_type_clause != null && cr_l.indexs.size()+1 <= cr_l.field.dims_sum() ){
+				if(cr_l.field.hava_refinement_type() && cr_r.field != null && cr_r.field.hava_refinement_type() && cr_l.indexs.size()+1 <= cr_l.field.dims_sum() ){
 					if(cs.in_helper){
 						if(cr_l.field instanceof Variable)cr_l.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(cr_l.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
 						if(cr_r.field instanceof Variable)cr_r.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(cr_r.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
@@ -330,7 +294,7 @@ public class assignment_expr implements Parser<String>{
 					}
 				}
 				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
-				if(cr_l.field.refinement_type_clause!=null && cr_r.field != null && cr_r.field.refinement_type_clause != null && cr_l.indexs.size()+2 <= cr_l.field.dims_sum() ){
+				if(cr_l.field.hava_refinement_type() && cr_r.field != null && cr_r.field.hava_refinement_type() && cr_l.indexs.size()+2 <= cr_l.field.dims_sum() ){
 					if(cs.in_helper){
 						if(cr_l.field instanceof Variable)cr_l.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(cr_l.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
 						if(cr_r.field instanceof Variable)cr_r.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(cr_r.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());

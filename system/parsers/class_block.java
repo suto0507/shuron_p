@@ -22,6 +22,7 @@ public class class_block implements Parser<String>{
 	List<method_decl> method_decls;
 	List<variable_definition> variable_definitions;
 	List<override_refinement_type_clause> override_refinement_type_clauses;
+	List<represents_clause> represents_clauses;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		invariants = new ArrayList<invariant>();
@@ -29,6 +30,7 @@ public class class_block implements Parser<String>{
 		method_decls = new ArrayList<method_decl>();
 		variable_definitions = new ArrayList<variable_definition>();
 		override_refinement_type_clauses = new ArrayList<override_refinement_type_clause>();
+		represents_clauses = new ArrayList<represents_clause>();
 
 		new string("{").parse(s,ps);
 		new newLines().parse(s,ps);
@@ -48,6 +50,8 @@ public class class_block implements Parser<String>{
 					variable_definitions.add((variable_definition) p);
 				}else if(p instanceof override_refinement_type_clause){
 					override_refinement_type_clauses.add((override_refinement_type_clause)p);
+				}else if(p instanceof represents_clause){
+					represents_clauses.add((represents_clause)p);
 				}
 			}
 		}catch (Exception e){
@@ -73,6 +77,10 @@ public class class_block implements Parser<String>{
 		}
 		ret = ret + "//methods are \n";
 		for(method_decl p : method_decls){
+			ret = ret + "<----------\n" + p.st + "\n------->\n";
+		}
+		ret = ret + "//represents are \n";
+		for(represents_clause p : represents_clauses){
 			ret = ret + "<----------\n" + p.st + "\n------->\n";
 		}
 		ret = ret + "}\n";

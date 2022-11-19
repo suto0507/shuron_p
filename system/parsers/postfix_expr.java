@@ -180,11 +180,8 @@ public class postfix_expr implements Parser<String>{
 			//return null;
 		}
 		
-		if(f!=null && f.refinement_type_clause!=null && is_refine_value==false){//篩型
-			
+		if(f!=null && f.hava_refinement_type() && is_refine_value==false){//篩型			
 			add_refinement_constraint(cs, f, ex, cs.instance_Field, cs.instance_Field.get_Expr(cs), cs.instance_indexs);
-			
-			
 		}
 		
 		
@@ -224,7 +221,7 @@ public class postfix_expr implements Parser<String>{
 						throw new Exception(f.type + " don't have " + ps.ident);
 					}
 					
-					if(f.refinement_type_clause!=null){//篩型
+					if(f.hava_refinement_type()){//篩型
 						add_refinement_constraint(cs, f, ex, pre_f, pre_ex, (ArrayList<IntExpr>) indexs);
 					}
 					
@@ -513,17 +510,8 @@ public class postfix_expr implements Parser<String>{
 			
 			
 			//篩型の検証
-			if(v.refinement_type_clause!=null){
-				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.assert_refinement(cs, v, v.get_Expr(cs), f, ex, indexs);
-				}else{
-					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.assert_refinement(cs, v, v.get_Expr(cs), f, ex, indexs);
-					}else{
-						throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-					}
-				}
+			if(v.hava_refinement_type()){
+				v.assert_refinement(cs, ex, indexs);
 			}
 		}
 		
@@ -698,17 +686,8 @@ public class postfix_expr implements Parser<String>{
 		result.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
 		result.temp_num++;
 		cs.result = result;
-		if(result.refinement_type_clause!=null){
-			if(result.refinement_type_clause.refinement_type!=null){
-				result.refinement_type_clause.refinement_type.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs, true);
-			}else{
-				refinement_type rt = cs.search_refinement_type(result.class_object.type, result.refinement_type_clause.ident);
-				if(rt!=null){
-					rt.add_refinement_constraint(cs, result, result.get_Expr(cs), f, ex, indexs, true);
-				}else{
-					throw new Exception("can't find refinement type " + result.refinement_type_clause.ident);
-				}
-			}
+		if(result.hava_refinement_type()){
+			result.add_refinement_constraint(cs, ex, indexs, true);
 		}
 		
 		//事後条件
@@ -750,16 +729,7 @@ public class postfix_expr implements Parser<String>{
 	        
 	    cs.refinement_deep++;
 	    if(cs.refinement_deep <= cs.refinement_deep_limmit){
-	        if(f.refinement_type_clause.refinement_type!=null){
-	            f.refinement_type_clause.refinement_type.add_refinement_constraint(cs, f, ex, class_Field, class_Expr, indexs);
-	        }else if(f.refinement_type_clause.ident!=null){
-	        	refinement_type rt = cs.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
-	            if(rt!=null){
-	                rt.add_refinement_constraint(cs, f, ex, class_Field, class_Expr, indexs);
-	            }else{
-	                throw new Exception("can't find refinement type " + f.refinement_type_clause.ident);
-	            }
-	        }
+	        f.add_refinement_constraint(cs, class_Expr, indexs);
 	    }else{
 	        throw new Exception("The depth of refinement type's verification has reached its limit.");
 	    }
@@ -1000,13 +970,13 @@ public class postfix_expr implements Parser<String>{
 		if(1 <= dim){
 			if(in_helper){
 				for(Variable v : cs.called_method_args){
-					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=1 && v.refinement_type_clause!=null){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=1 && v.hava_refinement_type()){
 						v.arg_field.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.arg_field.alias_in_helper_or_consutructor, condition);
 					}
 				}
 			}else if(in_constructor){
 				for(Field v : cs.fields){
-					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=1 && v.refinement_type_clause!=null){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=1 && v.hava_refinement_type()){
 						v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_in_helper_or_consutructor, condition);
 					}
 				}
@@ -1016,13 +986,13 @@ public class postfix_expr implements Parser<String>{
 		if(2 <= dim){
 			if(in_helper){
 				for(Variable v : cs.called_method_args){
-					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2 && v.refinement_type_clause!=null){
+					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2 && v.hava_refinement_type()){
 						v.arg_field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.arg_field.alias_2d_in_helper_or_consutructor, condition);
 					}
 				}
 			}else if(in_constructor){
 				for(Field v : cs.fields){
-					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2 && v.refinement_type_clause!=null){
+					if(v.class_object != null && v.class_object.equals(cs.this_field, cs) && v.dims>=2 && v.hava_refinement_type()){
 						v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_2d_in_helper_or_consutructor, condition);
 					}
 				}
@@ -1032,7 +1002,7 @@ public class postfix_expr implements Parser<String>{
 	
 	//helperメソッドやコンストラクタで、メソッド呼び出しにおいて、配列を代入する可能性がある場合の篩型のチェック
 	public void check_array_assign_in_helper_or_constructor(Field field, List<IntExpr> indexs, BoolExpr condition, boolean in_helper, boolean in_constructor, Check_status cs) throws Exception{
-		if(field.dims >= 1 && field.refinement_type_clause!=null && field.refinement_type_clause.have_index_access(field.class_object.type, cs) 
+		if(field.dims >= 1 && field.hava_refinement_type() && field.have_index_access(cs) 
 				&& (cs.in_helper || (cs.in_constructor && !(field instanceof Variable) && field.class_object != null && field.class_object.equals(cs.this_field, cs)))){
 			cs.solver.push();
 	
@@ -1057,28 +1027,10 @@ public class postfix_expr implements Parser<String>{
 			//メソッドの最初では篩型が満たしていることを仮定していい
 			//フィールドだけ
 			if(in_helper && !(v instanceof Variable)){
-				if(old_v.refinement_type_clause.refinement_type!=null){
-					old_v.refinement_type_clause.refinement_type.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
-				}else if(old_v.refinement_type_clause.ident!=null){
-					refinement_type rt = cs.search_refinement_type(old_v.class_object.type, old_v.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.add_refinement_constraint(cs.this_old_status, old_v, old_assign_field_expr, old_v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
-					}else{
-		                throw new Exception("can't find refinement type " + old_v.refinement_type_clause.ident);
-		            }
-				}
+				old_v.add_refinement_constraint(cs, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
 			}
 			
-			if(v.refinement_type_clause.refinement_type!=null){
-				v.refinement_type_clause.refinement_type.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
-			}else if(v.refinement_type_clause.ident!=null){
-				refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-				if(rt!=null){
-					rt.assert_refinement(cs, v, assign_field_expr, v.class_object, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
-				}else{
-	                throw new Exception("can't find refinement type " + v.refinement_type_clause.ident);
-	            }
-			}
+			v.assert_refinement(cs, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));
 			
 			cs.solver.pop();
 		}

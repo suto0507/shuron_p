@@ -49,17 +49,8 @@ public class param_declaration implements Parser<String>{
 			modi.is_spec_public = false;
 			Variable v = cs.add_variable(this.ident, this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, modi, cs.ctx.mkBool(true));
 			v.temp_num=0;
-			if(v.refinement_type_clause!=null){
-				if(v.refinement_type_clause.refinement_type!=null){
-					v.refinement_type_clause.refinement_type.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), true);
-				}else{
-					refinement_type rt = cs.search_refinement_type(v.class_object.type, v.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.add_refinement_constraint(cs, v, v.get_Expr(cs), cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), true);
-					}else{
-						throw new Exception("cant find refinement type " + v.refinement_type_clause.ident);
-					}
-				}
+			if(v.hava_refinement_type()){
+				v.add_refinement_constraint(cs, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), true);
 			}
 			
 			v.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。

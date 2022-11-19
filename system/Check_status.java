@@ -390,26 +390,13 @@ public class Check_status {
 	
 	
 	public void constructor_refinement_check() throws Exception{
-		
-		
 		System.out.println("check all refinement type predicates");
 		class_declaration cd = this.Check_status_share.compilation_unit.search_class(this.this_field.class_type_name);
 		for(Field f : this.fields){
-			if(f.class_object!=null && f.class_object.equals(this_field, this) && f.refinement_type_clause!=null){
-				if(f.refinement_type_clause.refinement_type!=null){
-					f.refinement_type_clause.refinement_type.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this), new ArrayList<IntExpr>());
-				}else if(f.refinement_type_clause.ident!=null){
-					refinement_type rt = this.search_refinement_type(f.class_object.type, f.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.assert_refinement(this, f, this.ctx.mkSelect((ArrayExpr) f.get_Expr(this), this.this_field.get_Expr(this)), this.this_field, this.this_field.get_Expr(this), new ArrayList<IntExpr>());
-					}else{
-						throw new Exception("can't find refinement type " + f.refinement_type_clause.ident);
-					}
-				}
+			if(f.class_object!=null && f.class_object.equals(this_field, this) && f.hava_refinement_type()){
+				f.assert_refinement(this, this.this_field.get_Expr(this), new ArrayList<IntExpr>());
 			}
 		}
-		
-		
 	}
 	
 	//localの篩型も含めて探す
@@ -431,23 +418,13 @@ public class Check_status {
 		class_declaration cd = Check_status_share.compilation_unit.search_class(this_field.type);
 		ArrayList<Field> fields = cd.all_field(0, field_deep_limmit, this_field, this);
 		for(Field field : fields){
-			if(field.refinement_type_clause!=null){
+			if(field.hava_refinement_type()){
 				Pair<Expr, ArrayList<IntExpr>> expr_indexs = field.class_object.fresh_index_full_expr(this);
 				Expr class_object_expr = expr_indexs.fst;
 				ArrayList<IntExpr> indexs = expr_indexs.snd;
 				Expr expr = this.ctx.mkSelect(field.get_Expr(this), class_object_expr);
 				
-				if(field.refinement_type_clause.refinement_type!=null){
-					
-					field.refinement_type_clause.refinement_type.assert_refinement(this, field, expr, field.class_object, class_object_expr, indexs);
-				}else{
-					refinement_type rt = this.search_refinement_type(field.class_object.type, field.refinement_type_clause.ident);
-					if(rt!=null){
-						rt.assert_refinement(this, field, expr, field.class_object, class_object_expr, indexs);
-					}else{
-						throw new Exception("can't find refinement type " + field.refinement_type_clause.ident);
-					}
-				}
+				field.assert_refinement(this, class_object_expr, indexs);
 			}
 		}
 	}
@@ -460,9 +437,9 @@ public class Check_status {
 		}else{
 			pathcondition = this.pathcondition;
 		}
-		if(f2!=null && f2.dims>0 && f2.dims_sum()!=f2_indexs.size() && f2.refinement_type_clause!=null && f2.refinement_type_clause.have_index_access(f2.class_object.type, this)){
-			if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size() && f1.refinement_type_clause!=null && f1.refinement_type_clause.have_index_access(f1.class_object.type, this)){//どっちも篩型を持つ配列
-				f2.refinement_type_clause.equal_predicate(f2_indexs, f2_expr, f2.class_object, f2_class_object_expr, f1.refinement_type_clause, f1_indexs, f1_expr, f1.class_object, f1_class_object_expr, this);
+		if(f2!=null && f2.dims>0 && f2.dims_sum()!=f2_indexs.size() && f2.hava_refinement_type() && f2.have_index_access(this)){
+			if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size() && f1.hava_refinement_type() && f1.have_index_access(this)){//どっちも篩型を持つ配列
+				this.equal_predicate(f1, f1_indexs, f1_class_object_expr, f2, f2_indexs, f2_class_object_expr);
 			}else if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size() && f1 instanceof Variable){//ローカル変数
 				if(((Variable) f1).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
 				
@@ -492,7 +469,7 @@ public class Check_status {
 			}else{//篩型の安全を保証できないような大入
 				throw new Exception("can not alias with refined array");
 			}
-		}else if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size()  && f1.refinement_type_clause!=null && f1.refinement_type_clause.have_index_access(f1.class_object.type, this)){
+		}else if(f1.dims>0 && f1.dims_sum()!=f1_indexs.size()  && f1.hava_refinement_type() && f1.have_index_access(this)){
 			if(f2!=null && f2.dims>0 && f2.dims_sum()!=f2_indexs.size() && f2 instanceof Variable){//ローカル変数
 				
 				if(((Variable)f2).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
@@ -579,7 +556,6 @@ public class Check_status {
 		}
 		
 		
-		
 		ArrayList<IntExpr> field_1_indexs = new ArrayList<IntExpr>(indexs_1.subList(field_1.class_object_dims_sum(), indexs_1.size()));
 		ArrayList<IntExpr> field_2_indexs = new ArrayList<IntExpr>(indexs_2.subList(field_2.class_object_dims_sum(), indexs_2.size()));
 		
@@ -587,69 +563,25 @@ public class Check_status {
 		this.solver.push();
 		ArrayList<Field> refresh_fields = new ArrayList<Field>();
 		for(Field f : this.fields){
-			if(!f.modifiers.is_final){
+			if(!(f.modifiers!=null && f.modifiers.is_final)){
 				f.temp_num += 9999;//9999を足す。別に被ってもpushpopによって問題ないので、今後9999回代入されてもいい
 				refresh_fields.add(f);
 			}
 		}
 		for(Variable v : this.variables){
-			if(!v.modifiers.is_final){
+			if(!(v.modifiers!=null && v.modifiers.is_final)){
 				v.temp_num += 9999;
 				refresh_fields.add(v);
 			}
 		}
 		
-		//エイリアスする部分に関する配列の長さは変わらない
-		String array_type;
-		if(field_1.type.equals("int")){
-			array_type = "int";
-		}else if(field_1.type.equals("boolean")){
-			array_type = "boolean";
+		//フレッシュにした状態で必要な値を用意する
+		Expr field_1_expr = null;
+		if(field_1 instanceof Variable){
+			field_1_expr = field_1.get_Expr(this);
 		}else{
-			array_type = "ref";
+			field_1_expr = this.ctx.mkSelect(field_1.get_Expr(this), class_Expr_1);
 		}
-		
-		
-		for(int i = 0; i <= field_1_indexs.size(); i++){
-			Expr alias_ex = field_1_alias_expr;
-			if(i>0){
-				for(IntExpr index : field_1_indexs.subList(0, i)){
-					alias_ex = this.ctx.mkSelect(alias_ex, index);
-				}
-			}
-			Expr ex = this.ctx.mkSelect(field_1.get_Expr(this), class_Expr_1);
-			
-			//長さに関する制約
-			int array_dim = field_1.dims - i;
-			
-			IntExpr length1 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, alias_ex.getSort(), this.ctx.mkIntSort()), alias_ex);
-			IntExpr length2 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), this.ctx.mkIntSort()), ex);
-			this.add_constraint(this.ctx.mkEq(length1, length2));
-		}
-		for(int i = 0; i <= field_2_indexs.size(); i++){
-			Expr alias_ex = field_2_alias_expr;
-			if(i>0){
-				for(IntExpr index : field_2_indexs.subList(0, i)){
-					alias_ex = this.ctx.mkSelect(alias_ex, index);
-				}
-			}
-			Expr ex = this.ctx.mkSelect(field_2.get_Expr(this), class_Expr_2);
-			
-			//長さに関する制約
-			int array_dim = field_2.dims - i;
-			
-			IntExpr length1 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, alias_ex.getSort(), this.ctx.mkIntSort()), alias_ex);
-			IntExpr length2 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), this.ctx.mkIntSort()), ex);
-			this.add_constraint(this.ctx.mkEq(length1, length2));
-		}
-		
-		
-		
-		//この型を持つ変数の値が変わっても他方の述語は満たされる
-		System.out.println("check refinement type equality 1");
-		this.solver.push();
-		
-		field_1.add_refinement_constraint(this, class_Expr_1, new ArrayList<IntExpr>(indexs_1.subList(0, field_1.class_object_dims_sum())), true);
 		
 		Expr field_2_expr = null;
 		if(field_2 instanceof Variable){
@@ -667,6 +599,80 @@ public class Check_status {
 		for(IntExpr index : field_1_indexs){
 			expr_1 = this.ctx.mkSelect(expr_1, index);
 		}
+		
+		Expr expr_2 = null;
+		if(field_2 instanceof Variable){
+			expr_2 = field_2.get_Expr(this);
+		}else{
+			expr_2 = this.ctx.mkSelect(field_2.get_Expr(this), class_Expr_2);
+		}
+		for(IntExpr index : field_2_indexs){
+			expr_2 = this.ctx.mkSelect(expr_2, index);
+		}
+		
+		
+		//エイリアスする部分に関する配列の長さは変わらない
+		String array_type;
+		if(field_1.type.equals("int")){
+			array_type = "int";
+		}else if(field_1.type.equals("boolean")){
+			array_type = "boolean";
+		}else{
+			array_type = "ref";
+		}
+		
+		for(int i = 0; i <= field_1_indexs.size(); i++){
+			Expr alias_ex = field_1_alias_expr;
+			if(i>0){
+				for(IntExpr index : field_1_indexs.subList(0, i)){
+					alias_ex = this.ctx.mkSelect(alias_ex, index);
+				}
+			}
+			Expr ex = field_1_expr;
+			if(i>0){
+				for(IntExpr index : field_1_indexs.subList(0, i)){
+					ex = this.ctx.mkSelect(ex, index);
+				}
+			}
+			
+			//長さに関する制約
+			int array_dim = field_1.dims - i;
+			
+			IntExpr length1 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, alias_ex.getSort(), this.ctx.mkIntSort()), alias_ex);
+			IntExpr length2 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), this.ctx.mkIntSort()), ex);
+			this.add_constraint(this.ctx.mkEq(length1, length2));
+		}
+		for(int i = 0; i <= field_2_indexs.size(); i++){
+			Expr alias_ex = field_2_alias_expr;
+			if(i>0){
+				for(IntExpr index : field_2_indexs.subList(0, i)){
+					alias_ex = this.ctx.mkSelect(alias_ex, index);
+				}
+			}
+			Expr ex = field_2_expr;
+			if(i>0){
+				for(IntExpr index : field_2_indexs.subList(0, i)){
+					ex = this.ctx.mkSelect(ex, index);
+				}
+			}
+			
+			//長さに関する制約
+			int array_dim = field_2.dims - i;
+			
+			IntExpr length1 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, alias_ex.getSort(), this.ctx.mkIntSort()), alias_ex);
+			IntExpr length2 = (IntExpr) this.ctx.mkSelect(this.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), this.ctx.mkIntSort()), ex);
+			this.add_constraint(this.ctx.mkEq(length1, length2));
+		}
+		
+		
+		
+		//この型を持つ変数の値が変わっても他方の述語は満たされる
+		System.out.println("check refinement type equality 1");
+		this.solver.push();
+		
+		field_1.add_refinement_constraint(this, class_Expr_1, new ArrayList<IntExpr>(indexs_1.subList(0, field_1.class_object_dims_sum())), true);
+		
+		
 		
 		if(field_2_indexs.size() == 0){
 			this.add_constraint(this.ctx.mkEq(field_2_expr, expr_1));
@@ -693,22 +699,7 @@ public class Check_status {
 		
 		field_2.add_refinement_constraint(this, class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, field_2.class_object_dims_sum())), true);
 		
-		Expr field_1_expr = null;
-		if(field_1 instanceof Variable){
-			field_1_expr = field_1.get_Expr(this);
-		}else{
-			field_1_expr = this.ctx.mkSelect(field_1.get_Expr(this), class_Expr_1);
-		}
 		
-		Expr expr_2 = null;
-		if(field_2 instanceof Variable){
-			expr_2 = field_2.get_Expr(this);
-		}else{
-			expr_2 = this.ctx.mkSelect(field_2.get_Expr(this), class_Expr_2);
-		}
-		for(IntExpr index : field_2_indexs){
-			expr_2 = this.ctx.mkSelect(expr_2, index);
-		}
 		
 		if(field_1_indexs.size() == 0){
 			this.add_constraint(this.ctx.mkEq(field_1_expr, expr_2));

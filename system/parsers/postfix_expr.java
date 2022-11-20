@@ -1020,14 +1020,14 @@ public class postfix_expr implements Parser<String>{
 			if(v instanceof Variable){
 				assign_field_expr = v.get_Expr(cs);
 			}else{
-				old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs), v_class_object_expr);
+				old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs.this_old_status), v_class_object_expr);
 				assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), v_class_object_expr);
 			}
 			
 			//メソッドの最初では篩型が満たしていることを仮定していい
 			//フィールドだけ
 			if(in_helper && !(v instanceof Variable)){
-				old_v.add_refinement_constraint(cs, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
+				old_v.add_refinement_constraint(cs.this_old_status, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())), true);
 			}
 			
 			v.assert_refinement(cs, v_class_object_expr, new ArrayList<IntExpr>(indexs.subList(0, v.class_object_dims_sum())));

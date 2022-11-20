@@ -7,9 +7,10 @@ import system.Source;
 
 public class represents_clause implements Parser<String>{
 	String st;
-	boolean is_private;
-	store_ref_expression store_ref_expression;
-	spec_expression spec_expression;
+	public boolean is_private;
+	//store_ref_expression store_ref_expression;
+	public String ident;
+	public spec_expression spec_expression;
 	
 	public String class_type_name;
 	
@@ -17,8 +18,10 @@ public class represents_clause implements Parser<String>{
 		this.st = "";
 		st = st + new string("represents").parse(s,ps);
 		st = st + new spaces().parse(s,ps);
-		this.store_ref_expression = new store_ref_expression();
-		st = st + store_ref_expression.parse(s,ps);
+		//this.store_ref_expression = new store_ref_expression(); 
+		//st = st + store_ref_expression.parse(s,ps);
+		this.ident = new ident().parse(s, ps);
+		st = st + this.ident;
 		st = st + new spaces().parse(s,ps);
 		st = st + new String("=");
 		st = st + new spaces().parse(s,ps);

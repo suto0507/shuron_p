@@ -196,6 +196,28 @@ public class compilation_unit implements Parser<String>{
 		}
 		return null;
 	}
+	
+	public represents_clause search_represents_clause(String class_name, String ident, String this_class_name){
+		for(class_declaration cd : classes){
+			if(cd.class_name.equals(class_name)){
+				for(represents_clause rc : cd.class_block.represents_clauses){
+					if(rc.ident.equals(ident) && !(rc.is_private && class_name.equals(this_class_name))){
+						return rc;
+					}
+				}
+				class_declaration super_class = cd;
+				while(super_class.super_class != null){
+					super_class = super_class.super_class;
+					for(represents_clause rc : super_class.class_block.represents_clauses){
+						if(rc.ident.equals(ident) && !(rc.is_private && super_class.class_name.equals(this_class_name))){
+							return rc;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
 
 	
 	public variable_definition search_field(String class_name, String field_name){

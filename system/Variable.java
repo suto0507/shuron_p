@@ -40,6 +40,8 @@ public class Variable extends Field{
 
 		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
 		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		
+		this.model_fields = new ArrayList<Model_Field>();
 	}
 	
 	public Variable(){}

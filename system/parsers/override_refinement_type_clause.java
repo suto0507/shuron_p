@@ -72,7 +72,7 @@ public class override_refinement_type_clause implements Parser<String>{
 			boolean exist_super_vd = false;
 			String base_type = "";
 			while(true){
-				variable_definition super_vd = cu.search_field(super_class.class_name, this.ident);
+				variable_definition super_vd = cu.search_field(super_class.class_name, this.ident, false);
 				
 				
 				

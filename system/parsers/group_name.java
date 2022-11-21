@@ -5,8 +5,8 @@ import system.Parser_status;
 import system.Source;
 
 public class group_name implements Parser<String>{
-	boolean is_super;
-	String ident;
+	public boolean is_super;
+	public String ident;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st = "";

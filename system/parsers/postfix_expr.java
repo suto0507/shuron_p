@@ -18,7 +18,7 @@ import system.Parser_status;
 import system.Quantifier_Variable;
 import system.Source;
 import system.Variable;
-import system.parsers.spec_case_seq.F_Assign;
+import system.F_Assign;
 
 public class postfix_expr implements Parser<String>{
 	primary_expr primary_expr;

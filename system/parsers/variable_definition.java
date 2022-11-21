@@ -11,7 +11,7 @@ public class variable_definition implements Parser<String>{
 	public modifiers modifiers;
 	public variable_decls variable_decls;
 	public String class_type_name;
-	ArrayList<group_name> group_names;
+	public ArrayList<group_name> group_names;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		this.st = "";

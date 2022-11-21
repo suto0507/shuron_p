@@ -9,7 +9,7 @@ import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
-import system.parsers.spec_case_seq.F_Assign;
+import system.F_Assign;
 
 public class method_specification implements Parser<String> {
 	spec_case_seq spec_case_seq;

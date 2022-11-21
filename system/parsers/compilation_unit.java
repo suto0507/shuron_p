@@ -220,12 +220,12 @@ public class compilation_unit implements Parser<String>{
 	}
 
 	
-	public variable_definition search_field(String class_name, String field_name){
+	public variable_definition search_field(String class_name, String field_name, boolean is_model){
 		for(class_declaration cd : classes){
 			if(cd.class_name.equals(class_name)){
 				refinement_type_clause rc = null;
 				for(variable_definition vd : cd.class_block.variable_definitions){
-					if(vd.variable_decls.ident.equals(field_name)){
+					if(vd.variable_decls.ident.equals(field_name) && vd.modifiers.is_model==is_model){
 						if(rc != null) vd.variable_decls.type_spec.refinement_type_clause = rc;
 						return vd;
 					}

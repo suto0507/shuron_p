@@ -18,7 +18,7 @@ import system.Parser_status;
 import system.Source;
 import system.Summery;
 import system.Variable;
-import system.parsers.spec_case_seq.F_Assign;
+import system.F_Assign;
 
 public class method_decl implements Parser<String>{
 	String st;

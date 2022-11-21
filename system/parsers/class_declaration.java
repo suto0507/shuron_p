@@ -15,9 +15,10 @@ import system.Variable;
 import com.microsoft.z3.*;
 
 public class class_declaration implements Parser<String>{
-	String class_name;
+	public String class_name;
 	class_block class_block;
-	class_declaration super_class = null;
+	public class_declaration super_class = null;
+	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		new spaces().parse(s,ps);
 		new string("class").parse(s,ps);

@@ -9,6 +9,7 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_status;
 import system.Field;
+import system.Model_Field;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -107,15 +108,36 @@ public class class_block implements Parser<String>{
 				if(method.type_spec==null) alias_2d = cs.ctx.mkBool(false);//コンストラクタ
 				
 				for(variable_definition vd : cb.variable_definitions){
-					Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
-							, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type, alias_2d);
-					
-					//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
-					List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
-					indexs.add(new ArrayList<IntExpr>());
-					f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkBool(false), indexs));
-					
-					csc.fields.add(f);
+					if(vd.modifiers.is_model){
+						cs.search_model_field(vd.variable_decls.ident, cs.this_field, cs);
+					}else{
+						
+						//データグループのリストを作る
+						ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
+						for(group_name gn : vd.group_names){
+							String class_type = null;
+							if(gn.is_super){
+								class_type = cd.super_class.class_name;
+							}else{
+								class_type = cd.class_name;
+							}
+							
+							String pre_type = cs.this_field.type;
+							cs.this_field.type = class_type;
+							data_groups.add(cs.search_model_field(gn.ident, cs.this_field, cs));
+							cs.this_field.type = pre_type;
+						}
+						
+						Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
+								, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type, alias_2d, data_groups);
+						
+						//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
+						List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
+						indexs.add(new ArrayList<IntExpr>());
+						f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkBool(false), indexs));
+						
+						csc.fields.add(f);
+					}
 				}
 				cd = cd.super_class;
 			}

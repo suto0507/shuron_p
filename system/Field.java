@@ -39,8 +39,11 @@ public class Field {
 	public BoolExpr alias_in_helper_or_consutructor;
 	public BoolExpr alias_2d_in_helper_or_consutructor;
 	
+	//データフィールド
+	ArrayList<Model_Field> model_fields;
+	
 	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
-	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor) throws Exception{
+	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = 0;
@@ -55,13 +58,14 @@ public class Field {
 		this.new_array = false;
 		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
 		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.model_fields = model_fields;
 	}
 	
 	public Field(){}
 	
 	
 	public Field clone_e() throws Exception{
-		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor);
+		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor, model_fields);
 		ret.temp_num = this.temp_num;
 		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
@@ -275,6 +279,7 @@ public class Field {
 		this.temp_num++;
 	}
 	
+	
 	public boolean is_this_field(){
 		return this.class_object.is_this_field();
 	}
@@ -397,6 +402,8 @@ public class Field {
 
 		return have;
 	}
+	
+	
 	
 
 }

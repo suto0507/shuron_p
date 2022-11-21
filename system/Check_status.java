@@ -17,6 +17,7 @@ public class Check_status {
 	public List<Variable> variables;
 	//List<Variable> before_if_variables;
 	public List<Field> fields;
+	public List<Model_Field> model_fields;
 	public List<invariant> invariants;
 	public Context ctx;
 	public Solver solver;
@@ -77,6 +78,7 @@ public class Check_status {
 		this.solver = ctx.mkSolver();
 		this.local_refinements = new ArrayList<Pair<String, refinement_type>>();
 		this.fields = new ArrayList<Field>();
+		this.model_fields = new ArrayList<Model_Field>();
 		//this.assignables = new ArrayList<Field>();
 		this.right_side_status = new Right_side_status();
 		quantifiers = new ArrayList<Pair<String, Expr>>();
@@ -114,7 +116,7 @@ public class Check_status {
 	//identはxとかで検索
 	public Field search_field(String ident, Field class_object, Check_status cs) throws Exception{
 		
-		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident);
+		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident, false);
 		
 		if(vd == null){
 			return null;
@@ -128,7 +130,24 @@ public class Check_status {
 			}
 		}
 		
-		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true));
+		//データグループのリストを作る
+		ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
+		for(group_name gn : vd.group_names){
+			String class_type = null;
+			if(gn.is_super){
+				class_declaration cd = this.Check_status_share.compilation_unit.search_class(class_object.type);
+				class_type = cd.super_class.class_name;
+			}else{
+				class_type = class_object.type;
+			}
+			
+			String pre_type = class_object.type;
+			class_object.type = class_type;
+			data_groups.add(search_model_field(gn.ident, class_object, this));
+			class_object.type = pre_type;
+		}
+		
+		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true), data_groups);
 		
 		//新しく追加したフィールドはassinable節で触れられていない
 		List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
@@ -147,6 +166,58 @@ public class Check_status {
 		
 		
 		return f;
+	}
+	
+	//identはxとかで検索
+	public Model_Field search_model_field(String ident, Field class_object, Check_status cs) throws Exception{
+		
+		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident, true);
+		
+		if(vd == null){
+			return null;
+		}
+		
+		String field_name = ident + "_" + vd.class_type_name;
+		
+		for(Model_Field model_field :model_fields){
+			if(field_name.equals(model_field.field_name + "_" + model_field.class_type_name) && model_field.class_object.equals(class_object, cs)){
+				return model_field;
+			}
+		}
+		
+		//データグループのリストを作る
+		ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
+		for(group_name gn : vd.group_names){
+			String class_type = null;
+			if(gn.is_super){
+				class_declaration cd = this.Check_status_share.compilation_unit.search_class(class_object.type);
+				class_type = cd.super_class.class_name;
+			}else{
+				class_type = class_object.type;
+			}
+			
+			String pre_type = class_object.type;
+			class_object.type = class_type;
+			data_groups.add(search_model_field(gn.ident, class_object, this));
+			class_object.type = pre_type;
+		}
+		
+		Model_Field mf = new Model_Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true), data_groups);
+		
+		
+		
+		this.model_fields.add(mf);
+		
+		//初期値をold用のcsにも追加しておく
+		if(cs.this_old_status!=null){
+			Model_Field mf_old = mf.clone_e();
+			cs.this_old_status.model_fields.add(mf_old);
+			mf_old.class_object = search_internal_id(mf.class_object.internal_id);
+		}
+		
+		
+		
+		return mf;
 	}
 	
 	public Field search_internal_id(int internal_id){

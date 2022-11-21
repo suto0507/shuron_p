@@ -17,7 +17,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.Variable;
-import system.parsers.spec_case_seq.F_Assign;
+import system.F_Assign;
 
 public class new_expr implements Parser<String>{
 	type type;

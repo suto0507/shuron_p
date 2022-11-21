@@ -1,19 +1,56 @@
 package system;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
 import system.parsers.class_declaration;
 import system.parsers.method_decl;
+import system.parsers.modifiers;
 import system.parsers.refinement_type;
+import system.parsers.refinement_type_clause;
 import system.parsers.spec_expression;
 import system.parsers.represents_clause;
 
 public class Model_Field extends Field{
 	
 	spec_expression represents_spec_expression;
+	
+	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+	public Model_Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
+		this.id = id;
+		this.internal_id = id;
+		this.temp_num = 0;
+		this.field_name = field_name;
+		this.type = type;
+		this.dims = dims;
+		this.refinement_type_clause = refinement_type_clause;
+		this.modifiers = modifiers;
+		this.class_object = class_object;
+		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+		this.class_type_name = class_type_name;
+		this.new_array = false;
+		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.model_fields = model_fields;
+	}
+	
+	public Model_Field clone_e() throws Exception{
+		Model_Field ret = new Model_Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor, model_fields);
+		ret.temp_num = this.temp_num;
+		ret.class_object_expr = this.class_object_expr;
+		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
+		ret.index = this.index;
+		
+		ret.final_initialized = final_initialized;
+		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+		
+		ret.represents_spec_expression = this.represents_spec_expression;
+		return ret;
+	}
 	
 	public void set_repersents(Check_status cs){
 		represents_clause rc = cs.Check_status_share.compilation_unit.search_represents_clause(this.class_object.type, this.field_name, cs.this_field.type);

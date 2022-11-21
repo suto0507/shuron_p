@@ -16,7 +16,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.Variable;
-import system.parsers.spec_case_seq.F_Assign;
+import system.F_Assign;
 
 //compund_statement‚Å‹ó”’A‰üs‚ğ‚â‚Á‚Ä‚¢‚é
 	public class statement implements Parser<String>{
@@ -499,7 +499,7 @@ import system.parsers.spec_case_seq.F_Assign;
 						if(v_assign_indexs!=null){
 							List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
 							b_is.add(new Pair(cs.ctx.mkBool(true), v_assign_indexs.snd));
-							F_Assign fa = new spec_case_seq().new F_Assign(v_loop, b_is);
+							F_Assign fa = new F_Assign(v_loop, b_is);
 							fa.assign_fresh_value(cs_loop);
 						}
 						
@@ -516,7 +516,7 @@ import system.parsers.spec_case_seq.F_Assign;
 						if(f_assign_indexs!=null){
 							List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList();
 							b_is.add(new Pair(cs.ctx.mkBool(true), f_assign_indexs.snd));
-							F_Assign fa = new spec_case_seq().new F_Assign(f_loop, b_is);
+							F_Assign fa = new F_Assign(f_loop, b_is);
 							fa.assign_fresh_value(cs_loop);
 						}
 					}

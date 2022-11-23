@@ -14,6 +14,7 @@ public class variable_definition implements Parser<String>{
 	public ArrayList<group_name> group_names;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
+		group_names = new ArrayList<group_name>();
 		this.st = "";
 		this.modifiers = new modifiers();
 		this.st = this.st + modifiers.parse(s, ps);

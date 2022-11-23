@@ -162,6 +162,7 @@ public class compilation_unit implements Parser<String>{
 			}catch(Exception e){
 				System.out.println(e);
 				System.out.println("class " + class_decl.class_name + " is wrong");
+				summery.invalid_classes.add("(class : " + class_decl.class_name + ")" + " " + summery.file.toString());
 			}
 		}
 	}

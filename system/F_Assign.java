@@ -80,15 +80,18 @@ public class F_Assign{
 					
 					cs.add_constraint(cs.ctx.mkEq(length, length_assign));
 				}
+				
+				Expr class_object_expr = field.class_object.get_full_Expr((ArrayList<IntExpr>) ((ArrayList<IntExpr>) indexs).clone(), cs);
+				
 				BoolExpr cnst = null;
 				if(field instanceof Variable){
 					cnst = cs.ctx.mkEq(field.get_Expr_assign(cs),  expr);
 				}else{
-					cnst = cs.ctx.mkEq(field.get_Expr_assign(cs), cs.ctx.mkStore(field.get_Expr(cs), field.class_object.get_full_Expr((ArrayList<IntExpr>) ((ArrayList<IntExpr>) indexs).clone(), cs), expr));
+					cnst = cs.ctx.mkEq(field.get_Expr_assign(cs), cs.ctx.mkStore(field.get_Expr(cs), class_object_expr, expr));
 				}
 				
 				cs.add_constraint(cnst);
-				field.temp_num++;
+				field.tmp_plus_with_data_group(class_object_expr, ca.fst, cs);
 			}
 		}
 		

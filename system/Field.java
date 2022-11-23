@@ -279,6 +279,47 @@ public class Field {
 		this.temp_num++;
 	}
 	
+	//tmp_numをインクリメントし、データグループの値も更新する　tmp_numのインクリメントした結果との制約は、データグループのモデルフィールドに対してだけ追加され、このフィールドに関しては制約は追加されない
+	public void tmp_plus_with_data_group(Check_status cs) throws Exception{
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
+			return;
+		}
+		this.temp_num++;
+		for(Model_Field mf : this.model_fields){
+			mf.tmp_plus_with_data_group(cs);
+		}
+	}
+	
+	public void tmp_plus_with_data_group(Expr class_expr, Check_status cs) throws Exception{
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
+			return;
+		}
+		this.temp_num++;
+		for(Model_Field mf : this.model_fields){
+			mf.tmp_plus_with_data_group(class_expr, cs);
+		}
+	}
+	
+	public void tmp_plus_with_data_group(BoolExpr condition, Check_status cs) throws Exception{//conditionは値を変更する条件
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
+			return;
+		}
+		this.temp_num++;
+		for(Model_Field mf : this.model_fields){
+			mf.tmp_plus_with_data_group(condition, cs);
+		}
+	}
+	
+	public void tmp_plus_with_data_group(Expr class_expr, BoolExpr condition, Check_status cs) throws Exception{//conditionは値を変更する条件
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
+			return;
+		}
+		this.temp_num++;
+		for(Model_Field mf : this.model_fields){
+			mf.tmp_plus_with_data_group(class_expr, condition, cs);
+		}
+	}
+	
 	
 	public boolean is_this_field(){
 		return this.class_object.is_this_field();

@@ -319,7 +319,7 @@ public class new_expr implements Parser<String>{
 				cs.assert_constraint(cs.ctx.mkImplies(assign_cnsts.snd, cs.assinable_cnst_all));
 				for(Field field : cs.fields){
 					cs.add_constraint(cs.ctx.mkImplies(cs.ctx.mkNot(assign_cnsts.snd), cs.ctx.mkEq(field.get_Expr_assign(cs), field.get_Expr_assign(cs))));
-					field.temp_num++;
+					field.tmp_plus_with_data_group(assign_cnsts.snd, cs);
 				}
 				for(Variable variable : cs.called_method_args){//引数
 					Field field = null;
@@ -330,7 +330,7 @@ public class new_expr implements Parser<String>{
 					}
 					if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
 						cs.add_constraint(cs.ctx.mkImplies(cs.ctx.mkNot(assign_cnsts.snd), cs.ctx.mkEq(field.get_Expr_assign(cs), field.get_Expr_assign(cs))));
-						field.temp_num++;
+						field.tmp_plus(cs);
 					}
 				}
 			}else{//assignableを含めた任意の仕様が書かれていない関数
@@ -353,13 +353,24 @@ public class new_expr implements Parser<String>{
 				
 				
 				for(Field f_a : cs.fields){
-					f_a.temp_num++;
+					f_a.tmp_plus_with_data_group(cs);
+				}
+				for(Variable variable : cs.called_method_args){//引数
+					Field field = null;
+					if(variable.arg_field != null){
+						field = variable.arg_field;
+					}else{
+						field = variable;
+					}
+					if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+						field.tmp_plus(cs);
+					}
 				}
 			}
 			
 			//引数自体には,intやbooleanであれば無条件に代入できる
 			for(Variable v : assignable_args){
-				v.temp_num++;
+				v.tmp_plus(cs);
 			}
 			
 			//helperメソッドやコンストラクターにおける配列のエイリアス

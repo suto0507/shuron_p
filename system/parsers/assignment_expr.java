@@ -182,7 +182,7 @@ public class assignment_expr implements Parser<String>{
 			
 			
 			
-			v.temp_num++;
+			v.tmp_plus_with_data_group(v_class_object_expr, cs);
 			
 			
 			//refinement_type

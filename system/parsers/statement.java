@@ -11,6 +11,7 @@ import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Helper_assigned_field;
+import system.Model_Field;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -217,7 +218,7 @@ import system.F_Assign;
 					}
 				}
 				
-				//cs.fieldsに含まれないものがあれば追加する
+				//cs.fields、model_fieldに含まれないものがあれば追加する
 				for(Field f : cs_then.fields){
 					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
 					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
@@ -226,6 +227,17 @@ import system.F_Assign;
 						Expr expr = f.get_Expr(cs);
 						f.temp_num = pre_tmp_num;
 						expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+						cs.add_constraint((BoolExpr) expr);
+					}
+				}
+				for(Model_Field mf : cs_then.model_fields){
+					Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+					if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+						int pre_tmp_num = mf.temp_num;
+						mf.temp_num = 0;
+						Expr expr = mf.get_Expr(cs);
+						mf.temp_num = pre_tmp_num;
+						expr = cs.ctx.mkEq(expr, cs_mf.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
 						cs.add_constraint((BoolExpr) expr);
 					}
 				}
@@ -238,6 +250,17 @@ import system.F_Assign;
 							Expr expr = f.get_Expr(cs);
 							f.temp_num = pre_tmp_num;
 							expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+							cs.add_constraint((BoolExpr) expr);
+						}
+					}
+					for(Model_Field mf : cs_else.model_fields){
+						Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+						if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+							int pre_tmp_num = mf.temp_num;
+							mf.temp_num = 0;
+							Expr expr = mf.get_Expr(cs);
+							mf.temp_num = pre_tmp_num;
+							expr = cs.ctx.mkEq(expr, cs_mf.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
 							cs.add_constraint((BoolExpr) expr);
 						}
 					}
@@ -262,7 +285,6 @@ import system.F_Assign;
 						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
 						f.alias_2d_in_helper_or_consutructor = f_then.alias_2d_in_helper_or_consutructor;
 					}else{
-						System.out.println(f.class_object);
 						Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
 						Field f_else = cs_else.search_field(f.field_name, f.class_object, cs);
 						if(f.temp_num!=f_then.temp_num || f.temp_num!=f_else.temp_num){
@@ -284,6 +306,29 @@ import system.F_Assign;
 						
 						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
 						f.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_2d_in_helper_or_consutructor, f_else.alias_2d_in_helper_or_consutructor);
+					}
+				}
+				
+				for(Model_Field mf : cs.model_fields){
+					if(cs_else==null){
+						Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
+						if(mf.temp_num!=mf_then.temp_num){
+							Expr e1 = mf.get_Expr(cs);
+							Expr e2 = mf_then.get_Expr(cs_then);
+							Expr e3 = mf.get_Expr_assign(cs);
+							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
+							mf.temp_num++;
+						}
+					}else{
+						Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
+						Model_Field mf_else = cs_else.search_model_field(mf.field_name, mf.class_object, cs);
+						if(mf.temp_num!=mf_then.temp_num || mf.temp_num!=mf_else.temp_num){
+							Expr e1 = mf_else.get_Expr(cs);
+							Expr e2 = mf_then.get_Expr(cs_then);
+							Expr e3 = mf.get_Expr_assign(cs);
+							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
+							mf.temp_num++;
+						}
 					}
 				}
 				
@@ -352,10 +397,10 @@ import system.F_Assign;
 				this.refresh_list(cs_loop_assign_check);
 				
 				for(Variable v : cs_loop_assign_check.variables){
-					v.tmp_plus(cs_loop_assign_check);
+					v.temp_num++;
 				}
 				for(Field f : cs_loop_assign_check.fields){
-					f.tmp_plus(cs_loop_assign_check);
+					f.temp_num++;
 				}
 				
 				
@@ -484,7 +529,7 @@ import system.F_Assign;
 						v.tmp_plus(cs_loop);
 					}
 					for(Field f : cs_loop.fields){
-						f.tmp_plus(cs_loop);
+						f.tmp_plus_with_data_group(cs_loop);
 					}
 				}else{//代入されるフィールドのそれぞれのインデックスにフレッシュな値を代入する
 					for(Variable v_loop : cs_loop.variables){//ローカル変数
@@ -568,6 +613,18 @@ import system.F_Assign;
 						cs.add_constraint((BoolExpr) expr);
 					}
 				}
+				//cs.model_fieldsに含まれないものがあれば追加する
+				for(Model_Field mf : cs_loop.model_fields){
+					Model_Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+					if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+						int pre_tmp_num = mf.temp_num;
+						mf.temp_num = 0;
+						Expr expr = mf.get_Expr(cs);
+						mf.temp_num = pre_tmp_num;
+						expr = cs.ctx.mkEq(expr, cs_mf.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+						cs.add_constraint((BoolExpr) expr);
+					}
+				}
 				for(Field f : cs.fields){//フィールドに関して値を更新
 					Field f_loop = cs_loop.search_field(f.field_name,f.class_object, cs);
 					if(f.temp_num<f_loop.temp_num){
@@ -585,6 +642,16 @@ import system.F_Assign;
 					
 					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
 					f.alias_2d_in_helper_or_consutructor = f_loop.alias_2d_in_helper_or_consutructor;
+				}
+				for(Model_Field mf : cs.model_fields){//モデルフィールドに関して値を更新
+					Model_Field mf_loop = cs_loop.search_model_field(mf.field_name, mf.class_object, cs);
+					if(mf.temp_num<mf_loop.temp_num){
+						Expr e1 = mf.get_Expr(cs);
+						Expr e2 = mf_loop.get_Expr(cs_loop);
+						Expr e3 = mf.get_Expr_assign(cs);
+						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
+						mf.temp_num++;
+					}
 				}
 				for(Variable v :cs.variables){//ローカル変数に関して値を更新
 					Variable v_loop = cs_loop.get_variable(v.field_name);
@@ -672,6 +739,16 @@ import system.F_Assign;
 					new_f.id = cs.Check_status_share.get_tmp_num();
 					cs.add_constraint(cs.ctx.mkEq(f.get_Expr(cs), new_f.get_Expr(cs)));
 					cs.fields.add(new_f);
+				}
+			}
+			if(cs.model_fields!=null){
+				List<Model_Field> mf_tmp = cs.model_fields;
+				cs.model_fields = new ArrayList<Model_Field>();
+				for(Model_Field mf : mf_tmp){
+					Model_Field new_mf = mf.clone_e();
+					new_mf.id = cs.Check_status_share.get_tmp_num();
+					cs.add_constraint(cs.ctx.mkEq(mf.get_Expr(cs), new_mf.get_Expr(cs)));
+					cs.fields.add(new_mf);
 				}
 			}
 		}

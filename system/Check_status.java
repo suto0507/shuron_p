@@ -341,6 +341,11 @@ public class Check_status {
 			cs.fields.add(f);
 		}
 		
+		cs.model_fields = new ArrayList<Model_Field>();
+		for(Model_Field mf : this.model_fields){
+			cs.model_fields.add(mf);
+		}
+		
 		cs.invariants = this.invariants;
 		cs.this_field = this.this_field;
 		

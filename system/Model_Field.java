@@ -59,6 +59,7 @@ public class Model_Field extends Field{
 		}
 	}
 	
+	//class_exprを渡すこと場合、representsに関する制約も追加する
 	public Expr get_Expr(Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
 		Expr expr = get_Expr(cs);
 		if(this.represents_spec_expression!=null){
@@ -80,6 +81,45 @@ public class Model_Field extends Field{
 		}
 		
 		return expr;
+	}
+	
+	public void tmp_plus_with_data_group(Expr class_expr, Check_status cs) throws Exception{
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
+			return;
+		}
+		
+		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkStore(this.get_Expr(cs), class_expr, this.get_Expr_tmp(cs))));
+		
+		this.temp_num++;
+		for(Model_Field mf : this.model_fields){
+			mf.tmp_plus_with_data_group(class_expr, cs);
+		}
+	}
+	
+	public void tmp_plus_with_data_group(BoolExpr condition, Check_status cs) throws Exception{
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
+			return;
+		}
+		
+		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkITE(condition, this.get_Expr_tmp(cs), this.get_Expr(cs))));
+		
+		this.temp_num++;
+		for(Model_Field mf : this.model_fields){
+			mf.tmp_plus_with_data_group(condition, cs);
+		}
+	}
+	
+	public void tmp_plus_with_data_group(Expr class_expr, BoolExpr condition, Check_status cs) throws Exception{
+		if(this.modifiers!=null && this.modifiers.is_final && this.dims == 0){
+			return;
+		}
+		
+		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkITE(condition, cs.ctx.mkStore(this.get_Expr(cs), class_expr, this.get_Expr_tmp(cs)), this.get_Expr(cs))));
+		
+		this.temp_num++;
+		for(Model_Field mf : this.model_fields){
+			mf.tmp_plus_with_data_group(class_expr, condition, cs);
+		}
 	}
 	
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス

@@ -377,7 +377,18 @@ public class Field {
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
 	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
 	public void add_refinement_constraint(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
-		
+		System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + cs.checked_refinement_type_field);
+		boolean root_check = false;
+		if(cs.checked_refinement_type_field.size()==0){
+			root_check = true;
+		}else{
+			for(Pair<Field, Expr> checked_field : cs.checked_refinement_type_field){
+				if(checked_field.fst == this && checked_field.snd == class_Expr){
+					return;
+				}
+			}
+		}
+		System.out.println("bbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 		Expr ex = null;
 		if(this instanceof Variable){
 			ex = get_Expr(cs);
@@ -396,9 +407,29 @@ public class Field {
             }
 		}
 		
+		
+		for(Model_Field mf : this.model_fields){
+			mf.add_refinement_constraint(cs, class_Expr, indexs, add_once);
+		}
+		
+		if(root_check){
+			cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
+		}
+		
 	}
 	
 	public void assert_refinement(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
+		
+		boolean root_check = false;
+		if(cs.checked_refinement_type_field.size()==0){
+			root_check = true;
+		}else{
+			for(Pair<Field, Expr> checked_field : cs.checked_refinement_type_field){
+				if(checked_field.fst == this && checked_field.snd == class_Expr){
+					return;
+				}
+			}
+		}
 		
 		Expr ex = null;
 		if(this instanceof Variable){
@@ -416,6 +447,14 @@ public class Field {
 			}else{
                 throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
             }
+		}
+		
+		for(Model_Field mf : this.model_fields){
+			mf.assert_refinement(cs, class_Expr, indexs);
+		}
+		
+		if(root_check){
+			cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 		}
 		
 	}

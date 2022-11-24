@@ -71,6 +71,8 @@ public class Check_status {
 	public ArrayList<Helper_assigned_field> helper_assigned_fields;
 	public int field_deep_limmit;
 	
+	public ArrayList<Pair<Field, Expr>> checked_refinement_type_field;//篩型の制約を既に追加したもの　Fieldとclass_objectのExprのPair    使い切りなのでcloneでは中身は気にしなくていい
+	
 	public Check_status(compilation_unit cu){
 		variables = new ArrayList<Variable>();
 		this.Check_status_share = new Check_status_share(cu);
@@ -83,6 +85,7 @@ public class Check_status {
 		this.right_side_status = new Right_side_status();
 		quantifiers = new ArrayList<Pair<String, Expr>>();
 		helper_assigned_fields = new ArrayList<Helper_assigned_field>();
+		checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 	}
 	
 	Check_status(){
@@ -387,6 +390,8 @@ public class Check_status {
 			cs.helper_assigned_fields.add(assigned_field);
 		}
 		cs.field_deep_limmit = this.field_deep_limmit;
+		
+		cs.checked_refinement_type_field = this.checked_refinement_type_field;
 		
 		return cs;
 	}

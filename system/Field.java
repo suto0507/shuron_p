@@ -40,7 +40,7 @@ public class Field {
 	public BoolExpr alias_2d_in_helper_or_consutructor;
 	
 	//データフィールド
-	ArrayList<Model_Field> model_fields;
+	public ArrayList<Model_Field> model_fields;
 	
 	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
@@ -377,7 +377,6 @@ public class Field {
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
 	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
 	public void add_refinement_constraint(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
-		System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + cs.checked_refinement_type_field);
 		boolean root_check = false;
 		if(cs.checked_refinement_type_field.size()==0){
 			root_check = true;
@@ -388,7 +387,6 @@ public class Field {
 				}
 			}
 		}
-		System.out.println("bbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 		Expr ex = null;
 		if(this instanceof Variable){
 			ex = get_Expr(cs);

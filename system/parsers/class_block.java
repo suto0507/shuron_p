@@ -104,14 +104,13 @@ public class class_block implements Parser<String>{
 			while(cd!=null){
 				class_block cb = cd.class_block;
 				
-				BoolExpr alias_2d = cs.ctx.mkBool(true);
-				if(method.type_spec==null) alias_2d = cs.ctx.mkBool(false);//コンストラクタ
+				BoolExpr alias_2d = csc.ctx.mkBool(true);
+				if(method.type_spec==null) alias_2d = csc.ctx.mkBool(false);//コンストラクタ
 				
 				for(variable_definition vd : cb.variable_definitions){
 					if(vd.modifiers.is_model){
-						cs.search_model_field(vd.variable_decls.ident, cs.this_field, cs);
+						csc.search_model_field(vd.variable_decls.ident, csc.this_field, csc);
 					}else{
-						
 						//データグループのリストを作る
 						ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
 						for(group_name gn : vd.group_names){
@@ -122,10 +121,10 @@ public class class_block implements Parser<String>{
 								class_type = cd.class_name;
 							}
 							
-							String pre_type = cs.this_field.type;
-							cs.this_field.type = class_type;
-							data_groups.add(cs.search_model_field(gn.ident, cs.this_field, cs));
-							cs.this_field.type = pre_type;
+							String pre_type = csc.this_field.type;
+							csc.this_field.type = class_type;
+							data_groups.add(csc.search_model_field(gn.ident, csc.this_field, csc));
+							csc.this_field.type = pre_type;
 						}
 						
 						Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
@@ -134,14 +133,13 @@ public class class_block implements Parser<String>{
 						//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
 						List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
 						indexs.add(new ArrayList<IntExpr>());
-						f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkBool(false), indexs));
+						f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(csc.ctx.mkBool(false), indexs));
 						
 						csc.fields.add(f);
 					}
 				}
 				cd = cd.super_class;
 			}
-			
 			
 			method.check(csc, summery);
 		}

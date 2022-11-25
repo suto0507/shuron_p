@@ -217,6 +217,7 @@ import system.F_Assign;
 						v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_2d_in_helper_or_consutructor, v_else.alias_2d_in_helper_or_consutructor);
 					}
 				}
+
 				
 				//cs.fieldsÅAmodel_fieldÇ…ä‹Ç‹ÇÍÇ»Ç¢Ç‡ÇÃÇ™Ç†ÇÍÇŒí«â¡Ç∑ÇÈ
 				for(Field f : cs_then.fields){
@@ -748,7 +749,33 @@ import system.F_Assign;
 					Model_Field new_mf = mf.clone_e();
 					new_mf.id = cs.Check_status_share.get_tmp_num();
 					cs.add_constraint(cs.ctx.mkEq(mf.get_Expr(cs), new_mf.get_Expr(cs)));
-					cs.fields.add(new_mf);
+					cs.model_fields.add(new_mf);
+				}
+			}
+			
+			//ÇªÇÍÇºÇÍÇÃFieldÇÃíÜêgÇç∑Çµë÷Ç¶
+			if(cs.fields!=null){
+				for(Field f : cs.fields){
+					if(f.class_object!=cs.this_field){
+						f.class_object = cs.search_internal_id(f.class_object.internal_id);
+					}
+					ArrayList<Model_Field> model_fields = new ArrayList<Model_Field>();
+					for(Model_Field mf : f.model_fields){
+						model_fields.add((Model_Field) cs.search_internal_id(mf.internal_id));
+					}
+					f.model_fields = model_fields;
+				}
+			}
+			if(cs.model_fields!=null){
+				for(Model_Field f : cs.model_fields){
+					if(f.class_object!=cs.this_field){
+						f.class_object = cs.search_internal_id(f.class_object.internal_id);
+					}
+					ArrayList<Model_Field> model_fields = new ArrayList<Model_Field>();
+					for(Model_Field mf : f.model_fields){
+						model_fields.add((Model_Field) cs.search_internal_id(mf.internal_id));
+					}
+					f.model_fields = model_fields;
 				}
 			}
 		}

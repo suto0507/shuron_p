@@ -181,7 +181,6 @@ public class Check_status {
 		}
 		
 		String field_name = ident + "_" + vd.class_type_name;
-		
 		for(Model_Field model_field :model_fields){
 			if(field_name.equals(model_field.field_name + "_" + model_field.class_type_name) && model_field.class_object.equals(class_object, cs)){
 				return model_field;
@@ -207,10 +206,9 @@ public class Check_status {
 		
 		Model_Field mf = new Model_Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true), data_groups);
 		
-		
+
 		
 		this.model_fields.add(mf);
-		
 		//èâä˙ílÇoldópÇÃcsÇ…Ç‡í«â¡ÇµÇƒÇ®Ç≠
 		if(cs.this_old_status!=null){
 			Model_Field mf_old = mf.clone_e();
@@ -239,8 +237,15 @@ public class Check_status {
 			}
 		}
 		
+		for(Field mf : this.model_fields){
+			if(mf.internal_id == internal_id){
+				return mf;
+			}
+		}
+		
 		return null;
 	}
+	
 	
 	public boolean search_called_method_arg(String ident){
 		boolean ret = false;
@@ -414,6 +419,15 @@ public class Check_status {
 			for(Field f : f_tmp){
 				Field new_f = f.clone_e();
 				this.fields.add(new_f);
+			}
+		}
+		
+		if(this.model_fields!=null){
+			List<Model_Field> mf_tmp = this.model_fields;
+			this.model_fields = new ArrayList<Model_Field>();
+			for(Model_Field mf : mf_tmp){
+				Model_Field new_mf = mf.clone_e();
+				this.model_fields.add(new_mf);
 			}
 		}
 		

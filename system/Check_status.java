@@ -205,7 +205,7 @@ public class Check_status {
 		}
 		
 		Model_Field mf = new Model_Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true), data_groups);
-		
+		mf.set_repersents(cs);
 
 		
 		this.model_fields.add(mf);
@@ -396,7 +396,7 @@ public class Check_status {
 		}
 		cs.field_deep_limmit = this.field_deep_limmit;
 		
-		cs.checked_refinement_type_field = this.checked_refinement_type_field;
+		cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 		
 		return cs;
 	}
@@ -775,7 +775,6 @@ public class Check_status {
 			field_2.assert_refinement(this, class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, field_2.class_object_dims_sum())));
 		}else{
 			field_2.add_refinement_constraint(this, class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, field_2.class_object_dims_sum())), true);
-			
 			
 			this.add_constraint(this.ctx.mkEq(field_2.get_Expr_assign(this), field_2.assign_value(indexs_2, expr_1, class_Expr_2, this)));
 			

@@ -106,7 +106,7 @@ public class class_block implements Parser<String>{
 				
 				BoolExpr alias_2d = csc.ctx.mkBool(true);
 				if(method.type_spec==null) alias_2d = csc.ctx.mkBool(false);//コンストラクタ
-				
+
 				for(variable_definition vd : cb.variable_definitions){
 					if(vd.modifiers.is_model){
 						csc.search_model_field(vd.variable_decls.ident, csc.this_field, csc);
@@ -140,7 +140,7 @@ public class class_block implements Parser<String>{
 				}
 				cd = cd.super_class;
 			}
-			
+
 			method.check(csc, summery);
 		}
 	}

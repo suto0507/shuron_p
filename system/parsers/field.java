@@ -12,12 +12,12 @@ public class field implements Parser<Parser>{
 		
 		Source s_backup = s.clone();
 		try{
-			member_decl md = new member_decl();
-			p = md.parse(s,ps);
-		}catch (Exception e){
-			s.revert(s_backup);
 			jml_declaration jd = new jml_declaration();
 			p = jd.parse(s,ps);
+		}catch (Exception e){
+			s.revert(s_backup);
+			member_decl md = new member_decl();
+			p = md.parse(s,ps);
 		}
 		
 		new newLines().parse(s,ps);

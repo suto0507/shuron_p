@@ -101,7 +101,7 @@ public class postfix_expr implements Parser<String>{
 					Field searched_field = cs.search_field(primary_expr.ident, cs.instance_Field ,cs);
 					if(searched_field != null){//フィールド
 						f = searched_field;
-						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.instance_expr);
+						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.instance_expr);
 						if(cs.can_not_use_mutable){
 							if(!f.modifiers.is_final){
 								new Exception("method depends on mutable field in refinenment type predicate.");
@@ -111,7 +111,7 @@ public class postfix_expr implements Parser<String>{
 						Model_Field searched_model_field = cs.search_model_field(primary_expr.ident, cs.instance_Field ,cs);
 						if(searched_model_field != null){//modelフィールド
 							f = searched_model_field;
-							ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs),cs.instance_expr);
+							ex = cs.ctx.mkSelect((ArrayExpr) ((Model_Field)f).get_Expr(cs.instance_expr, (ArrayList<IntExpr>) indexs, cs),cs.instance_expr);
 							if(cs.can_not_use_mutable){
 								new Exception("method depends on model field in refinenment type predicate.");
 							}
@@ -231,7 +231,7 @@ public class postfix_expr implements Parser<String>{
 						Model_Field searched_model_field = cs.search_model_field(ps.ident, f, cs);
 						if(searched_model_field != null){
 							f = searched_model_field;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+							ex = cs.ctx.mkSelect((ArrayExpr) ((Model_Field)f).get_Expr(ex, (ArrayList<IntExpr>) indexs, cs), ex);
 							if(cs.can_not_use_mutable){
 								new Exception("method depends on model field in refinenment type predicate.");
 							}

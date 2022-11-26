@@ -1,5 +1,7 @@
 package system;
 
+import java.util.ArrayList;
+
 import com.microsoft.z3.Expr;
 
 public class Quantifier_Variable extends Variable{
@@ -7,6 +9,8 @@ public class Quantifier_Variable extends Variable{
 	Quantifier_Variable(String field_name, Expr expr){
 		this.field_name = field_name;
 		this.quantifier_expr = expr;
+		
+		this.model_fields = new ArrayList<Model_Field>();
 	}
 	
 	@Override

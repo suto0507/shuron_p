@@ -382,29 +382,32 @@ public class Field {
 			root_check = true;
 		}else{
 			for(Pair<Field, Expr> checked_field : cs.checked_refinement_type_field){
-				if(checked_field.fst == this && checked_field.snd == class_Expr){
+				if(checked_field.fst == this && checked_field.snd.equals(class_Expr)){
 					return;
 				}
 			}
 		}
-		Expr ex = null;
-		if(this instanceof Variable){
-			ex = get_Expr(cs);
-		}else{
-			ex = cs.ctx.mkSelect(get_Expr(cs), class_Expr);
-		}
+		cs.checked_refinement_type_field.add(new Pair(this, class_Expr));
 		
-		if(this.refinement_type_clause.refinement_type!=null){
-			this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
-		}else if(this.refinement_type_clause.ident!=null){
-			refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
-			if(rt!=null){
-				rt.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+		if(this.refinement_type_clause!=null){
+			Expr ex = null;
+			if(this instanceof Variable){
+				ex = get_Expr(cs);
 			}else{
-                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
-            }
+				ex = cs.ctx.mkSelect(get_Expr(cs), class_Expr);
+			}
+			
+			if(this.refinement_type_clause.refinement_type!=null){
+				this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+			}else if(this.refinement_type_clause.ident!=null){
+				refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+				if(rt!=null){
+					rt.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+				}else{
+	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	            }
+			}
 		}
-		
 		
 		for(Model_Field mf : this.model_fields){
 			mf.add_refinement_constraint(cs, class_Expr, indexs, add_once);
@@ -428,29 +431,31 @@ public class Field {
 				}
 			}
 		}
+		cs.checked_refinement_type_field.add(new Pair(this, class_Expr));
 		
-		Expr ex = null;
-		if(this instanceof Variable){
-			ex = get_Expr(cs);
-		}else{
-			ex = cs.ctx.mkSelect(get_Expr(cs), class_Expr);
-		}
-		
-		if(this.refinement_type_clause.refinement_type!=null){
-			this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
-		}else if(this.refinement_type_clause.ident!=null){
-			refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
-			if(rt!=null){
-				rt.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+		if(this.refinement_type_clause!=null){
+			Expr ex = null;
+			if(this instanceof Variable){
+				ex = get_Expr(cs);
 			}else{
-                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
-            }
+				ex = cs.ctx.mkSelect(get_Expr(cs), class_Expr);
+			}
+			
+			if(this.refinement_type_clause.refinement_type!=null){
+				this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+			}else if(this.refinement_type_clause.ident!=null){
+				refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+				if(rt!=null){
+					rt.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+				}else{
+	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	            }
+			}
 		}
 		
 		for(Model_Field mf : this.model_fields){
 			mf.assert_refinement(cs, class_Expr, indexs);
 		}
-		
 		if(root_check){
 			cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 		}
@@ -461,9 +466,13 @@ public class Field {
 		if(this.refinement_type_clause!=null){
 			return true;
 		}
+		for(Model_Field mf : this.model_fields){
+			if(mf.hava_refinement_type()) return true;
+		}
 		return false;
 	}
 	
+	//â¿Œ^‚ª”z—ñ‚Ì—v‘f‚ÉŒ¾‹y‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©
 	public boolean have_index_access(Check_status cs) throws Exception{
 		boolean have = false;
 		
@@ -476,6 +485,9 @@ public class Field {
 			}else{
                 throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
             }
+		}
+		for(Model_Field mf : this.model_fields){
+			have = have || mf.have_index_access(cs);
 		}
 
 		return have;

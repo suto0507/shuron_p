@@ -780,27 +780,7 @@ import system.F_Assign;
 			}
 		}
 		
-		//‘O‚Æ’l‚ª“¯‚¶‚Å‚Í‚È‚¢
-		public void new_id_list(Check_status cs) throws Exception{
-			if(cs.variables!=null){
-				List<Variable> v_tmp = cs.variables;
-				cs.variables = new ArrayList<Variable>();
-				for(Variable v : v_tmp){
-					Variable new_v = v.clone_e();
-					new_v.id = cs.Check_status_share.get_tmp_num();
-					cs.variables.add(new_v);
-				}
-			}
-			if(cs.fields!=null){
-				List<Field> f_tmp = cs.fields;
-				cs.fields = new ArrayList<Field>();
-				for(Field f : f_tmp){
-					Field new_f = f.clone_e();
-					new_f.id = cs.Check_status_share.get_tmp_num();
-					cs.fields.add(new_f);
-				}
-			}
-		}
+		
 		
 		public void loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
 			if(this.is_expression){
@@ -839,7 +819,6 @@ import system.F_Assign;
 					enter_loop_condition = cs.ctx.mkBool(true);
 				}
 				BoolExpr pre_pathcondition = cs.pathcondition;
-				System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + enter_loop_condition);
 				cs.add_path_condition_tmp(enter_loop_condition);
 				
 				this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs);

@@ -23,7 +23,7 @@ public class represents_clause implements Parser<String>{
 		this.ident = new ident().parse(s, ps);
 		st = st + this.ident;
 		st = st + new spaces().parse(s,ps);
-		st = st + new String("=");
+		st = st + new string("=").parse(s, ps);
 		st = st + new spaces().parse(s,ps);
 		this.spec_expression = new spec_expression();
 		st = st + spec_expression.parse(s,ps);

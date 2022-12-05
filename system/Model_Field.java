@@ -124,7 +124,6 @@ public class Model_Field extends Field{
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
 	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
 	public void add_refinement_constraint(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
-		
 		boolean root_check = false;
 		if(cs.checked_refinement_type_field.size()==0){
 			root_check = true;

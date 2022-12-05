@@ -77,15 +77,24 @@ public class method_decl implements Parser<String>{
 		
 		this.st = this.st + new newLines().parse(s, ps);
 		
-		this.compound_statement = new compound_statement();
-		this.st = this.st + this.compound_statement.parse(s, ps);
-		
+		//method_body
+		s_backup = s.clone();
+		try{
+			this.compound_statement = new compound_statement();
+			this.st = this.st + this.compound_statement.parse(s, ps);
+		}catch (Exception e){
+			this.st = this.st + new string(";").parse(s, ps);
+		}
+			
+			
 		this.class_type_name = ps.class_type_name;
 		
 		return st;
 	}
 	
 	public void check(Check_status cs, Summery summery){
+		
+		if(this.modifiers.is_model) return; //modelメソッドは検証する必要はない
 		
 		System.out.println("Verify method " + this.ident);
 		

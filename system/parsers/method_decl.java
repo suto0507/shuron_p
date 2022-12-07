@@ -56,11 +56,11 @@ public class method_decl implements Parser<String>{
 			String st2 = "";
 			type_spec ts = new type_spec();
 			st2 = st2 + ts.parse(s, ps);
-			this.type_spec = ts;
 			st2 = st2 + new spaces().parse(s, ps);
 			
 			method_head mh = new method_head();
 			st2 = st2 + mh.parse(s, ps);
+			this.type_spec = ts;
 			this.ident = mh.ident;
 			this.formals = mh.formals;
 			this.st = this.st + st2;
@@ -93,8 +93,6 @@ public class method_decl implements Parser<String>{
 	}
 	
 	public void check(Check_status cs, Summery summery){
-		
-		if(this.modifiers.is_model) return; //modelメソッドは検証する必要はない
 		
 		System.out.println("Verify method " + this.ident);
 		
@@ -169,7 +167,7 @@ public class method_decl implements Parser<String>{
 			BoolExpr require_expr = null;
 			
 			if(this.method_specification != null){
-				if(this.modifiers.is_privte==false){
+				if(this.modifiers.is_private==false){
 					cs.ban_private_visibility = true;
 				}
 				
@@ -184,7 +182,7 @@ public class method_decl implements Parser<String>{
 			
 
 			if(this.method_specification != null){
-				if(this.modifiers.is_privte==false){
+				if(this.modifiers.is_private==false){
 					cs.ban_private_visibility = true;
 				}
 				Pair<List<F_Assign>, BoolExpr> assign_cnsts = this.method_specification.assignables(cs);
@@ -234,6 +232,7 @@ public class method_decl implements Parser<String>{
 
 		
 		//事後条件
+		cs.in_postconditions = true;
 		System.out.println("postcondition invariant");
 		BoolExpr post_invariant_expr = null;
 		if(cs.invariants!=null&&cs.invariants.size()>0 && !cs.in_helper){
@@ -258,7 +257,7 @@ public class method_decl implements Parser<String>{
 		System.out.println("postcondition ensures");
 		BoolExpr ensures_expr = null;
 		if(this.method_specification!=null){
-			if(this.modifiers.is_privte==false){
+			if(this.modifiers.is_private==false){
 				cs.ban_private_visibility = true;
 			}
 			
@@ -269,7 +268,7 @@ public class method_decl implements Parser<String>{
 			
 			cs.ban_private_visibility = false;
 		}
-		
+		cs.in_postconditions = false;
 		
 		
 		//返り値のrefinement_type
@@ -448,7 +447,7 @@ public class method_decl implements Parser<String>{
 			//処理する引数を表すVariable
 			modifiers modi = new modifiers();
 			modi.is_final = this.formals.param_declarations.get(i).is_final;
-			modi.is_privte = false;
+			modi.is_private = false;
 			modi.is_spec_public = false;
 			//↓のvに篩型をつけなくても動く(制約は追加していくので)
 			Variable v = cs.add_variable(this.formals.param_declarations.get(i).ident, this.formals.param_declarations.get(i).type_spec.type.type

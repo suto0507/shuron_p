@@ -17,7 +17,7 @@ import system.parsers.represents_clause;
 
 public class Model_Field extends Field{
 	
-	spec_expression represents_spec_expression;
+	represents_clause represents_clause;
 	
 	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 	public Model_Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
@@ -48,35 +48,44 @@ public class Model_Field extends Field{
 		ret.final_initialized = final_initialized;
 		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 		
-		ret.represents_spec_expression = this.represents_spec_expression;
+		ret.represents_clause = this.represents_clause;
 		return ret;
 	}
 	
 	public void set_repersents(Check_status cs){
 		represents_clause rc = cs.Check_status_share.compilation_unit.search_represents_clause(this.class_object.type, this.field_name, cs.this_field.type);
-		if(rc != null){
-			represents_spec_expression = rc.spec_expression;
-		}
+		represents_clause = rc;
 	}
 	
 	//class_exprを渡すこと場合、representsに関する制約も追加する
 	public Expr get_Expr(Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
 		Expr expr = get_Expr(cs);
-		if(this.represents_spec_expression!=null){
+		if(this.represents_clause!=null){
 			Expr full_expr = cs.ctx.mkSelect(expr, class_expr);
 			Expr pre_instance_expr = cs.instance_expr;
 			Field pre_instance_Field = cs.instance_Field;
 			ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+			boolean pre_ban_private_visibility = cs.ban_private_visibility;
+			boolean pre_ban_default_visibility = cs.ban_default_visibility;
 			
 			cs.instance_expr = class_expr;
 			cs.instance_Field = this.class_object;
 			cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
+			//可視性について
+			cs.ban_default_visibility = false;
+			if(this.represents_clause.is_private){
+				cs.ban_private_visibility = false;
+			}else{
+				cs.ban_private_visibility = true;
+			}
 			
-			cs.add_constraint(cs.ctx.mkEq(full_expr, this.represents_spec_expression.check(cs).expr));
+			cs.add_constraint(cs.ctx.mkEq(full_expr, this.represents_clause.spec_expression.check(cs).expr));
 			
 			cs.instance_expr = pre_instance_expr;
 			cs.instance_Field = pre_instance_Field;
 			cs.instance_indexs = pre_instance_indexs;
+			cs.ban_private_visibility = pre_ban_private_visibility;
+			cs.ban_default_visibility = pre_ban_default_visibility;
 		}
 		
 		return expr;

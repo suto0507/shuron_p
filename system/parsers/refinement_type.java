@@ -68,6 +68,8 @@ public class refinement_type implements Parser<String>{
 		Field pre_instance_Field = cs.instance_Field;
 		ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
 		boolean pre_use_only_helper_method = cs.use_only_helper_method;
+		boolean pre_ban_private_visibility = cs.ban_private_visibility;
+		boolean pre_ban_default_visibility = cs.ban_default_visibility;
 
 	    //â¿Œ^‚Ìˆ—‚Ì‚½‚ß‚Ì–‘O€”õ
 		cs.instance_expr = class_Expr;
@@ -85,6 +87,14 @@ public class refinement_type implements Parser<String>{
 		
 		BoolExpr expr = this.predicate.check(cs);
 		cs.instance_Field.type = pre_class_type_name;
+
+		//‰Â‹«‚É‚Â‚¢‚Ä
+		cs.ban_default_visibility = false;
+		if(refined_Field.modifiers != null && refined_Field.modifiers.is_private){
+			cs.ban_private_visibility = false;
+		}else{
+			cs.ban_private_visibility = true;
+		}
 		
 		cs.assert_constraint(expr);
 		cs.in_refinement_predicate = false;
@@ -117,6 +127,8 @@ public class refinement_type implements Parser<String>{
 		cs.instance_Field = pre_instance_Field;
 		cs.instance_indexs = pre_instance_indexs;
 		cs.use_only_helper_method = pre_use_only_helper_method;
+		cs.ban_private_visibility = pre_ban_private_visibility;
+		cs.ban_default_visibility = pre_ban_default_visibility;
 	}
 	
 	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
@@ -140,6 +152,8 @@ public class refinement_type implements Parser<String>{
 	    Expr pre_instance_expr = cs.instance_expr;
 		Field pre_instance_Field = cs.instance_Field;
 		ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+		boolean pre_ban_private_visibility = cs.ban_private_visibility;
+		boolean pre_ban_default_visibility = cs.ban_default_visibility;
 
 	    //â¿Œ^‚Ìˆ—‚Ì‚½‚ß‚Ì–‘O€”õ
 		cs.instance_expr = class_Expr;
@@ -157,6 +171,14 @@ public class refinement_type implements Parser<String>{
 		BoolExpr expr = this.predicate.check(cs);
 		
 		cs.instance_Field.type = pre_class_type_name;
+		
+		//‰Â‹«‚É‚Â‚¢‚Ä
+		cs.ban_default_visibility = false;
+		if(refined_Field.modifiers != null && refined_Field.modifiers.is_private){
+			cs.ban_private_visibility = false;
+		}else{
+			cs.ban_private_visibility = true;
+		}
 		
 		cs.add_constraint(expr);
 		cs.in_refinement_predicate = false;
@@ -188,6 +210,8 @@ public class refinement_type implements Parser<String>{
 	    cs.instance_expr = pre_instance_expr;
 		cs.instance_Field = pre_instance_Field;
 		cs.instance_indexs = pre_instance_indexs;
+		cs.ban_private_visibility = pre_ban_private_visibility;
+		cs.ban_default_visibility = pre_ban_default_visibility;
 	}
 	
 	// subtype <= this

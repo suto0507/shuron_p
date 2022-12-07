@@ -45,7 +45,7 @@ public class param_declaration implements Parser<String>{
 		if(cs.search_variable(this.ident)==false){
 			modifiers modi = new modifiers();
 			modi.is_final = this.is_final;
-			modi.is_privte = false;
+			modi.is_private = false;
 			modi.is_spec_public = false;
 			Variable v = cs.add_variable(this.ident, this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, modi, cs.ctx.mkBool(true));
 			v.temp_num=0;
@@ -54,6 +54,7 @@ public class param_declaration implements Parser<String>{
 			}
 			
 			v.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
+			v.is_arg = true;
 		}else{
 			//System.out.println("this name is used");
 			throw new Exception("this name is used");

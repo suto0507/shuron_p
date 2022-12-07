@@ -21,6 +21,7 @@ public class Variable extends Field{
 	public BoolExpr alias;
 	public BoolExpr alias_refined;
 	public boolean out_loop_v;//ループの外で定義された変数
+	public boolean is_arg;//検証中のメソッドの引数
 	
 	public Field arg_field;//この変数がメソッド呼び出しの引数であるとき、引数として渡されたField
 	

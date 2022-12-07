@@ -49,7 +49,7 @@ public class logical_or_expr implements Parser<String>{
 		}else{
 			BoolExpr expr = (BoolExpr)logical_and_expr.check(cs).expr;
 			for(logical_and_expr lae : logical_and_exprs){
-				expr = cs.ctx.mkAnd(expr,(BoolExpr)lae.check(cs).expr);
+				expr = cs.ctx.mkOr(expr,(BoolExpr)lae.check(cs).expr);
 			}
 			return new Check_return(expr, null, null);
 		}
@@ -69,7 +69,7 @@ public class logical_or_expr implements Parser<String>{
 		}else{
 			BoolExpr expr = (BoolExpr)logical_and_expr.loop_assign(assigned_fields, cs).expr;
 			for(logical_and_expr lae : logical_and_exprs){
-				expr = cs.ctx.mkAnd(expr,(BoolExpr)lae.loop_assign(assigned_fields, cs).expr);
+				expr = cs.ctx.mkOr(expr,(BoolExpr)lae.loop_assign(assigned_fields, cs).expr);
 			}
 			return new Check_return(expr, null, null);
 		}

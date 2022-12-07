@@ -5,7 +5,7 @@ import system.Parser_status;
 import system.Source;
 
 public class modifiers implements Parser<String>{
-	boolean is_privte;
+	boolean is_private;
 	public boolean is_final;
 	boolean is_spec_public;
 	boolean is_pure;
@@ -14,7 +14,7 @@ public class modifiers implements Parser<String>{
 	
 	modifiers(){
 		this.is_final = false;
-		this.is_privte = false;
+		this.is_private = false;
 		this.is_spec_public = false;
 		this.is_pure = false;
 		this.is_helper = false;
@@ -29,7 +29,7 @@ public class modifiers implements Parser<String>{
 				s_backup = s.clone();
 				String st = new modifier().parse(s,ps);
 				if(st.equals("private")){
-					this.is_privte = true;
+					this.is_private = true;
 				}else if(st.equals("final")){
 					this.is_final = true;
 				}else if(st.equals("spec_public")){

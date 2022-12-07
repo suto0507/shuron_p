@@ -92,7 +92,7 @@ public class Comment_analysis {
 		new_str += str.substring(end);
 		str = new_str;
 
-		ptn = Pattern.compile("/\\*.*\\*/");
+		ptn = Pattern.compile("/\\*(.*?)*\\*/", Pattern.DOTALL);
 		match = ptn.matcher(str);
 		new_str = "";
 		end = 0;

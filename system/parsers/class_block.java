@@ -7,6 +7,7 @@ import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Model_Field;
@@ -18,7 +19,7 @@ import system.Summery;
 
 public class class_block implements Parser<String>{
 	
-	List<invariant> invariants;
+	public List<invariant> invariants;
 	List<def_type_clause> def_type_clauses;
 	List<method_decl> method_decls;
 	List<variable_definition> variable_definitions;
@@ -95,53 +96,65 @@ public class class_block implements Parser<String>{
 		cs.invariants = this.invariants;
 		
 		for(method_decl method :method_decls){
-			Check_status csc =  cs.clone();
-			csc.solver = csc.ctx.mkSolver();
-			
-			//初期化
-			
-			//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため
-			while(cd!=null){
-				class_block cb = cd.class_block;
+			if(!(method.modifiers != null && method.modifiers.is_model)){//modelメソッドは検証する必要はない
+				Check_status csc =  cs.clone();
+				csc.solver = csc.ctx.mkSolver();
 				
-				BoolExpr alias_2d = csc.ctx.mkBool(true);
-				if(method.type_spec==null) alias_2d = csc.ctx.mkBool(false);//コンストラクタ
-
-				for(variable_definition vd : cb.variable_definitions){
-					if(vd.modifiers.is_model){
-						csc.search_model_field(vd.variable_decls.ident, csc.this_field, csc);
-					}else{
-						//データグループのリストを作る
-						ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
-						for(group_name gn : vd.group_names){
-							String class_type = null;
-							if(gn.is_super){
-								class_type = cd.super_class.class_name;
-							}else{
-								class_type = cd.class_name;
+				//初期化
+				
+				//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため
+				while(cd!=null){
+					class_block cb = cd.class_block;
+					
+					BoolExpr alias_2d = csc.ctx.mkBool(true);
+					if(method.type_spec==null) alias_2d = csc.ctx.mkBool(false);//コンストラクタ
+	
+					for(variable_definition vd : cb.variable_definitions){
+						if(vd.modifiers.is_model){
+							csc.search_model_field(vd.variable_decls.ident, csc.this_field, csc);
+						}else{
+							//データグループのリストを作る
+							ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
+							for(group_name gn : vd.group_names){
+								String class_type = null;
+								if(gn.is_super){
+									class_type = cd.super_class.class_name;
+								}else{
+									class_type = cd.class_name;
+								}
+								
+								String pre_type = csc.this_field.type;
+								csc.this_field.type = class_type;
+								data_groups.add(csc.search_model_field(gn.ident, csc.this_field, csc));
+								csc.this_field.type = pre_type;
 							}
 							
-							String pre_type = csc.this_field.type;
-							csc.this_field.type = class_type;
-							data_groups.add(csc.search_model_field(gn.ident, csc.this_field, csc));
-							csc.this_field.type = pre_type;
+							Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
+									, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type, alias_2d, data_groups);
+							
+							//initializerが付いていた場合
+							if(vd.variable_decls.initializer!=null && (method.type_spec==null || (vd.modifiers != null && vd.modifiers.is_final))){
+								Check_return init_Expr = vd.variable_decls.initializer.check(csc);
+								Expr field_Expr = csc.ctx.mkSelect(f.get_Expr(csc), csc.this_field.get_Expr(csc));
+								csc.add_constraint(csc.ctx.mkEq(field_Expr, init_Expr.expr));
+								if(method.type_spec==null && (vd.modifiers != null && vd.modifiers.is_final)){
+									f.final_initialized = true;
+								}
+							}
+							
+							//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
+							List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
+							indexs.add(new ArrayList<IntExpr>());
+							f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(csc.ctx.mkBool(false), indexs));
+							
+							csc.fields.add(f);
 						}
-						
-						Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
-								, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type, alias_2d, data_groups);
-						
-						//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
-						List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
-						indexs.add(new ArrayList<IntExpr>());
-						f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(csc.ctx.mkBool(false), indexs));
-						
-						csc.fields.add(f);
 					}
+					cd = cd.super_class;
 				}
-				cd = cd.super_class;
+	
+				method.check(csc, summery);
 			}
-
-			method.check(csc, summery);
 		}
 	}
 	

@@ -202,7 +202,7 @@ public class compilation_unit implements Parser<String>{
 		for(class_declaration cd : classes){
 			if(cd.class_name.equals(class_name)){
 				for(represents_clause rc : cd.class_block.represents_clauses){
-					if(rc.ident.equals(ident) && !(rc.is_private && class_name.equals(this_class_name))){
+					if(rc.ident.equals(ident) && !(rc.is_private && !class_name.equals(this_class_name))){
 						return rc;
 					}
 				}

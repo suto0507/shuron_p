@@ -64,6 +64,7 @@ public class Check_status {
 	public List<Pair<String, Expr>> quantifiers;
 	
 	public boolean in_jml_predicate;
+	public boolean in_postconditions;
 	public boolean use_only_helper_method;
 	
 	
@@ -151,6 +152,7 @@ public class Check_status {
 		}
 		
 		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true), data_groups);
+		
 		
 		//新しく追加したフィールドはassinable節で触れられていない
 		List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();

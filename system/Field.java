@@ -6,6 +6,9 @@ import java.util.List;
 import com.microsoft.z3.*;
 
 import system.parsers.refinement_type_clause;
+import system.parsers.variable_definition;
+import system.parsers.class_declaration;
+import system.parsers.invariant;
 import system.parsers.modifiers;
 import system.parsers.refinement_type;
 
@@ -493,7 +496,45 @@ public class Field {
 		return have;
 	}
 	
+	//finalのフィールドにinitializerが付いていた場合
+	public void set_initialize(Expr class_expr, Check_status cs) throws Exception{
+		variable_definition vd = cs.Check_status_share.compilation_unit.search_field(class_object.type, this.field_name, false);
+		//initializerが付いていた場合
+		if(vd.variable_decls.initializer!=null && vd.modifiers.is_final){
+			Check_return init_Expr = vd.variable_decls.initializer.check(cs);
+			Expr field_Expr = cs.ctx.mkSelect(this.get_Expr(cs), class_expr);
+			cs.add_constraint(cs.ctx.mkEq(field_Expr, init_Expr.expr));
+		}
+	}
 	
+	//このフィールドが持つinvariantに関しての制約を返す
+	//配列に関しては、任意のインデックスに対する制約
+	public BoolExpr invariants_expr(Expr class_expr, Check_status cs) throws Exception{
+		BoolExpr ret_expr =  cs.ctx.mkBool(true);
+		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(type);
+		if(cd.class_block.invariants.size()!=0){
+			Expr pre_instance_expr = cs.instance_expr;
+			Field pre_instance_Field = cs.instance_Field;
+			ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+			
+			Pair<Expr, ArrayList<IntExpr>> expr_indexs =  fresh_index_full_expr(cs);
+			cs.instance_expr = expr_indexs.fst;
+			cs.instance_Field = class_object;
+			cs.instance_indexs = expr_indexs.snd;
+			
+			for(invariant invariant : cd.class_block.invariants){
+				Expr invariant_expr = invariant.check(cs);
+				if(expr_indexs.snd.size() > 0){
+					aaaaaaaaaaaaaaaaaaa
+				}
+			}
+			
+			
+			cs.instance_expr = pre_instance_expr;
+			cs.instance_Field = pre_instance_Field;
+			cs.instance_indexs = pre_instance_indexs;
+		}
+	}
 	
 
 }

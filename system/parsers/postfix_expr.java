@@ -94,6 +94,10 @@ public class postfix_expr implements Parser<String>{
 					if(cs.search_variable(primary_expr.ident)){
 						f = cs.get_variable(primary_expr.ident);
 						ex = f.get_Expr(cs);
+						if(cs.in_postconditions && ((Variable)f).is_arg && f.dims==0){//メソッドの引数には暗黙のoldが付く
+							f = cs.this_old_status.get_variable(primary_expr.ident);
+							ex = f.get_Expr(cs.this_old_status);
+						}
 					}
 				}
 				
@@ -107,6 +111,10 @@ public class postfix_expr implements Parser<String>{
 								new Exception("method depends on mutable field in refinenment type predicate.");
 							}
 						}
+						if(f.modifiers.is_final){
+							f.set_initialize(cs.instance_expr, cs);
+						}
+						
 					}else{
 						Model_Field searched_model_field = cs.search_model_field(primary_expr.ident, cs.instance_Field ,cs);
 						if(searched_model_field != null){//modelフィールド
@@ -132,12 +140,12 @@ public class postfix_expr implements Parser<String>{
 				}
 				//JML節での使えない可視性の確認
 				if(cs.ban_default_visibility){
-					if(f.modifiers!=null&&f.modifiers.is_privte==false){
+					if(f.modifiers!=null&&f.modifiers.is_private==false){
 						throw new Exception("can not use default visibility variable");
 					}
 				}
 				if(cs.ban_private_visibility){
-					if(f.modifiers!=null&&f.modifiers.is_privte==true){
+					if(f.modifiers!=null&&f.modifiers.is_private==true){
 						throw new Exception("can not use private visibility variable");
 					}
 				}
@@ -199,7 +207,7 @@ public class postfix_expr implements Parser<String>{
 		for(int i = 0; i < this.primary_suffixs.size(); i++){
 			primary_suffix ps = this.primary_suffixs.get(i);
 			if(ps.is_field){
-				if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
+				if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(i+1).is_method){
 					ident = ps.ident;
 				}else if(f.dims_sum() > indexs.size() && ps.ident.equals("length")){
 					if(this.primary_suffixs.size()-1 != i) throw new Exception("length don't have suffix");
@@ -227,6 +235,10 @@ public class postfix_expr implements Parser<String>{
 								new Exception("method depends on mutable field in refinenment type predicate.");
 							}
 						}
+
+						if(f.modifiers.is_final){
+							f.set_initialize(pre_ex, cs);
+						}
 					}else{
 						Model_Field searched_model_field = cs.search_model_field(ps.ident, f, cs);
 						if(searched_model_field != null){
@@ -252,12 +264,12 @@ public class postfix_expr implements Parser<String>{
 					
 					//JML節での使えない可視性の確認
 					if(cs.ban_default_visibility){
-						if(f.modifiers!=null&&f.modifiers.is_privte==false){
+						if(f.modifiers!=null&&f.modifiers.is_private==false){
 							throw new Exception("can not use default visibility variable");
 						}
 					}
 					if(cs.ban_private_visibility){
-						if(f.modifiers!=null&&f.modifiers.is_privte==true){
+						if(f.modifiers!=null&&f.modifiers.is_private==true){
 							throw new Exception("can not use private visibility variable");
 						}
 					}
@@ -383,7 +395,7 @@ public class postfix_expr implements Parser<String>{
 			for(int i = 0; i < this.primary_suffixs.size(); i++){
 				primary_suffix ps = this.primary_suffixs.get(i);
 				if(ps.is_field){
-					if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
+					if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(i+1).is_method){
 						ident = ps.ident;
 					}else{
 						Field searched_field = cs.search_field(ps.ident, f, cs);
@@ -447,6 +459,8 @@ public class postfix_expr implements Parser<String>{
 	
 	public Field method(Check_status cs, String ident, Field f, Expr ex, ArrayList<IntExpr> indexs, primary_suffix ps)throws Exception{
 		
+		System.out.println("call method " + ident);
+		
 		boolean pre_can_not_use_mutable = cs.can_not_use_mutable;
 		if(cs.in_refinement_predicate) cs.can_not_use_mutable = true;
 		boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
@@ -502,7 +516,7 @@ public class postfix_expr implements Parser<String>{
 		cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
 		
 		
-		ArrayList<Variable> assignable_args = new ArrayList<Variable>();
+		
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
@@ -516,7 +530,6 @@ public class postfix_expr implements Parser<String>{
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
 			if(!((v.type.equals("int") || v.type.equals("boolean")) && v.dims==0))v.arg_field =  method_arg_valuse.get(j).field;
 			if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
-			if((v.type.equals("int") || v.type.equals("boolean"))) assignable_args.add(v);
 			
 			//配列の篩型が安全かどうか
 			Expr method_arg_assign_field_expr = null;
@@ -535,8 +548,9 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		//事前条件
+		System.out.println("method call pre invarinats");
 		BoolExpr pre_invariant_expr = null;
-		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0 && !cs.in_helper){
+		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0 && !md.modifiers.is_helper){
 			for(invariant inv : cd.class_block.invariants){
 				if(pre_invariant_expr == null){
 					pre_invariant_expr = (BoolExpr) inv.check(cs);
@@ -548,6 +562,7 @@ public class postfix_expr implements Parser<String>{
 		}
 		BoolExpr require_expr = null;
 
+		System.out.println("method call requires");
 		if(md.method_specification != null){
 			require_expr = md.method_specification.requires_expr(cs);
 			cs.assert_constraint(require_expr);
@@ -559,6 +574,7 @@ public class postfix_expr implements Parser<String>{
 		cs.old_status = csc;
 		
 		//assign
+		System.out.println("method call assign");
 		if(md.modifiers.is_pure){
 			//何もしない
 		}else if(md.method_specification != null){
@@ -586,7 +602,7 @@ public class postfix_expr implements Parser<String>{
 				}else{
 					field = variable;
 				}
-				if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+				if(field instanceof Variable && field.dims > 0){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
 					check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), assign_cnsts.snd, cs.in_helper, cs.in_constructor, cs);
 				}
 			}
@@ -657,7 +673,7 @@ public class postfix_expr implements Parser<String>{
 				}else{
 					field = variable;
 				}
-				if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+				if(field instanceof Variable && field.dims > 0){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
 					cs.add_constraint(cs.ctx.mkImplies(cs.ctx.mkNot(assign_cnsts.snd), cs.ctx.mkEq(field.get_Expr(cs), field.get_Expr_assign(cs))));
 					field.tmp_plus(cs);
 				}
@@ -677,7 +693,7 @@ public class postfix_expr implements Parser<String>{
 				}else{
 					field = variable;
 				}
-				if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+				if(field instanceof Variable && field.dims > 0){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
 					check_array_assign_in_helper_or_constructor(field, new ArrayList<IntExpr>(), cs.ctx.mkBool(true), cs.in_helper, cs.in_constructor, cs);
 				}
 			}
@@ -693,7 +709,7 @@ public class postfix_expr implements Parser<String>{
 				}else{
 					field = variable;
 				}
-				if(field instanceof Variable){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
+				if(field instanceof Variable && field.dims > 0){//cs.fieldsに無いもの 　　　　thisもVariableのインスタンス
 					field.tmp_plus(cs);
 				}
 			}
@@ -701,10 +717,6 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		
-		//引数自体には,intやbooleanであれば無条件に代入できる
-		for(Variable v : assignable_args){
-			v.tmp_plus(cs);
-		}
 		
 		//helperメソッドやコンストラクターにおける配列のエイリアス
 		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
@@ -721,8 +733,9 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		//事後条件
+		System.out.println("method call post invarinats");
 		BoolExpr post_invariant_expr = null;
-		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0 && !cs.in_helper){
+		if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0 && !md.modifiers.is_helper){
 			for(invariant inv : cd.class_block.invariants){
 				if(post_invariant_expr == null){
 					post_invariant_expr = (BoolExpr) inv.check(cs);
@@ -732,6 +745,8 @@ public class postfix_expr implements Parser<String>{
 			}
 			cs.add_constraint(post_invariant_expr);
 		}
+		
+		System.out.println("method call ensures");
 		BoolExpr ensures_expr = null;
 		
 		if(md.method_specification != null){
@@ -845,7 +860,7 @@ public class postfix_expr implements Parser<String>{
 		for(int i = 0; i < this.primary_suffixs.size(); i++){
 			primary_suffix ps = this.primary_suffixs.get(i);
 			if(ps.is_field){
-				if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(0).is_method){
+				if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(i+1).is_method){
 					ident = ps.ident;
 				}else if(f.dims_sum() > indexs.size() && ps.ident.equals("length")){
 					if(this.primary_suffixs.size()-1 != i) throw new Exception("length don't have suffix");

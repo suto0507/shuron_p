@@ -1,5 +1,3 @@
-nes (13 sloc)  183 Bytes
-
 class model {
 	//@model int x;
 	int y; //@ in x;

@@ -93,7 +93,6 @@ public class class_block implements Parser<String>{
 	
 	public void check(Check_status cs, Summery summery, class_declaration cd) throws Exception{
 		//invariantとフィールドについて書く
-		cs.invariants = this.invariants;
 		
 		for(method_decl method :method_decls){
 			if(!(method.modifiers != null && method.modifiers.is_model)){//modelメソッドは検証する必要はない

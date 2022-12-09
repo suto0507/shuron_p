@@ -63,9 +63,12 @@ public class class_declaration implements Parser<String>{
 	public ArrayList<Field> all_field(int deep, int deep_limmit, Field class_object, Check_status cs) throws Exception{
 		if(deep >= deep_limmit) return new ArrayList<Field>();
 		ArrayList<Field> fields = new ArrayList<Field>();
+		fields.add(class_object);
 		for(variable_definition vd : this.class_block.variable_definitions){
 			Field field = cs.search_field(vd.variable_decls.ident, class_object, cs);
-			fields.add(field);
+			if(field == null)field = cs.search_model_field(vd.variable_decls.ident, class_object, cs);
+			if(field == null)throw new Exception(class_object.type + " don't have " + vd.variable_decls.ident);
+			
 			if(!vd.variable_decls.type_spec.type.type.equals("int") && !vd.variable_decls.type_spec.type.type.equals("boolean")){
 				class_declaration cd = cs.Check_status_share.compilation_unit.search_class(vd.variable_decls.type_spec.type.type);
 				if(cd != null){
@@ -74,9 +77,11 @@ public class class_declaration implements Parser<String>{
 				}else{
 					throw new Exception("class " + vd.variable_decls.type_spec.type.type + " don't exist.");
 				}
+			}else{
+				if(!(deep+1 >= deep_limmit))fields.add(field);
 			}
 		}
-		
+
 		return fields;
 	}
 	

@@ -509,31 +509,55 @@ public class Field {
 	
 	//このフィールドが持つinvariantに関しての制約を返す
 	//配列に関しては、任意のインデックスに対する制約
-	public BoolExpr invariants_expr(Expr class_expr, Check_status cs) throws Exception{
+	public BoolExpr invariants_expr(Check_status cs) throws Exception{
 		BoolExpr ret_expr =  cs.ctx.mkBool(true);
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(type);
+		if(cd==null) throw new Exception("cannot find class " + type);
 		if(cd.class_block.invariants.size()!=0){
 			Expr pre_instance_expr = cs.instance_expr;
 			Field pre_instance_Field = cs.instance_Field;
 			ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
 			
+			BoolExpr pre_pathcondition = cs.pathcondition;
+			
 			Pair<Expr, ArrayList<IntExpr>> expr_indexs =  fresh_index_full_expr(cs);
 			cs.instance_expr = expr_indexs.fst;
-			cs.instance_Field = class_object;
+			cs.instance_Field = this;
 			cs.instance_indexs = expr_indexs.snd;
 			
 			for(invariant invariant : cd.class_block.invariants){
-				Expr invariant_expr = invariant.check(cs);
-				if(expr_indexs.snd.size() > 0){
-					aaaaaaaaaaaaaaaaaaa
+				if(invariant.is_private==true){//可視性が同じものしか使えない
+					cs.ban_default_visibility = true;
+				}else{
+					cs.ban_private_visibility = true;
 				}
+				
+				Expr invariant_expr = invariant.check(cs);
+				
+				cs.ban_default_visibility = false;
+				cs.ban_private_visibility = false;
+				
+				if(expr_indexs.snd.size() > 0){
+					IntExpr[] tmps = new IntExpr[expr_indexs.snd.size()];
+					for(int i = 0; i < expr_indexs.snd.size(); i++){
+						tmps[i] = expr_indexs.snd.get(i);
+					}
+					invariant_expr = cs.ctx.mkForall(tmps, invariant_expr, 1, null, null, null, null);
+				}
+
+				cs.add_path_condition_tmp((BoolExpr) invariant_expr);
+				ret_expr = cs.ctx.mkAnd(ret_expr, invariant_expr);
 			}
 			
 			
 			cs.instance_expr = pre_instance_expr;
 			cs.instance_Field = pre_instance_Field;
 			cs.instance_indexs = pre_instance_indexs;
+
+			cs.pathcondition = pre_pathcondition;
 		}
+		
+		return ret_expr;
 	}
 	
 

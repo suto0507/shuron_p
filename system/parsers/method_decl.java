@@ -136,26 +136,12 @@ public class method_decl implements Parser<String>{
 				
 				//事前条件
 				System.out.println("precondition invariant");
-				BoolExpr pre_invariant_expr = null;
-				if(cs.invariants!=null&&cs.invariants.size()>0 && !cs.in_helper){
-					for(invariant inv : cs.invariants){
-						if(inv.is_private==true){//可視性が同じものしか使えない
-							cs.ban_default_visibility = true;
-						}else{
-							cs.ban_private_visibility = true;
-						}
-
-						if(pre_invariant_expr == null){
-							pre_invariant_expr = (BoolExpr) inv.check(cs);
-						}else{
-							pre_invariant_expr = cs.ctx.mkAnd(pre_invariant_expr, (BoolExpr)inv.check(cs));
-						}
-
-						cs.ban_default_visibility = false;
-						cs.ban_private_visibility = false;
-					}
+				
+				if(!cs.in_helper){
+					BoolExpr pre_invariant_expr = cs.all_invariant_expr();
 					cs.add_constraint(pre_invariant_expr);
 				}
+				
 
 			
 			}else{//コンストラクタ
@@ -234,26 +220,11 @@ public class method_decl implements Parser<String>{
 		//事後条件
 		cs.in_postconditions = true;
 		System.out.println("postcondition invariant");
-		BoolExpr post_invariant_expr = null;
-		if(cs.invariants!=null&&cs.invariants.size()>0 && !cs.in_helper){
-			for(invariant inv : cs.invariants){
-				if(inv.is_private==true){//可視性が同じものしか使えない
-					cs.ban_default_visibility = true;
-				}else{
-					cs.ban_private_visibility = true;
-				}
-				
-				if(post_invariant_expr == null){
-					post_invariant_expr = (BoolExpr) inv.check(cs);
-				}else{
-					post_invariant_expr = cs.ctx.mkAnd(post_invariant_expr, (BoolExpr)inv.check(cs));
-				}
-				
-				cs.ban_default_visibility = false;
-				cs.ban_private_visibility = false;
-			}
-			cs.assert_constraint(post_invariant_expr);
+		if(!cs.in_helper){
+			BoolExpr post_invariant_expr = cs.all_invariant_expr();
+			cs.add_constraint(post_invariant_expr);
 		}
+		
 		System.out.println("postcondition ensures");
 		BoolExpr ensures_expr = null;
 		if(this.method_specification!=null){

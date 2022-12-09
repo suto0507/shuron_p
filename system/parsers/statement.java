@@ -449,7 +449,7 @@ import system.F_Assign;
 				}
 				//assigned_fields‚ÉŠÜ‚Ü‚ê‚È‚¢‚à‚Ì‚ª“¯‚¶’ö“x‚Ì‚±‚Æ‚Í•ÛØ‚·‚é
 				if(!assigned_fields.snd){
-					System.out.println("no assign fields in loop");
+					System.out.println("fields that isn't assigned in loop");
 					for(Variable v : cs_loop_assign_check.variables){
 						boolean assigned = false;
 						for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
@@ -827,6 +827,7 @@ import system.F_Assign;
 					enter_loop_condition = cs.ctx.mkBool(true);
 				}
 				BoolExpr pre_pathcondition = cs.pathcondition;
+
 				cs.add_path_condition_tmp(enter_loop_condition);
 				
 				this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs);

@@ -18,7 +18,6 @@ public class Check_status {
 	//List<Variable> before_if_variables;
 	public List<Field> fields;
 	public List<Model_Field> model_fields;
-	public List<invariant> invariants;
 	public Context ctx;
 	public Solver solver;
 	public Field this_field;
@@ -70,7 +69,8 @@ public class Check_status {
 	
 	public boolean in_helper; //helperメソッドの中かどうか
 	public ArrayList<Helper_assigned_field> helper_assigned_fields;
-	public int field_deep_limmit;
+	
+	public int invariant_refinement_type_deep_limmit;//invarintどこまで検証するか　また、helperメソッドで普通のメソッドを呼び出す際にどこまで篩型を検証するか　0の時は検証しない
 	
 	public ArrayList<Pair<Field, Expr>> checked_refinement_type_field;//篩型の制約を既に追加したもの　Fieldとclass_objectのExprのPair    使い切りなのでcloneでは中身は気にしなくていい
 	
@@ -356,7 +356,6 @@ public class Check_status {
 			cs.model_fields.add(mf);
 		}
 		
-		cs.invariants = this.invariants;
 		cs.this_field = this.this_field;
 		
 		cs.in_method_call = this.in_method_call;
@@ -396,7 +395,7 @@ public class Check_status {
 		for(Helper_assigned_field assigned_field : this.helper_assigned_fields){
 			cs.helper_assigned_fields.add(assigned_field);
 		}
-		cs.field_deep_limmit = this.field_deep_limmit;
+		cs.invariant_refinement_type_deep_limmit = this.invariant_refinement_type_deep_limmit;
 		
 		cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 		
@@ -513,7 +512,17 @@ public class Check_status {
 	public void assert_all_refinement_type() throws Exception{
 		System.out.println("check all refinement");
 		class_declaration cd = Check_status_share.compilation_unit.search_class(this_field.type);
-		ArrayList<Field> fields = cd.all_field(0, field_deep_limmit, this_field, this);
+		ArrayList<Field> fields = cd.all_field(0, invariant_refinement_type_deep_limmit+1, this_field, this);
+		//ローカル変数も
+		for(Variable v : variables){
+			if(!(v.type.equals("int") || v.type.equals("boolean")) && v.is_arg){
+				cd = Check_status_share.compilation_unit.search_class(v.type);
+				fields.addAll(cd.all_field(0, invariant_refinement_type_deep_limmit+1, this_field, this));
+			}else{
+				fields.add(v);
+			}
+		}
+		
 		for(Field field : fields){
 			if(field.hava_refinement_type()){
 				Pair<Expr, ArrayList<IntExpr>> expr_indexs = field.class_object.fresh_index_full_expr(this);
@@ -524,6 +533,26 @@ public class Check_status {
 				field.assert_refinement(this, class_object_expr, indexs);
 			}
 		}
+	}
+	
+	//必要なinvariant
+	public BoolExpr all_invariant_expr() throws Exception{
+		class_declaration cd = Check_status_share.compilation_unit.search_class(this_field.type);
+		ArrayList<Field> all_fields = cd.all_field(0, invariant_refinement_type_deep_limmit, this_field, this);
+		//ローカル変数も
+		for(Variable v : variables){
+			if(!(v.type.equals("int") || v.type.equals("boolean")) && v.is_arg){//引数だけ考える
+				cd = Check_status_share.compilation_unit.search_class(v.type);
+				if(cd==null) throw new Exception("cannot find class " + v.type);
+				all_fields.addAll(cd.all_field(0, invariant_refinement_type_deep_limmit, v, this));
+			}
+		}
+		
+		BoolExpr ret_expr = this.ctx.mkBool(true);
+		for(Field field : all_fields){
+			if(!(field.type.equals("int") || field.type.equals("boolean")))ret_expr = this.ctx.mkAnd(ret_expr, field.invariants_expr(this));
+		}
+		return ret_expr;
 	}
 	
 	public void check_array_alias(Field f1, Expr f1_expr, Expr f1_class_object_expr, ArrayList<IntExpr> f1_indexs, Field f2, Expr f2_expr, Expr f2_class_object_expr, ArrayList<IntExpr> f2_indexs) throws Exception{

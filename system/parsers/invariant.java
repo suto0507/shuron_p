@@ -10,7 +10,7 @@ import system.Source;
 
 public class invariant implements Parser<String>{
 	String st;
-	boolean is_private;
+	public boolean is_private;
 	predicate predicate;
 	
 	public String class_type_name;

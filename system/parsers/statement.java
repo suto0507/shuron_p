@@ -161,204 +161,7 @@ import system.F_Assign;
 			}else if(this.assert_statement!=null){
 				this.assert_statement.check(cs);
 			}else if(this.is_if){
-				BoolExpr pc = (BoolExpr)this.expression.check(cs).expr;
-
-				Check_status cs_then = cs.clone();
-				this.refresh_list(cs_then);
-				Check_status cs_else = null;
-				if(this.false_statement!=null){
-					cs_else = cs.clone();
-					this.refresh_list(cs_else);
-				}
-				cs_then.add_path_condition(pc);
-				this.true_statement.check(cs_then);
-				
-				if(cs_then.return_v!=null)cs.return_v = cs_then.return_v;
-				if(cs_then.return_expr!=null)cs.return_expr = cs_then.return_expr;
-				//cs.return_pathcondition = cs_then.return_pathcondition;
-				
-				if(this.false_statement!=null){
-					cs_else.add_path_condition(cs.ctx.mkNot(pc));
-					//return
-					//cs_else.return_pathcondition = cs_then.return_pathcondition;
-					cs_else.return_expr = cs_then.return_expr;
-					this.false_statement.check(cs_else);
-					
-					if(cs_else.return_v!=null)cs.return_v = cs_else.return_v;
-					if(cs_else.return_expr!=null)cs.return_expr = cs_else.return_expr;
-					//cs.return_pathcondition = cs_else.return_pathcondition;
-				}
-				//変更されていたものは統合する
-				for(Variable v : cs.variables){
-					if(cs_else==null){
-						Variable v_then = cs_then.get_variable(v.field_name);
-						if(v.temp_num!=v_then.temp_num){
-							Expr e1 = v.get_Expr(cs);
-							Expr e2 = v_then.get_Expr(cs_then);
-							Expr e3 = v.get_Expr_assign(cs);
-							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
-							v.temp_num++;
-						}
-						
-						//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
-						v.alias_in_helper_or_consutructor = v_then.alias_in_helper_or_consutructor;
-						v.alias_2d_in_helper_or_consutructor = v_then.alias_2d_in_helper_or_consutructor;
-					}else{
-						Variable v_then = cs_then.get_variable(v.field_name);
-						Variable v_else = cs_else.get_variable(v.field_name);
-						if(v.temp_num!=v_then.temp_num || v.temp_num!=v_else.temp_num){
-							Expr e1 = v_else.get_Expr(cs);
-							Expr e2 = v_then.get_Expr(cs_then);
-							Expr e3 = v.get_Expr_assign(cs);
-							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
-							v.temp_num++;
-						}
-						
-						//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
-						v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_in_helper_or_consutructor, v_else.alias_in_helper_or_consutructor);
-						v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_2d_in_helper_or_consutructor, v_else.alias_2d_in_helper_or_consutructor);
-					}
-				}
-
-				
-				//cs.fields、model_fieldに含まれないものがあれば追加する
-				for(Field f : cs_then.fields){
-					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
-					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
-						int pre_tmp_num = f.temp_num;
-						f.temp_num = 0;
-						Expr expr = f.get_Expr(cs);
-						f.temp_num = pre_tmp_num;
-						expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
-						cs.add_constraint((BoolExpr) expr);
-					}
-				}
-				for(Model_Field mf : cs_then.model_fields){
-					Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
-					if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
-						int pre_tmp_num = mf.temp_num;
-						mf.temp_num = 0;
-						Expr expr = mf.get_Expr(cs);
-						mf.temp_num = pre_tmp_num;
-						expr = cs.ctx.mkEq(expr, cs_mf.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
-						cs.add_constraint((BoolExpr) expr);
-					}
-				}
-				if(cs_else != null){
-					for(Field f : cs_else.fields){
-						Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
-						if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
-							int pre_tmp_num = f.temp_num;
-							f.temp_num = 0;
-							Expr expr = f.get_Expr(cs);
-							f.temp_num = pre_tmp_num;
-							expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
-							cs.add_constraint((BoolExpr) expr);
-						}
-					}
-					for(Model_Field mf : cs_else.model_fields){
-						Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
-						if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
-							int pre_tmp_num = mf.temp_num;
-							mf.temp_num = 0;
-							Expr expr = mf.get_Expr(cs);
-							mf.temp_num = pre_tmp_num;
-							expr = cs.ctx.mkEq(expr, cs_mf.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
-							cs.add_constraint((BoolExpr) expr);
-						}
-					}
-				}
-				
-				
-				for(Field f : cs.fields){
-					if(cs_else==null){
-						Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
-						if(f.temp_num!=f_then.temp_num){
-							Expr e1 = f.get_Expr(cs);
-							Expr e2 = f_then.get_Expr(cs_then);
-							Expr e3 = f.get_Expr_assign(cs);
-							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
-							f.temp_num++;
-							//コンストラクタでのfinalの初期化
-							if(cs.in_constructor && f.final_initialized==false && f_then.final_initialized==true){
-								throw new Exception("shuold initialize in both of then and else.");
-							}
-						}
-						
-						//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
-						f.alias_in_helper_or_consutructor = f_then.alias_in_helper_or_consutructor;
-						f.alias_2d_in_helper_or_consutructor = f_then.alias_2d_in_helper_or_consutructor;
-					}else{
-						Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
-						Field f_else = cs_else.search_field(f.field_name, f.class_object, cs);
-						if(f.temp_num!=f_then.temp_num || f.temp_num!=f_else.temp_num){
-							Expr e1 = f_else.get_Expr(cs);
-							Expr e2 = f_then.get_Expr(cs_then);
-							Expr e3 = f.get_Expr_assign(cs);
-							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
-							f.temp_num++;
-							
-							//コンストラクタでのfinalの初期化
-							if(cs.in_constructor && f.final_initialized==false){
-								if(f_then.final_initialized==true && f_else.final_initialized==true){
-									f.final_initialized=true;
-								}else{
-									throw new Exception("shuold initialize in both of then and else.");
-								}
-							}
-						}
-						
-						//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-						f.alias_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_in_helper_or_consutructor, f_else.alias_in_helper_or_consutructor);
-						f.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_2d_in_helper_or_consutructor, f_else.alias_2d_in_helper_or_consutructor);
-					}
-				}
-				
-				for(Model_Field mf : cs.model_fields){
-					if(cs_else==null){
-						Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
-						if(mf.temp_num!=mf_then.temp_num){
-							Expr e1 = mf.get_Expr(cs);
-							Expr e2 = mf_then.get_Expr(cs_then);
-							Expr e3 = mf.get_Expr_assign(cs);
-							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
-							mf.temp_num++;
-						}
-					}else{
-						Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
-						Model_Field mf_else = cs_else.search_model_field(mf.field_name, mf.class_object, cs);
-						if(mf.temp_num!=mf_then.temp_num || mf.temp_num!=mf_else.temp_num){
-							Expr e1 = mf_else.get_Expr(cs);
-							Expr e2 = mf_then.get_Expr(cs_then);
-							Expr e3 = mf.get_Expr_assign(cs);
-							cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
-							mf.temp_num++;
-						}
-					}
-				}
-				
-				//returnのやつ
-				if(cs_else!=null&& cs_then.after_return&&cs_else.after_return){
-					cs.after_return = true;
-				}
-				
-				//helperメソッドの代入されたフィールド
-				if(!cs_then.after_return){
-					for(Helper_assigned_field assigned_field : cs_then.helper_assigned_fields){
-						if(!cs.helper_assigned_fields.contains(assigned_field)){
-							cs.helper_assigned_fields.add(assigned_field);
-						}
-					}
-				}
-				if(cs_else!=null&& !cs_else.after_return){
-					for(Helper_assigned_field assigned_field : cs_else.helper_assigned_fields){
-						if(!cs.helper_assigned_fields.contains(assigned_field)){
-							cs.helper_assigned_fields.add(assigned_field);
-						}
-					}
-				}
-				
-				
+				check_if(cs);
 			}else if(this.compound_statement!=null){
 				this.compound_statement.check(cs);
 			}else if(this.def_type_clause!=null){
@@ -392,226 +195,101 @@ import system.F_Assign;
 				}
 				cs.return_conditions.add(pathcondition);
 			}else if(this.possibly_annotated_loop!=null){
+				check_loop(cs);
+			}else{
 				
-				System.out.println("loop verification");
-				
-				/////////////どのフィールドが変更されるかの検証
-				System.out.println("check assigned fields");
-				//インスタンスの生成
-				Check_status cs_loop_assign_check = cs.clone();
-				this.refresh_list(cs_loop_assign_check);
-				
-				for(Variable v : cs_loop_assign_check.variables){
-					v.temp_num++;
-				}
-				for(Field f : cs_loop_assign_check.fields){
-					f.temp_num++;
-				}
-				
-				
-				//ループ内での代入
-				Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean> assigned_fields = new Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>(new ArrayList<Pair<Field,List<List<IntExpr>>>>(), false);
+			}
+			
 
+		}
+		
+		//ifの検証
+		public void check_if(Check_status cs) throws Exception{
+			BoolExpr pc = (BoolExpr)this.expression.check(cs).expr;
+
+			Check_status cs_then = cs.clone();
+			this.refresh_list(cs_then);
+			Check_status cs_else = null;
+			if(this.false_statement!=null){
+				cs_else = cs.clone();
+				this.refresh_list(cs_else);
+			}
+			cs_then.add_path_condition(pc);
+			this.true_statement.check(cs_then);
+			
+			if(cs_then.return_v!=null)cs.return_v = cs_then.return_v;
+			if(cs_then.return_expr!=null)cs.return_expr = cs_then.return_expr;
+			//cs.return_pathcondition = cs_then.return_pathcondition;
+			
+			if(this.false_statement!=null){
+				cs_else.add_path_condition(cs.ctx.mkNot(pc));
+				//return
+				//cs_else.return_pathcondition = cs_then.return_pathcondition;
+				cs_else.return_expr = cs_then.return_expr;
+				this.false_statement.check(cs_else);
 				
-				//local_declarationの処理
-				Variable assign_check_local_v = null;
-				if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
-					assign_check_local_v = this.possibly_annotated_loop.loop_stmt.local_declaration.loop_assign(assigned_fields,cs_loop_assign_check);
-				}
-				
-				BoolExpr enter_loop_condition_assign_check = null;
-				if(this.possibly_annotated_loop.loop_stmt.expression!=null){
-					enter_loop_condition_assign_check = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop_assign_check).expr;
-				}else{
-					enter_loop_condition_assign_check = cs.ctx.mkBool(true);
-				}
-				cs_loop_assign_check.add_path_condition_tmp(enter_loop_condition_assign_check);
-				
-				//中身
-				this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs_loop_assign_check);
-				if(this.possibly_annotated_loop.loop_stmt.expression_list!=null){
-					for(expression ex : this.possibly_annotated_loop.loop_stmt.expression_list.expressions){
-						ex.loop_assign(assigned_fields, cs_loop_assign_check);
-					}
-				}
-				
-				//cs.fieldsに含まれないものがあれば追加する
-				for(Field f : cs_loop_assign_check.fields){
-					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
-					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
-						int pre_tmp_num = f.temp_num;
-						f.temp_num = 0;
-						Expr expr = f.get_Expr(cs);
-						f.temp_num = pre_tmp_num;
-						expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
-						cs.add_constraint((BoolExpr) expr);
-					}
-				}
-				//assigned_fieldsに含まれないものが同じ程度のことは保証する
-				if(!assigned_fields.snd){
-					System.out.println("fields that isn't assigned in loop");
-					for(Variable v : cs_loop_assign_check.variables){
-						boolean assigned = false;
-						for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
-							if(assigned_field.fst.equals(v, cs)){
-								assigned = true;
-								break;
-							}
-						}
-						if(!assigned){
-							v.temp_num--;
-							Expr pre_expr = v.get_Expr(cs_loop_assign_check);
-							v.temp_num++;
-							cs.add_constraint(cs.ctx.mkEq(pre_expr, v.get_Expr(cs_loop_assign_check)));
-						}
+				if(cs_else.return_v!=null)cs.return_v = cs_else.return_v;
+				if(cs_else.return_expr!=null)cs.return_expr = cs_else.return_expr;
+				//cs.return_pathcondition = cs_else.return_pathcondition;
+			}
+			//変更されていたものは統合する
+			for(Variable v : cs.variables){
+				if(cs_else==null){
+					Variable v_then = cs_then.get_variable(v.field_name);
+					if(v.temp_num!=v_then.temp_num){
+						Expr e1 = v.get_Expr(cs);
+						Expr e2 = v_then.get_Expr(cs_then);
+						Expr e3 = v.get_Expr_assign(cs);
+						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
+						v.temp_num++;
 					}
 					
-					for(Field f : cs_loop_assign_check.fields){
-						boolean assigned = false;
-						for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
-							if(assigned_field.fst.equals(f, cs)){
-								assigned = true;
-								break;
-							}
-						}
-						if(!assigned){
-							f.temp_num--;
-							Expr pre_expr = f.get_Expr(cs_loop_assign_check);
-							f.temp_num++;
-							cs.add_constraint(cs.ctx.mkEq(pre_expr, f.get_Expr(cs_loop_assign_check)));
-						}
-					}
-				}
-				//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
-				for(Variable v : cs_loop_assign_check.variables){
-					Field cs_v = cs.search_internal_id(v.internal_id);
-					if(cs_v!=null){//ループ内で追加されたローカル変数の場合はnullになる
-						cs_v.alias_in_helper_or_consutructor = v.alias_in_helper_or_consutructor;
-						cs_v.alias_2d_in_helper_or_consutructor = v.alias_2d_in_helper_or_consutructor;
-					}
-				}
-				for(Field f : cs_loop_assign_check.fields){
-					Field cs_f = cs.search_internal_id(f.internal_id);
-					cs_f.alias_in_helper_or_consutructor = f.alias_in_helper_or_consutructor;
-					cs_f.alias_2d_in_helper_or_consutructor = f.alias_2d_in_helper_or_consutructor;
-				}
-				
-				
-				////////////ここからが本番の検証
-				System.out.println("check loop");
-				//インスタンスの生成
-				Check_status cs_loop = cs.clone();
-				this.refresh_list(cs_loop);
-
-				//local_declarationの処理
-				Variable v_local=null;
-				if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
-					v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
-					if(assign_check_local_v!=null){
-						v_local.internal_id = assign_check_local_v.internal_id;
-					}
-				}
-				
-				BoolExpr enter_loop_condition = null;
-				if(this.possibly_annotated_loop.loop_stmt.expression!=null){
-					enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+					//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
+					v.alias_in_helper_or_consutructor = v_then.alias_in_helper_or_consutructor;
+					v.alias_2d_in_helper_or_consutructor = v_then.alias_2d_in_helper_or_consutructor;
 				}else{
-					enter_loop_condition = cs.ctx.mkBool(true);
-				}
-				
-				
-				
-				//PCにループに入る条件を加える
-				System.out.println("loop init condition");
-				cs_loop.add_path_condition(enter_loop_condition);
-				
-				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr ex = li.predicate.check(cs_loop);
-					cs_loop.assert_constraint(ex);
-				}
-				
-				//中身用に変数を一新
-				System.out.println("loop fields refresh");
-				if(assigned_fields.snd){//何でも代入できるメソッドを呼び出したとき
-					System.out.println("assigned all in loop");
-					for(Variable v : cs_loop.variables){
-						v.tmp_plus(cs_loop);
+					Variable v_then = cs_then.get_variable(v.field_name);
+					Variable v_else = cs_else.get_variable(v.field_name);
+					if(v.temp_num!=v_then.temp_num || v.temp_num!=v_else.temp_num){
+						Expr e1 = v_else.get_Expr(cs);
+						Expr e2 = v_then.get_Expr(cs_then);
+						Expr e3 = v.get_Expr_assign(cs);
+						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
+						v.temp_num++;
 					}
-					for(Field f : cs_loop.fields){
-						f.tmp_plus_with_data_group(cs_loop);
-					}
-				}else{//代入されるフィールドのそれぞれのインデックスにフレッシュな値を代入する
-					for(Variable v_loop : cs_loop.variables){//ローカル変数
-						Pair<Field,List<List<IntExpr>>> v_assign_indexs = null;
-						for(Pair<Field,List<List<IntExpr>>> variable_assign_indexs : assigned_fields.fst){
-							if(v_loop.equals(variable_assign_indexs.fst, cs)){
-								v_assign_indexs = variable_assign_indexs;
-								break;
-							}
-						}
-						
-						if(v_assign_indexs!=null){
-							List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
-							b_is.add(new Pair(cs.ctx.mkBool(true), v_assign_indexs.snd));
-							F_Assign fa = new F_Assign(v_loop, b_is);
-							fa.assign_fresh_value(cs_loop);
-						}
-						
-					}
-					for(Field f_loop : cs_loop.fields){//フィールド
-						Pair<Field,List<List<IntExpr>>> f_assign_indexs = null;
-						for(Pair<Field,List<List<IntExpr>>> field_assign_indexs : assigned_fields.fst){
-							if(f_loop.equals(field_assign_indexs.fst, cs)){
-								f_assign_indexs = field_assign_indexs;
-								break;
-							}
-						}
-						
-						if(f_assign_indexs!=null){
-							List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList();
-							b_is.add(new Pair(cs.ctx.mkBool(true), f_assign_indexs.snd));
-							F_Assign fa = new F_Assign(f_loop, b_is);
-							fa.assign_fresh_value(cs_loop);
-						}
-					}
+					
+					//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
+					v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_in_helper_or_consutructor, v_else.alias_in_helper_or_consutructor);
+					v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_2d_in_helper_or_consutructor, v_else.alias_2d_in_helper_or_consutructor);
 				}
-				
-				//外で定義された変数
-				for(Variable v : cs_loop.variables){
-					v.out_loop_v = true;
-				}
+			}
 
-				
-				//中身の初期条件
-				System.out.println("a loop pre condition");
-				if(this.possibly_annotated_loop.loop_stmt.expression!=null){
-					enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
-				}else{
-					enter_loop_condition = cs.ctx.mkBool(true);
+			
+			//cs.fields、model_fieldに含まれないものがあれば追加する
+			for(Field f : cs_then.fields){
+				Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+				if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+					int pre_tmp_num = f.temp_num;
+					f.temp_num = 0;
+					Expr expr = f.get_Expr(cs);
+					f.temp_num = pre_tmp_num;
+					expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+					cs.add_constraint((BoolExpr) expr);
 				}
-				cs_loop.add_path_condition_tmp(enter_loop_condition);//途中でUnreachbleかどうかは関係ないはず
-				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr ex = li.predicate.check(cs_loop);
-					cs_loop.add_constraint(ex);
+			}
+			for(Model_Field mf : cs_then.model_fields){
+				Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+				if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+					int pre_tmp_num = mf.temp_num;
+					mf.temp_num = 0;
+					Expr expr = mf.get_Expr(cs);
+					mf.temp_num = pre_tmp_num;
+					expr = cs.ctx.mkEq(expr, cs_mf.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+					cs.add_constraint((BoolExpr) expr);
 				}
-				
-				//中身
-				this.possibly_annotated_loop.loop_stmt.statement.check(cs_loop);
-				if(this.possibly_annotated_loop.loop_stmt.expression_list!=null)this.possibly_annotated_loop.loop_stmt.expression_list.check(cs_loop);
-				
-				
-				//中身の事後条件
-				System.out.println("a loop post condition");
-				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr ex = li.predicate.check(cs_loop);
-					cs_loop.assert_constraint(ex);
-				}
-				
-				//全体の事後条件
-				System.out.println("loop post condition");
-				//変更されていたものは統合する
-				//cs.fieldsに含まれないものがあれば追加する
-				for(Field f : cs_loop.fields){
+			}
+			if(cs_else != null){
+				for(Field f : cs_else.fields){
 					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
 					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 						int pre_tmp_num = f.temp_num;
@@ -622,9 +300,8 @@ import system.F_Assign;
 						cs.add_constraint((BoolExpr) expr);
 					}
 				}
-				//cs.model_fieldsに含まれないものがあれば追加する
-				for(Model_Field mf : cs_loop.model_fields){
-					Model_Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+				for(Model_Field mf : cs_else.model_fields){
+					Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
 					if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 						int pre_tmp_num = mf.temp_num;
 						mf.temp_num = 0;
@@ -634,97 +311,424 @@ import system.F_Assign;
 						cs.add_constraint((BoolExpr) expr);
 					}
 				}
-				for(Field f : cs.fields){//フィールドに関して値を更新
-					Field f_loop = cs_loop.search_field(f.field_name,f.class_object, cs);
-					if(f.temp_num<f_loop.temp_num){
-						if(cs.in_constructor && f.modifiers!=null && f.modifiers.is_final){//コンストラクタのfinalの初期化はloopのなかではできない
-							if(f.final_initialized==false&&f_loop.final_initialized==true){
-								throw new Exception("can not initialized final variable in loop.");
+			}
+			
+			
+			for(Field f : cs.fields){
+				if(cs_else==null){
+					Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
+					if(f.temp_num!=f_then.temp_num){
+						Expr e1 = f.get_Expr(cs);
+						Expr e2 = f_then.get_Expr(cs_then);
+						Expr e3 = f.get_Expr_assign(cs);
+						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
+						f.temp_num++;
+						//コンストラクタでのfinalの初期化
+						if(cs.in_constructor && f.final_initialized==false && f_then.final_initialized==true){
+							throw new Exception("shuold initialize in both of then and else.");
+						}
+					}
+					
+					//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
+					f.alias_in_helper_or_consutructor = f_then.alias_in_helper_or_consutructor;
+					f.alias_2d_in_helper_or_consutructor = f_then.alias_2d_in_helper_or_consutructor;
+				}else{
+					Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
+					Field f_else = cs_else.search_field(f.field_name, f.class_object, cs);
+					if(f.temp_num!=f_then.temp_num || f.temp_num!=f_else.temp_num){
+						Expr e1 = f_else.get_Expr(cs);
+						Expr e2 = f_then.get_Expr(cs_then);
+						Expr e3 = f.get_Expr_assign(cs);
+						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
+						f.temp_num++;
+						
+						//コンストラクタでのfinalの初期化
+						if(cs.in_constructor && f.final_initialized==false){
+							if(f_then.final_initialized==true && f_else.final_initialized==true){
+								f.final_initialized=true;
+							}else{
+								throw new Exception("shuold initialize in both of then and else.");
 							}
 						}
-						Expr e1 = f.get_Expr(cs);
-						Expr e2 = f_loop.get_Expr(cs_loop);
-						Expr e3 = f.get_Expr_assign(cs);
-						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
-						f.temp_num++;
 					}
 					
 					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-					f.alias_2d_in_helper_or_consutructor = f_loop.alias_2d_in_helper_or_consutructor;
+					f.alias_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_in_helper_or_consutructor, f_else.alias_in_helper_or_consutructor);
+					f.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_2d_in_helper_or_consutructor, f_else.alias_2d_in_helper_or_consutructor);
 				}
-				for(Model_Field mf : cs.model_fields){//モデルフィールドに関して値を更新
-					Model_Field mf_loop = cs_loop.search_model_field(mf.field_name, mf.class_object, cs);
-					if(mf.temp_num<mf_loop.temp_num){
+			}
+			
+			for(Model_Field mf : cs.model_fields){
+				if(cs_else==null){
+					Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
+					if(mf.temp_num!=mf_then.temp_num){
 						Expr e1 = mf.get_Expr(cs);
-						Expr e2 = mf_loop.get_Expr(cs_loop);
+						Expr e2 = mf_then.get_Expr(cs_then);
 						Expr e3 = mf.get_Expr_assign(cs);
-						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
+						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
+						mf.temp_num++;
+					}
+				}else{
+					Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
+					Model_Field mf_else = cs_else.search_model_field(mf.field_name, mf.class_object, cs);
+					if(mf.temp_num!=mf_then.temp_num || mf.temp_num!=mf_else.temp_num){
+						Expr e1 = mf_else.get_Expr(cs);
+						Expr e2 = mf_then.get_Expr(cs_then);
+						Expr e3 = mf.get_Expr_assign(cs);
+						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(pc, e2, e1)));
 						mf.temp_num++;
 					}
 				}
-				for(Variable v :cs.variables){//ローカル変数に関して値を更新
-					Variable v_loop = cs_loop.get_variable(v.field_name);
-					if(v.temp_num<v_loop.temp_num){
-						Expr e1 = v.get_Expr(cs);
-						Expr e2 = v_loop.get_Expr(cs_loop);
-						Expr e3 = v.get_Expr_assign(cs);
-						cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
-						v.temp_num++;
-					}
-					//配列のエイリアス
-					if(((Variable) v).alias == null){
-						((Variable) v).alias = v_loop.alias;
-					}else{//v.alias!=nullならv_loop.alias!=nullであるはず
-						((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, v_loop.alias);
-					}
-					
-					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-					v.alias_2d_in_helper_or_consutructor = v_loop.alias_2d_in_helper_or_consutructor;
-				}
-				
-				
-				//helperメソッドの代入されたフィールド
-				if(!cs_loop.after_return){
-					for(Helper_assigned_field assigned_field : cs_loop.helper_assigned_fields){
-						if(!cs.helper_assigned_fields.contains(assigned_field)){
-							cs.helper_assigned_fields.add(assigned_field);
-						}
-					}
-				}
-				
-				
-				//ループ出た後の条件
-				if(this.possibly_annotated_loop.loop_stmt.expression!=null){
-					enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
-				}else{
-					enter_loop_condition = cs.ctx.mkBool(true);
-				}
-				BoolExpr post_loop = cs.ctx.mkNot(enter_loop_condition);
-				
-				BoolExpr pre_pathcondition = cs.pathcondition;
-				
-				for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-					BoolExpr li_expr = li.predicate.check(cs_loop);
-					post_loop = cs.ctx.mkAnd(post_loop, li_expr);
-					cs.add_path_condition_tmp(li_expr);
-				}
-				
-				cs.pathcondition = pre_pathcondition;
-				
-				
-				
-				cs.add_constraint(cs.ctx.mkImplies(enter_loop_condition, post_loop));
-				
-				//v_localは中身での変数なので消す
-				if(v_local!=null)cs.variables.remove(v_local);
-				
-				
-				
-			}else{
-				System.out.println("statementのまだ書いてないところ");
 			}
 			
+			//returnのやつ
+			if(cs_else!=null&& cs_then.after_return&&cs_else.after_return){
+				cs.after_return = true;
+			}
+			
+			//helperメソッドの代入されたフィールド
+			if(!cs_then.after_return){
+				for(Helper_assigned_field assigned_field : cs_then.helper_assigned_fields){
+					if(!cs.helper_assigned_fields.contains(assigned_field)){
+						cs.helper_assigned_fields.add(assigned_field);
+					}
+				}
+			}
+			if(cs_else!=null&& !cs_else.after_return){
+				for(Helper_assigned_field assigned_field : cs_else.helper_assigned_fields){
+					if(!cs.helper_assigned_fields.contains(assigned_field)){
+						cs.helper_assigned_fields.add(assigned_field);
+					}
+				}
+			}
+		}
+		
+		//ループの検証
+		public void check_loop(Check_status cs) throws Exception{
+			System.out.println("loop verification");
+			
+			/////////////どのフィールドが変更されるかの検証
+			System.out.println("check assigned fields");
+			//インスタンスの生成
+			Check_status cs_loop_assign_check = cs.clone();
+			this.refresh_list(cs_loop_assign_check);
+			
+			for(Variable v : cs_loop_assign_check.variables){
+				v.temp_num++;
+			}
+			for(Field f : cs_loop_assign_check.fields){
+				f.temp_num++;
+			}
+			
+			
+			//ループ内での代入
+			Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean> assigned_fields = new Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>(new ArrayList<Pair<Field,List<List<IntExpr>>>>(), false);
 
+			
+			//local_declarationの処理
+			Variable assign_check_local_v = null;
+			if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
+				assign_check_local_v = this.possibly_annotated_loop.loop_stmt.local_declaration.loop_assign(assigned_fields,cs_loop_assign_check);
+			}
+			
+			BoolExpr enter_loop_condition_assign_check = null;
+			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
+				enter_loop_condition_assign_check = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop_assign_check).expr;
+			}else{
+				enter_loop_condition_assign_check = cs.ctx.mkBool(true);
+			}
+			cs_loop_assign_check.add_path_condition_tmp(enter_loop_condition_assign_check);
+			
+			//中身
+			this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs_loop_assign_check);
+			if(this.possibly_annotated_loop.loop_stmt.expression_list!=null){
+				for(expression ex : this.possibly_annotated_loop.loop_stmt.expression_list.expressions){
+					ex.loop_assign(assigned_fields, cs_loop_assign_check);
+				}
+			}
+			
+			//cs.fieldsに含まれないものがあれば追加する
+			for(Field f : cs_loop_assign_check.fields){
+				Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+				if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+					int pre_tmp_num = f.temp_num;
+					f.temp_num = 0;
+					Expr expr = f.get_Expr(cs);
+					f.temp_num = pre_tmp_num;
+					expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+					cs.add_constraint((BoolExpr) expr);
+				}
+			}
+			//assigned_fieldsに含まれないものが同じ程度のことは保証する
+			if(!assigned_fields.snd){
+				System.out.println("fields that isn't assigned in loop");
+				for(Variable v : cs_loop_assign_check.variables){
+					boolean assigned = false;
+					for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
+						if(assigned_field.fst.equals(v, cs)){
+							assigned = true;
+							break;
+						}
+					}
+					if(!assigned){
+						v.temp_num--;
+						Expr pre_expr = v.get_Expr(cs_loop_assign_check);
+						v.temp_num++;
+						cs.add_constraint(cs.ctx.mkEq(pre_expr, v.get_Expr(cs_loop_assign_check)));
+					}
+				}
+				
+				for(Field f : cs_loop_assign_check.fields){
+					boolean assigned = false;
+					for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
+						if(assigned_field.fst.equals(f, cs)){
+							assigned = true;
+							break;
+						}
+					}
+					if(!assigned){
+						f.temp_num--;
+						Expr pre_expr = f.get_Expr(cs_loop_assign_check);
+						f.temp_num++;
+						cs.add_constraint(cs.ctx.mkEq(pre_expr, f.get_Expr(cs_loop_assign_check)));
+					}
+				}
+			}
+			//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
+			for(Variable v : cs_loop_assign_check.variables){
+				Field cs_v = cs.search_internal_id(v.internal_id);
+				if(cs_v!=null){//ループ内で追加されたローカル変数の場合はnullになる
+					cs_v.alias_in_helper_or_consutructor = v.alias_in_helper_or_consutructor;
+					cs_v.alias_2d_in_helper_or_consutructor = v.alias_2d_in_helper_or_consutructor;
+				}
+			}
+			for(Field f : cs_loop_assign_check.fields){
+				Field cs_f = cs.search_internal_id(f.internal_id);
+				cs_f.alias_in_helper_or_consutructor = f.alias_in_helper_or_consutructor;
+				cs_f.alias_2d_in_helper_or_consutructor = f.alias_2d_in_helper_or_consutructor;
+			}
+			
+			
+			////////////ここからが本番の検証
+			System.out.println("check loop");
+			//インスタンスの生成
+			Check_status cs_loop = cs.clone();
+			this.refresh_list(cs_loop);
+
+			//local_declarationの処理
+			Variable v_local=null;
+			if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
+				v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
+				if(assign_check_local_v!=null){
+					v_local.internal_id = assign_check_local_v.internal_id;
+				}
+			}
+			
+			BoolExpr enter_loop_condition = null;
+			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
+				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+			}else{
+				enter_loop_condition = cs.ctx.mkBool(true);
+			}
+			
+			
+			
+			//PCにループに入る条件を加える
+			System.out.println("loop init condition");
+			cs_loop.add_path_condition(enter_loop_condition);
+			
+			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
+				BoolExpr ex = li.predicate.check(cs_loop);
+				cs_loop.assert_constraint(ex);
+			}
+			
+			//中身用に変数を一新
+			System.out.println("loop fields refresh");
+			if(assigned_fields.snd){//何でも代入できるメソッドを呼び出したとき
+				System.out.println("assigned all in loop");
+				for(Variable v : cs_loop.variables){
+					v.tmp_plus(cs_loop);
+				}
+				for(Field f : cs_loop.fields){
+					f.tmp_plus_with_data_group(cs_loop);
+				}
+			}else{//代入されるフィールドのそれぞれのインデックスにフレッシュな値を代入する
+				for(Variable v_loop : cs_loop.variables){//ローカル変数
+					Pair<Field,List<List<IntExpr>>> v_assign_indexs = null;
+					for(Pair<Field,List<List<IntExpr>>> variable_assign_indexs : assigned_fields.fst){
+						if(v_loop.equals(variable_assign_indexs.fst, cs)){
+							v_assign_indexs = variable_assign_indexs;
+							break;
+						}
+					}
+					
+					if(v_assign_indexs!=null){
+						List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+						b_is.add(new Pair(cs.ctx.mkBool(true), v_assign_indexs.snd));
+						F_Assign fa = new F_Assign(v_loop, b_is);
+						fa.assign_fresh_value(cs_loop);
+					}
+					
+				}
+				for(Field f_loop : cs_loop.fields){//フィールド
+					Pair<Field,List<List<IntExpr>>> f_assign_indexs = null;
+					for(Pair<Field,List<List<IntExpr>>> field_assign_indexs : assigned_fields.fst){
+						if(f_loop.equals(field_assign_indexs.fst, cs)){
+							f_assign_indexs = field_assign_indexs;
+							break;
+						}
+					}
+					
+					if(f_assign_indexs!=null){
+						List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList();
+						b_is.add(new Pair(cs.ctx.mkBool(true), f_assign_indexs.snd));
+						F_Assign fa = new F_Assign(f_loop, b_is);
+						fa.assign_fresh_value(cs_loop);
+					}
+				}
+			}
+			
+			//外で定義された変数
+			for(Variable v : cs_loop.variables){
+				v.out_loop_v = true;
+			}
+
+			
+			//中身の初期条件
+			System.out.println("a loop pre condition");
+			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
+				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+			}else{
+				enter_loop_condition = cs.ctx.mkBool(true);
+			}
+			cs_loop.add_path_condition_tmp(enter_loop_condition);//途中でUnreachbleかどうかは関係ないはず
+			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
+				BoolExpr ex = li.predicate.check(cs_loop);
+				cs_loop.add_constraint(ex);
+			}
+			
+			//中身
+			this.possibly_annotated_loop.loop_stmt.statement.check(cs_loop);
+			if(this.possibly_annotated_loop.loop_stmt.expression_list!=null)this.possibly_annotated_loop.loop_stmt.expression_list.check(cs_loop);
+			
+			
+			//中身の事後条件
+			System.out.println("a loop post condition");
+			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
+				BoolExpr ex = li.predicate.check(cs_loop);
+				cs_loop.assert_constraint(ex);
+			}
+			
+			//全体の事後条件
+			System.out.println("loop post condition");
+			//変更されていたものは統合する
+			//cs.fieldsに含まれないものがあれば追加する
+			for(Field f : cs_loop.fields){
+				Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+				if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+					int pre_tmp_num = f.temp_num;
+					f.temp_num = 0;
+					Expr expr = f.get_Expr(cs);
+					f.temp_num = pre_tmp_num;
+					expr = cs.ctx.mkEq(expr, cs_f.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+					cs.add_constraint((BoolExpr) expr);
+				}
+			}
+			//cs.model_fieldsに含まれないものがあれば追加する
+			for(Model_Field mf : cs_loop.model_fields){
+				Model_Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+				if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
+					int pre_tmp_num = mf.temp_num;
+					mf.temp_num = 0;
+					Expr expr = mf.get_Expr(cs);
+					mf.temp_num = pre_tmp_num;
+					expr = cs.ctx.mkEq(expr, cs_mf.get_Expr(cs));//この時点でのcs_fのtmp_numは0であるはず
+					cs.add_constraint((BoolExpr) expr);
+				}
+			}
+			for(Field f : cs.fields){//フィールドに関して値を更新
+				Field f_loop = cs_loop.search_field(f.field_name,f.class_object, cs);
+				if(f.temp_num<f_loop.temp_num){
+					if(cs.in_constructor && f.modifiers!=null && f.modifiers.is_final){//コンストラクタのfinalの初期化はloopのなかではできない
+						if(f.final_initialized==false&&f_loop.final_initialized==true){
+							throw new Exception("can not initialized final variable in loop.");
+						}
+					}
+					Expr e1 = f.get_Expr(cs);
+					Expr e2 = f_loop.get_Expr(cs_loop);
+					Expr e3 = f.get_Expr_assign(cs);
+					cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
+					f.temp_num++;
+				}
+				
+				//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+				f.alias_2d_in_helper_or_consutructor = f_loop.alias_2d_in_helper_or_consutructor;
+			}
+			for(Model_Field mf : cs.model_fields){//モデルフィールドに関して値を更新
+				Model_Field mf_loop = cs_loop.search_model_field(mf.field_name, mf.class_object, cs);
+				if(mf.temp_num<mf_loop.temp_num){
+					Expr e1 = mf.get_Expr(cs);
+					Expr e2 = mf_loop.get_Expr(cs_loop);
+					Expr e3 = mf.get_Expr_assign(cs);
+					cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
+					mf.temp_num++;
+				}
+			}
+			for(Variable v :cs.variables){//ローカル変数に関して値を更新
+				Variable v_loop = cs_loop.get_variable(v.field_name);
+				if(v.temp_num<v_loop.temp_num){
+					Expr e1 = v.get_Expr(cs);
+					Expr e2 = v_loop.get_Expr(cs_loop);
+					Expr e3 = v.get_Expr_assign(cs);
+					cs.add_constraint(cs.ctx.mkEq(e3, cs.ctx.mkITE(enter_loop_condition, e2, e1)));
+					v.temp_num++;
+				}
+				//配列のエイリアス
+				if(((Variable) v).alias == null){
+					((Variable) v).alias = v_loop.alias;
+				}else{//v.alias!=nullならv_loop.alias!=nullであるはず
+					((Variable) v).alias = cs.ctx.mkOr(((Variable) v).alias, v_loop.alias);
+				}
+				
+				//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
+				v.alias_2d_in_helper_or_consutructor = v_loop.alias_2d_in_helper_or_consutructor;
+			}
+			
+			
+			//helperメソッドの代入されたフィールド
+			if(!cs_loop.after_return){
+				for(Helper_assigned_field assigned_field : cs_loop.helper_assigned_fields){
+					if(!cs.helper_assigned_fields.contains(assigned_field)){
+						cs.helper_assigned_fields.add(assigned_field);
+					}
+				}
+			}
+			
+			
+			//ループ出た後の条件
+			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
+				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+			}else{
+				enter_loop_condition = cs.ctx.mkBool(true);
+			}
+			BoolExpr post_loop = cs.ctx.mkNot(enter_loop_condition);
+			
+			BoolExpr pre_pathcondition = cs.pathcondition;
+			
+			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
+				BoolExpr li_expr = li.predicate.check(cs_loop);
+				post_loop = cs.ctx.mkAnd(post_loop, li_expr);
+				cs.add_path_condition_tmp(li_expr);
+			}
+			
+			cs.pathcondition = pre_pathcondition;
+			
+			
+			
+			cs.add_constraint(cs.ctx.mkImplies(enter_loop_condition, post_loop));
+			
+			//v_localは中身での変数なので消す
+			if(v_local!=null)cs.variables.remove(v_local);
 		}
 		
 		public void refresh_list(Check_status cs) throws Exception{
@@ -787,8 +791,6 @@ import system.F_Assign;
 				}
 			}
 		}
-		
-		
 		
 		public void loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
 			if(this.is_expression){

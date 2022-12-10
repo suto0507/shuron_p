@@ -222,7 +222,7 @@ public class method_decl implements Parser<String>{
 		System.out.println("postcondition invariant");
 		if(!cs.in_helper){
 			BoolExpr post_invariant_expr = cs.all_invariant_expr();
-			cs.add_constraint(post_invariant_expr);
+			cs.assert_constraint(post_invariant_expr);
 		}
 		
 		System.out.println("postcondition ensures");

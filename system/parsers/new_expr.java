@@ -409,7 +409,7 @@ public class new_expr implements Parser<String>{
 			throw new Exception("wrong new clause");
 		}
 	}
-	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+	public Check_return loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 		if(this.new_suffix.is_index){
 			return null;
 		}else if(this.new_suffix.expression_list!=null){//コンストラクタ
@@ -421,7 +421,7 @@ public class new_expr implements Parser<String>{
 		}
 	}
 	
-	public Field loop_assign_method(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs, new_suffix ps)throws Exception{
+	public Field loop_assign_method(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs, new_suffix ps)throws Exception{
 		
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type.type);
 		if(cd == null){
@@ -474,44 +474,36 @@ public class new_expr implements Parser<String>{
 		
 		//assign
 		if(md.method_specification != null){
-			
-			for(generic_spec_case gsc : md.method_specification.spec_case_seq.generic_spec_cases){
-				BoolExpr require_expr = gsc.requires_expr(cs);
-				List<assignable_clause> assignables = gsc.get_assignable();
-				if(assignables == null){//何でも代入していい
-					assigned_fields.snd = true;
-				}else{
-					for(assignable_clause ac : assignables){
-						
-						for(store_ref_expression sre : ac.store_ref_list.store_ref_expressions){
-							Pair<Field, List<IntExpr>> f_indexs = sre.check(cs);
-							
-							boolean find_field = false;
-							for(Pair<Field,List<List<IntExpr>>> f_i : assigned_fields.fst){
-								if(f_i.fst == f_indexs.fst){//見つかったら追加する
-									find_field = true;
-									f_i.snd.add(f_indexs.snd);
-									break;
-								}
-							}
-							//見つからなかったら新しくフィールドごと追加する
-							if(!find_field){
-								List<List<IntExpr>> f_indexs_snd = new ArrayList<List<IntExpr>>();
-								f_indexs_snd.add(f_indexs.snd);
-								Pair<Field,List<List<IntExpr>>> f_i = new Pair<Field,List<List<IntExpr>>>(f_indexs.fst, f_indexs_snd);
-								assigned_fields.fst.add(f_i);
-							}
+			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
+			for(F_Assign fa : assign_cnsts.fst){
+				
+				boolean find_field = false;
+				for(F_Assign f_i : assigned_fields.fst){
+					if(f_i.field.equals(fa.field, cs) ){//見つかったら追加する
+						find_field = true;
+						for(Pair<BoolExpr,List<List<IntExpr>>> b_i : fa.cnst_array){
+							f_i.cnst_array.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkAnd(cs.get_pathcondition(), b_i.fst), b_i.snd));
 						}
+						break;
 					}
+				}
+				//見つからなかったら新しくフィールドごと追加する
+				if(!find_field){
+					List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+					for(Pair<BoolExpr,List<List<IntExpr>>> b_i : fa.cnst_array){
+						b_is.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkAnd(cs.get_pathcondition(), b_i.fst), b_i.snd));
+					}
+					assigned_fields.fst.add(new F_Assign(fa.field, b_is));
 				}
 			}
 			
-			
-			
+			//なんでも代入できる場合
+			assigned_fields.snd = cs.ctx.mkOr(assigned_fields.snd, cs.ctx.mkAnd(cs.get_pathcondition(), assign_cnsts.snd));
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
-			assigned_fields.snd = true;
+			assigned_fields.snd = cs.ctx.mkOr(assigned_fields.snd, cs.get_pathcondition());
 		}
+			
 		
 		//helperメソッドやコンストラクターにおける配列のエイリアス
 		//loop_assign_methodではpre_in_helperなどは用意しない

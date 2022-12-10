@@ -422,7 +422,7 @@ import system.F_Assign;
 			
 			
 			//ループ内での代入
-			Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean> assigned_fields = new Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>(new ArrayList<Pair<Field,List<List<IntExpr>>>>(), false);
+			Pair<List<F_Assign>,BoolExpr> assigned_fields = new Pair<List<F_Assign>,BoolExpr>(new ArrayList<F_Assign>(), cs.ctx.mkBool(false));
 
 			
 			//local_declarationの処理
@@ -438,6 +438,12 @@ import system.F_Assign;
 				enter_loop_condition_assign_check = cs.ctx.mkBool(true);
 			}
 			cs_loop_assign_check.add_path_condition_tmp(enter_loop_condition_assign_check);
+			
+			//ループ不変条件の制約の追加
+			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
+				BoolExpr ex = li.predicate.check(cs_loop_assign_check);
+				cs_loop_assign_check.add_constraint(ex);
+			}
 			
 			//中身
 			this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs_loop_assign_check);
@@ -459,41 +465,76 @@ import system.F_Assign;
 					cs.add_constraint((BoolExpr) expr);
 				}
 			}
+			
 			//assigned_fieldsに含まれないものが同じ程度のことは保証する
-			if(!assigned_fields.snd){
-				System.out.println("fields that isn't assigned in loop");
-				for(Variable v : cs_loop_assign_check.variables){
-					boolean assigned = false;
-					for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
-						if(assigned_field.fst.equals(v, cs)){
-							assigned = true;
-							break;
-						}
-					}
-					if(!assigned){
-						v.temp_num--;
-						Expr pre_expr = v.get_Expr(cs_loop_assign_check);
-						v.temp_num++;
-						cs.add_constraint(cs.ctx.mkEq(pre_expr, v.get_Expr(cs_loop_assign_check)));
+			for(Variable v : cs_loop_assign_check.variables){
+				F_Assign assigned = null;
+				for(F_Assign assigned_field: assigned_fields.fst){
+					if(assigned_field.field.equals(v, cs)){
+						assigned = assigned_field;
+						break;
 					}
 				}
-				
-				for(Field f : cs_loop_assign_check.fields){
-					boolean assigned = false;
-					for(Pair<Field,List<List<IntExpr>>> assigned_field: assigned_fields.fst){
-						if(assigned_field.fst.equals(f, cs)){
-							assigned = true;
-							break;
-						}
-					}
-					if(!assigned){
-						f.temp_num--;
-						Expr pre_expr = f.get_Expr(cs_loop_assign_check);
-						f.temp_num++;
-						cs.add_constraint(cs.ctx.mkEq(pre_expr, f.get_Expr(cs_loop_assign_check)));
-					}
+				if(assigned != null){//フィールド単体に対する代入があった場合
+					v.temp_num--;
+					Expr pre_expr = v.get_Expr(cs_loop_assign_check);
+					
+					v.temp_num++;
+					Expr post_expr = v.get_Expr(cs_loop_assign_check);
+					
+					v.temp_num++;
+					Expr pre_expr_tmp = v.get_Expr(cs_loop_assign_check);
+					cs.add_constraint(cs.ctx.mkEq(pre_expr, pre_expr_tmp));
+					
+					assigned.assign_fresh_value(cs_loop_assign_check);
+					//なんでも代入できる条件
+					Expr post_expr_tmp = cs.ctx.mkITE(assigned_fields.snd, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), post_expr.getSort()), v.get_Expr(cs_loop_assign_check));
+					cs.add_constraint(cs.ctx.mkEq(post_expr, post_expr_tmp));
+				}else{//代入が無かった場合、またはなんでも代入できるのみの場合
+					v.temp_num--;
+					Expr pre_expr = v.get_Expr(cs_loop_assign_check);
+					
+					v.temp_num++;
+					Expr post_expr = v.get_Expr(cs_loop_assign_check);
+					
+					cs.add_constraint(cs.ctx.mkEq(post_expr, cs.ctx.mkITE(assigned_fields.snd, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), pre_expr.getSort()), pre_expr)));
 				}
 			}
+			
+			for(Field f : cs_loop_assign_check.fields){
+				F_Assign assigned = null;
+				for(F_Assign assigned_field: assigned_fields.fst){
+					if(assigned_field.field.equals(f, cs)){
+						assigned = assigned_field;
+						break;
+					}
+				}
+				if(assigned != null){//フィールド単体に対する代入があった場合
+					f.temp_num--;
+					Expr pre_expr = f.get_Expr(cs_loop_assign_check);
+					
+					f.temp_num++;
+					Expr post_expr = f.get_Expr(cs_loop_assign_check);
+					
+					f.temp_num++;
+					Expr pre_expr_tmp = f.get_Expr(cs_loop_assign_check);
+					cs.add_constraint(cs.ctx.mkEq(pre_expr, pre_expr_tmp));
+					
+					assigned.assign_fresh_value(cs_loop_assign_check);
+					//なんでも代入できる条件
+					Expr post_expr_tmp = cs.ctx.mkITE(assigned_fields.snd, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), post_expr.getSort()), f.get_Expr(cs_loop_assign_check));
+					cs.add_constraint(cs.ctx.mkEq(post_expr, post_expr_tmp));
+				}else{//代入が無かった場合、またはなんでも代入できるのみの場合
+					f.temp_num--;
+					Expr pre_expr = f.get_Expr(cs_loop_assign_check);
+					
+					f.temp_num++;
+					Expr post_expr = f.get_Expr(cs_loop_assign_check);
+					
+					cs.add_constraint(cs.ctx.mkEq(post_expr, cs.ctx.mkITE(assigned_fields.snd, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), pre_expr.getSort()), pre_expr)));
+				}
+			}
+				
 			//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
 			for(Variable v : cs_loop_assign_check.variables){
 				Field cs_v = cs.search_internal_id(v.internal_id);
@@ -524,7 +565,7 @@ import system.F_Assign;
 				}
 			}
 			
-			BoolExpr enter_loop_condition = null;
+			BoolExpr enter_loop_condition = null;//ループ全体に突入する条件
 			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
 				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
 			}else{
@@ -544,48 +585,42 @@ import system.F_Assign;
 			
 			//中身用に変数を一新
 			System.out.println("loop fields refresh");
-			if(assigned_fields.snd){//何でも代入できるメソッドを呼び出したとき
-				System.out.println("assigned all in loop");
-				for(Variable v : cs_loop.variables){
-					v.tmp_plus(cs_loop);
-				}
-				for(Field f : cs_loop.fields){
-					f.tmp_plus_with_data_group(cs_loop);
-				}
-			}else{//代入されるフィールドのそれぞれのインデックスにフレッシュな値を代入する
-				for(Variable v_loop : cs_loop.variables){//ローカル変数
-					Pair<Field,List<List<IntExpr>>> v_assign_indexs = null;
-					for(Pair<Field,List<List<IntExpr>>> variable_assign_indexs : assigned_fields.fst){
-						if(v_loop.equals(variable_assign_indexs.fst, cs)){
-							v_assign_indexs = variable_assign_indexs;
-							break;
-						}
-					}
-					
-					if(v_assign_indexs!=null){
-						List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
-						b_is.add(new Pair(cs.ctx.mkBool(true), v_assign_indexs.snd));
-						F_Assign fa = new F_Assign(v_loop, b_is);
-						fa.assign_fresh_value(cs_loop);
-					}
-					
-				}
-				for(Field f_loop : cs_loop.fields){//フィールド
-					Pair<Field,List<List<IntExpr>>> f_assign_indexs = null;
-					for(Pair<Field,List<List<IntExpr>>> field_assign_indexs : assigned_fields.fst){
-						if(f_loop.equals(field_assign_indexs.fst, cs)){
-							f_assign_indexs = field_assign_indexs;
-							break;
-						}
-					}
-					
-					if(f_assign_indexs!=null){
-						List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList();
-						b_is.add(new Pair(cs.ctx.mkBool(true), f_assign_indexs.snd));
-						F_Assign fa = new F_Assign(f_loop, b_is);
-						fa.assign_fresh_value(cs_loop);
+			//代入されるフィールドのそれぞれのインデックスにフレッシュな値を代入する
+			for(Variable v_loop : cs_loop.variables){//ローカル変数
+				F_Assign assigned = null;
+				for(F_Assign assigned_field: assigned_fields.fst){
+					if(assigned_field.field.equals(v_loop, cs)){
+						assigned = assigned_field;
+						break;
 					}
 				}
+				
+				if(assigned!=null){
+					assigned.field = v_loop;
+					assigned.assign_fresh_value(cs_loop);
+				}
+				//なんでも代入できる条件
+				Expr pre_expr = v_loop.get_Expr(cs_loop_assign_check);
+				v_loop.tmp_plus_with_data_group(assigned_fields.snd, cs_loop);
+				cs_loop.add_constraint(cs.ctx.mkEq(v_loop.get_Expr(cs_loop_assign_check), cs.ctx.mkITE(assigned_fields.snd, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), pre_expr.getSort()), pre_expr)));
+			}
+			for(Field f_loop : cs_loop.fields){//フィールド
+				F_Assign assigned = null;
+				for(F_Assign assigned_field: assigned_fields.fst){
+					if(assigned_field.field.equals(f_loop, cs)){
+						assigned = assigned_field;
+						break;
+					}
+				}
+				
+				if(assigned!=null){
+					assigned.field = f_loop;
+					assigned.assign_fresh_value(cs_loop);
+				}
+				//なんでも代入できる条件
+				Expr pre_expr = f_loop.get_Expr(cs_loop_assign_check);
+				f_loop.tmp_plus_with_data_group(assigned_fields.snd, cs_loop);
+				cs_loop.add_constraint(cs.ctx.mkEq(f_loop.get_Expr(cs_loop_assign_check), cs.ctx.mkITE(assigned_fields.snd, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), pre_expr.getSort()), pre_expr)));
 			}
 			
 			//外で定義された変数
@@ -596,12 +631,14 @@ import system.F_Assign;
 			
 			//中身の初期条件
 			System.out.println("a loop pre condition");
+			BoolExpr enter_condition = null;//ループの特定の反復に突入する条件
 			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
-				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+				enter_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
 			}else{
-				enter_loop_condition = cs.ctx.mkBool(true);
+				enter_condition = cs.ctx.mkBool(true);
 			}
-			cs_loop.add_path_condition_tmp(enter_loop_condition);//途中でUnreachbleかどうかは関係ないはず
+			cs_loop.add_path_condition_tmp(enter_condition);//途中でUnreachbleかどうかは関係ないはず
+			//ループ不変条件の制約の追加
 			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 				BoolExpr ex = li.predicate.check(cs_loop);
 				cs_loop.add_constraint(ex);
@@ -706,15 +743,17 @@ import system.F_Assign;
 			
 			
 			//ループ出た後の条件
+			BoolExpr post_enter_condition = null;//特定の反復の終了時におけるループの突入条件
 			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
-				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+				post_enter_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
 			}else{
-				enter_loop_condition = cs.ctx.mkBool(true);
+				post_enter_condition = cs.ctx.mkBool(true);
 			}
-			BoolExpr post_loop = cs.ctx.mkNot(enter_loop_condition);
+			BoolExpr post_loop = cs.ctx.mkNot(post_enter_condition);
 			
 			BoolExpr pre_pathcondition = cs.pathcondition;
 			
+			//ループ不変条件の検証
 			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 				BoolExpr li_expr = li.predicate.check(cs_loop);
 				post_loop = cs.ctx.mkAnd(post_loop, li_expr);
@@ -792,7 +831,7 @@ import system.F_Assign;
 			}
 		}
 		
-		public void loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+		public void loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 			if(this.is_expression){
 				this.expression.loop_assign(assigned_fields,cs);
 			}else if(this.local_declaration!=null){

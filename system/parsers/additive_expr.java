@@ -3,11 +3,13 @@ package system.parsers;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.F_Assign;
 import system.Field;
 import system.Pair;
 import system.Parser;
@@ -70,7 +72,7 @@ public class additive_expr implements Parser<String>{
 		return have;
 	}
 	
-	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+	public Check_return loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 		if(this.mult_exprs.size() == 0) return this.mult_expr1.loop_assign(assigned_fields, cs);
 		
 		Expr expr =  this.mult_expr1.loop_assign(assigned_fields, cs).expr;

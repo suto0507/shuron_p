@@ -238,7 +238,7 @@ public class Field {
 	
 	
 	//Ž©•ª‚Æ“¯‚¶Œ^‚ÌƒtƒŒƒbƒVƒ…‚ÈExpr‚ð•Ô‚·
-	public Expr get_Expr_tmp(Check_status cs) throws Exception{
+	public Expr get_fresh_value(Check_status cs) throws Exception{
 		if(this.type.equals("int")&&this.dims==0){
 			String ret = "tmpInt" + cs.Check_status_share.get_tmp_num();
 			return cs.ctx.mkIntConst(ret);

@@ -96,7 +96,7 @@ public class Model_Field extends Field{
 			return;
 		}
 		
-		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkStore(this.get_Expr(cs), class_expr, this.get_Expr_tmp(cs))));
+		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkStore(this.get_Expr(cs), class_expr, this.get_fresh_value(cs))));
 		
 		this.temp_num++;
 		for(Model_Field mf : this.model_fields){
@@ -109,7 +109,8 @@ public class Model_Field extends Field{
 			return;
 		}
 		
-		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkITE(condition, this.get_Expr_tmp(cs), this.get_Expr(cs))));
+		Expr expr = this.get_Expr(cs);
+		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkITE(condition, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), expr.getSort()), expr)));
 		
 		this.temp_num++;
 		for(Model_Field mf : this.model_fields){
@@ -122,7 +123,7 @@ public class Model_Field extends Field{
 			return;
 		}
 		
-		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkITE(condition, cs.ctx.mkStore(this.get_Expr(cs), class_expr, this.get_Expr_tmp(cs)), this.get_Expr(cs))));
+		cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkITE(condition, cs.ctx.mkStore(this.get_Expr(cs), class_expr, this.get_fresh_value(cs)), this.get_Expr(cs))));
 		
 		this.temp_num++;
 		for(Model_Field mf : this.model_fields){

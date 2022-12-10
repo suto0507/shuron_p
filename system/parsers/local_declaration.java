@@ -9,6 +9,7 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.F_Assign;
 import system.Field;
 import system.Helper_assigned_field;
 import system.Pair;
@@ -111,7 +112,7 @@ public class local_declaration implements Parser<String>{
 	}
 
 	
-	public Variable loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+	public Variable loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 		if(cs.search_variable(this.variable_decls.ident)==false){
 			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null, cs.ctx.mkBool(false));
 			v.tmp_plus(cs);

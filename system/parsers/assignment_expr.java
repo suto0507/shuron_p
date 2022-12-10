@@ -11,6 +11,7 @@ import com.microsoft.z3.Status;
 
 import system.Check_return;
 import system.Check_status;
+import system.F_Assign;
 import system.Field;
 import system.Helper_assigned_field;
 import system.Pair;
@@ -250,25 +251,28 @@ public class assignment_expr implements Parser<String>{
 		return implies_expr.have_index_access(cs);
 	}
 	
-	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+	public Check_return loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 		Check_return cr_l = null;
 		if(this.postfix_expr!=null){
 			cr_l = this.postfix_expr.loop_assign(assigned_fields, cs);
 			
 			boolean find_field = false;
-			for(Pair<Field,List<List<IntExpr>>> f_i : assigned_fields.fst){
-				if(f_i.fst == cr_l.field){//見つかったら追加する
+			for(F_Assign f_i : assigned_fields.fst){
+				if(f_i.field.equals(cr_l.field, cs) ){//見つかったら追加する
 					find_field = true;
-					f_i.snd.add(cr_l.indexs);
+					ArrayList<List<IntExpr>> indexs =  new ArrayList<List<IntExpr>>();
+					indexs.add(cr_l.indexs);
+					f_i.cnst_array.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.get_pathcondition(), indexs));
 					break;
 				}
 			}
 			//見つからなかったら新しくフィールドごと追加する
 			if(!find_field){
-				List<List<IntExpr>> f_indexs_snd = new ArrayList<List<IntExpr>>();
-				f_indexs_snd.add(cr_l.indexs);
-				Pair<Field,List<List<IntExpr>>> f_i = new Pair<Field,List<List<IntExpr>>>(cr_l.field, f_indexs_snd);
-				assigned_fields.fst.add(f_i);
+				List<Pair<BoolExpr,List<List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+				ArrayList<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
+				indexs.add(cr_l.indexs);
+				b_is.add(new Pair(cs.get_pathcondition(), indexs));
+				assigned_fields.fst.add(new F_Assign(cr_l.field, b_is));
 			}
 			
 		}

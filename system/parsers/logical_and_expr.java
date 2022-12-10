@@ -9,6 +9,7 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.F_Assign;
 import system.Field;
 import system.Pair;
 import system.Parser;
@@ -71,7 +72,7 @@ public class logical_and_expr implements Parser<String>{
 		return have;
 	}
 	
-	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+	public Check_return loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 		if(this.equality_exprs.size()==0){
 			return this.equality_expr.loop_assign(assigned_fields, cs);
 		}else{

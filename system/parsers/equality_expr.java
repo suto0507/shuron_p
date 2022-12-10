@@ -9,6 +9,7 @@ import com.microsoft.z3.IntExpr;
 
 import system.Check_return;
 import system.Check_status;
+import system.F_Assign;
 import system.Field;
 import system.Pair;
 import system.Parser;
@@ -70,7 +71,7 @@ public class equality_expr implements Parser<String>{
 		return relational_expr1.have_index_access(cs);
 	}
 	
-	public Check_return loop_assign(Pair<List<Pair<Field,List<List<IntExpr>>>>,Boolean>assigned_fields, Check_status cs) throws Exception{
+	public Check_return loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 		if(this.relational_expr2==null){
 			return this.relational_expr1.loop_assign(assigned_fields, cs);
 		}else{

@@ -25,8 +25,9 @@ public class Check_status {
 	
 	
 	public Expr instance_expr;
-	public Field instance_Field;
-	public ArrayList<IntExpr> instance_indexs;
+	public String instance_class_name;
+	//public Field instance_Field;
+	//public ArrayList<IntExpr> instance_indexs;
 	
 	public boolean in_refinement_predicate;//篩型の述語のの中でメソッドを呼び出した場合、その検証中はこのフラグはfalseになる
 	public Field refined_Field;
@@ -74,6 +75,14 @@ public class Check_status {
 	
 	public ArrayList<Pair<Field, Expr>> checked_refinement_type_field;//篩型の制約を既に追加したもの　Fieldとclass_objectのExprのPair    使い切りなのでcloneでは中身は気にしなくていい
 	
+	//配列のポインターから配列
+	//追加しただけ　あとでコンストラクタで書く
+	Array array_arrayref;
+	Array array_int;
+	Array array_boolean;
+	Array array_ref;
+	
+	
 	public Check_status(compilation_unit cu){
 		variables = new ArrayList<Variable>();
 		this.Check_status_share = new Check_status_share(cu);
@@ -118,9 +127,9 @@ public class Check_status {
 	}
 	
 	//identはxとかで検索
-	public Field search_field(String ident, Field class_object, Check_status cs) throws Exception{
+	public Field search_field(String ident, String class_type_name, Check_status cs) throws Exception{
 		
-		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident, false);
+		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_type_name, ident, false);
 		
 		if(vd == null){
 			return null;
@@ -129,7 +138,7 @@ public class Check_status {
 		String field_name = ident + "_" + vd.class_type_name;
 		
 		for(Field v :fields){
-			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_object.equals(class_object, cs)){
+			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_type_name.equals(class_type_name)){
 				return v;
 			}
 		}
@@ -139,25 +148,19 @@ public class Check_status {
 		for(group_name gn : vd.group_names){
 			String class_type = null;
 			if(gn.is_super){
-				class_declaration cd = this.Check_status_share.compilation_unit.search_class(class_object.type);
+				class_declaration cd = this.Check_status_share.compilation_unit.search_class(class_type_name);
 				class_type = cd.super_class.class_name;
 			}else{
-				class_type = class_object.type;
+				class_type = class_type_name;
 			}
 			
-			String pre_type = class_object.type;
-			class_object.type = class_type;
-			data_groups.add(search_model_field(gn.ident, class_object, this));
-			class_object.type = pre_type;
+			
+			data_groups.add(search_model_field(gn.ident, class_type, this));
 		}
 		
-		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true), data_groups);
+		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, vd.class_type_name, new ArrayList<Pair<Expr, BoolExpr>>(), data_groups);
 		
 		
-		//新しく追加したフィールドはassinable節で触れられていない
-		List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
-		indexs.add(new ArrayList<IntExpr>());
-		f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(cs.ctx.mkBool(false), indexs));
 		
 		this.fields.add(f);
 		
@@ -165,7 +168,6 @@ public class Check_status {
 		if(cs.this_old_status!=null){
 			Field f_old = f.clone_e();
 			cs.this_old_status.fields.add(f_old);
-			f_old.class_object = search_internal_id(f.class_object.internal_id);
 		}
 		
 		
@@ -174,9 +176,9 @@ public class Check_status {
 	}
 	
 	//identはxとかで検索
-	public Model_Field search_model_field(String ident, Field class_object, Check_status cs) throws Exception{
+	public Model_Field search_model_field(String ident, String class_type_name, Check_status cs) throws Exception{
 		
-		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_object.type, ident, true);
+		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_type_name, ident, true);
 		
 		if(vd == null){
 			return null;
@@ -184,7 +186,7 @@ public class Check_status {
 		
 		String field_name = ident + "_" + vd.class_type_name;
 		for(Model_Field model_field :model_fields){
-			if(field_name.equals(model_field.field_name + "_" + model_field.class_type_name) && model_field.class_object.equals(class_object, cs)){
+			if(field_name.equals(model_field.field_name + "_" + model_field.class_type_name) && model_field.class_type_name.equals(class_type_name)){
 				return model_field;
 			}
 		}
@@ -194,19 +196,16 @@ public class Check_status {
 		for(group_name gn : vd.group_names){
 			String class_type = null;
 			if(gn.is_super){
-				class_declaration cd = this.Check_status_share.compilation_unit.search_class(class_object.type);
+				class_declaration cd = this.Check_status_share.compilation_unit.search_class(class_type);
 				class_type = cd.super_class.class_name;
 			}else{
-				class_type = class_object.type;
+				class_type = class_type_name;
 			}
 			
-			String pre_type = class_object.type;
-			class_object.type = class_type;
-			data_groups.add(search_model_field(gn.ident, class_object, this));
-			class_object.type = pre_type;
+			data_groups.add(search_model_field(gn.ident, class_type, this));
 		}
 		
-		Model_Field mf = new Model_Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, class_object, vd.class_type_name, this.ctx.mkBool(true), data_groups);
+		Model_Field mf = new Model_Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, vd.class_type_name, new ArrayList<Pair<Expr, BoolExpr>>(), data_groups);
 		mf.set_repersents(cs);
 
 		
@@ -215,7 +214,6 @@ public class Check_status {
 		if(cs.this_old_status!=null){
 			Model_Field mf_old = mf.clone_e();
 			cs.this_old_status.model_fields.add(mf_old);
-			mf_old.class_object = search_internal_id(mf.class_object.internal_id);
 		}
 		
 		
@@ -320,8 +318,8 @@ public class Check_status {
 		this.solver.pop();
 	}
 	
-	public Variable add_variable(String variable, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, BoolExpr alias_2d) throws Exception{
-		Variable v = new Variable(this.Check_status_share.get_tmp_num(), variable, type, dims, refinement_type_clause, modifiers, this.this_field, alias_2d);
+	public Variable add_variable(String variable, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, ArrayList<Pair<Expr, BoolExpr>> alias_2d) throws Exception{
+		Variable v = new Variable(this.Check_status_share.get_tmp_num(), variable, type, dims, refinement_type_clause, modifiers, this.this_field.type, alias_2d);
 		this.variables.add(v);
 		return v;
 	}
@@ -377,8 +375,7 @@ public class Check_status {
 		cs.refinement_deep_limmit = this.refinement_deep_limmit;
 		
 		cs.instance_expr = this.instance_expr;
-		cs.instance_Field = this.instance_Field;
-		cs.instance_indexs = this.instance_indexs;
+		cs.instance_class_name = this.instance_class_name;
 		
 		cs.in_constructor = this.in_constructor;
 		
@@ -398,6 +395,9 @@ public class Check_status {
 		cs.invariant_refinement_type_deep_limmit = this.invariant_refinement_type_deep_limmit;
 		
 		cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
+		
+
+		
 		
 		return cs;
 	}
@@ -446,11 +446,6 @@ public class Check_status {
 	
 	
 	
-	public void add_assign(Expr postfix_tmp, Expr implies_tmp) throws Exception{
-		BoolExpr expr = this.ctx.mkEq(postfix_tmp, implies_tmp);
-		this.add_constraint(expr);
-	}
-	
 	public void add_path_condition(BoolExpr expr) throws Exception{
 		System.out.println("check unreachable");
 		if(this.pathcondition==null){
@@ -484,19 +479,7 @@ public class Check_status {
 		
 	}
 	
-	
-	public void constructor_refinement_check() throws Exception{
-		System.out.println("check all refinement type predicates");
-		class_declaration cd = this.Check_status_share.compilation_unit.search_class(this.this_field.class_type_name);
-		for(Field f : this.fields){
-			if(f.class_object!=null && f.class_object.equals(this_field, this) && f.hava_refinement_type()){
-				f.assert_refinement(this, this.this_field.get_Expr(this), new ArrayList<IntExpr>());
-			}
-		}
-	}
-	
 	//localの篩型も含めて探す
-	
 	public refinement_type search_refinement_type(String class_name, String type_name){
 		//フィールド
 		refinement_type rt = this.Check_status_share.compilation_unit.search_refinement_type(class_name, type_name);
@@ -508,6 +491,19 @@ public class Check_status {
 		}
 		return null;
 	}
+	
+	
+	public void constructor_refinement_check() throws Exception{
+		System.out.println("check all refinement type predicates");
+		class_declaration cd = this.Check_status_share.compilation_unit.search_class(this.this_field.class_type_name);
+		for(Field f : this.fields){
+			if(f.class_object!=null && f.class_object.equals(this_field, this) && f.hava_refinement_type()){
+				f.assert_refinement(this, this.this_field.get_Expr(this), new ArrayList<IntExpr>());
+			}
+		}
+	}
+	
+	
 	
 	public void assert_all_refinement_type() throws Exception{
 		System.out.println("check all refinement");

@@ -20,7 +20,7 @@ public class Model_Field extends Field{
 	represents_clause represents_clause;
 	
 	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
-	public Model_Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
+	public Model_Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = 0;
@@ -29,8 +29,7 @@ public class Model_Field extends Field{
 		this.dims = dims;
 		this.refinement_type_clause = refinement_type_clause;
 		this.modifiers = modifiers;
-		this.class_object = class_object;
-		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
 		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
@@ -39,11 +38,9 @@ public class Model_Field extends Field{
 	}
 	
 	public Model_Field clone_e() throws Exception{
-		Model_Field ret = new Model_Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor, model_fields);
+		Model_Field ret = new Model_Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, class_type_name, alias_in_helper_or_consutructor, model_fields);
 		ret.temp_num = this.temp_num;
-		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
-		ret.index = this.index;
 		
 		ret.final_initialized = final_initialized;
 		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
@@ -53,7 +50,7 @@ public class Model_Field extends Field{
 	}
 	
 	public void set_repersents(Check_status cs){
-		represents_clause rc = cs.Check_status_share.compilation_unit.search_represents_clause(this.class_object.type, this.field_name, cs.this_field.type);
+		represents_clause rc = cs.Check_status_share.compilation_unit.search_represents_clause(this.class_type_name, this.field_name, cs.this_field.type);
 		represents_clause = rc;
 	}
 	
@@ -63,14 +60,12 @@ public class Model_Field extends Field{
 		if(this.represents_clause!=null){
 			Expr full_expr = cs.ctx.mkSelect(expr, class_expr);
 			Expr pre_instance_expr = cs.instance_expr;
-			Field pre_instance_Field = cs.instance_Field;
-			ArrayList<IntExpr> pre_instance_indexs = cs.instance_indexs;
+			String pre_instance_class_name = cs.instance_class_name;
 			boolean pre_ban_private_visibility = cs.ban_private_visibility;
 			boolean pre_ban_default_visibility = cs.ban_default_visibility;
 			
 			cs.instance_expr = class_expr;
-			cs.instance_Field = this.class_object;
-			cs.instance_indexs = (ArrayList<IntExpr>) indexs.clone();
+			cs.instance_class_name = this.class_type_name;
 			//可視性について
 			cs.ban_default_visibility = false;
 			if(this.represents_clause.is_private){
@@ -82,8 +77,7 @@ public class Model_Field extends Field{
 			cs.add_constraint(cs.ctx.mkEq(full_expr, this.represents_clause.spec_expression.check(cs).expr));
 			
 			cs.instance_expr = pre_instance_expr;
-			cs.instance_Field = pre_instance_Field;
-			cs.instance_indexs = pre_instance_indexs;
+			cs.instance_class_name = pre_instance_class_name;
 			cs.ban_private_visibility = pre_ban_private_visibility;
 			cs.ban_default_visibility = pre_ban_default_visibility;
 		}
@@ -150,11 +144,11 @@ public class Model_Field extends Field{
 		
 		if(this.refinement_type_clause!=null){
 			if(this.refinement_type_clause.refinement_type!=null){
-				this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+				this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, class_Expr, indexs, add_once);
 			}else if(this.refinement_type_clause.ident!=null){
-				refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+				refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+					rt.add_refinement_constraint(cs, this, ex, class_Expr, indexs, add_once);
 				}else{
 	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
 	            }
@@ -189,11 +183,11 @@ public class Model_Field extends Field{
 		
 		if(this.refinement_type_clause!=null){
 			if(this.refinement_type_clause.refinement_type!=null){
-				this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+				this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, class_Expr, indexs);
 			}else if(this.refinement_type_clause.ident!=null){
-				refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+				refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+					rt.assert_refinement(cs, this, ex, class_Expr, indexs);
 				}else{
 	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
 	            }

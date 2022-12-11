@@ -22,13 +22,8 @@ public class Field {
 	public refinement_type_clause refinement_type_clause;
 	public modifiers modifiers;
 	
-	public Field class_object;
-	public Expr class_object_expr;
-	
-	
-	public List<Pair<BoolExpr,List<List<IntExpr>>>> assinable_cnst_indexs;//配列の要素に代入できる条件
-	
-	public ArrayList<IntExpr> index; //代入するときの右辺値のindexを表してっるっぽい？メソッドには使えないので要確認
+	//要素が無かったら、何にも代入できない状態であるべき
+	public List<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>> assinable_cnst_indexs;//配列の要素に代入できる条件
 	
 	public boolean new_array;//newとかで生成された配列　
 	
@@ -39,14 +34,15 @@ public class Field {
 	public String class_type_name;
 	
 	//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-	public BoolExpr alias_in_helper_or_consutructor;
-	public BoolExpr alias_2d_in_helper_or_consutructor;
+	//対応するclass_exprが含まれていない場合はtrueとして扱う
+	public ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor;
+	public ArrayList<Pair<Expr, BoolExpr>> alias_2d_in_helper_or_consutructor;
 	
 	//データフィールド
 	public ArrayList<Model_Field> model_fields;
 	
 	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
-	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, String class_type_name, BoolExpr alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
+	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = 0;
@@ -55,8 +51,7 @@ public class Field {
 		this.dims = dims;
 		this.refinement_type_clause = refinement_type_clause;
 		this.modifiers = modifiers;
-		this.class_object = class_object;
-		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<List<IntExpr>>>>();
+		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
 		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
@@ -68,11 +63,9 @@ public class Field {
 	
 	
 	public Field clone_e() throws Exception{
-		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, class_type_name, alias_in_helper_or_consutructor, model_fields);
+		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, class_type_name, alias_in_helper_or_consutructor, model_fields);
 		ret.temp_num = this.temp_num;
-		ret.class_object_expr = this.class_object_expr;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
-		ret.index = this.index;
 		
 		ret.final_initialized = final_initialized;
 		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
@@ -94,27 +87,9 @@ public class Field {
 			//クラス
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkUninterpretedSort("Ref"));
-		}else if(this.type.equals("int")&&this.dims>0){ //配列
-			String ret = field_name + "_temp_" + this.id + "_" + this.temp_num;
-			Sort arraysort = cs.ctx.mkIntSort();
-			for(int i = 0; i < this.dims; i++){
-				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
-			}
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
-		}else if(this.type.equals("boolean")&&this.dims>0){
-			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			Sort arraysort = cs.ctx.mkBoolSort();
-			for(int i = 0; i < this.dims; i++){
-				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
-			}
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
 		}else if(this.dims>0){
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			Sort arraysort = cs.ctx.mkUninterpretedSort("Ref");
-			for(int i = 0; i < this.dims; i++){
-				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
-			}
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), arraysort);
+			return cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkUninterpretedSort("ArrayRef"));
 		}
 		throw new Exception("unexpect variable");
 	}
@@ -129,111 +104,32 @@ public class Field {
 		return ex;
 	}
 	
-	//indexsは、a[x].array[2]だったら{x,2}になるようなもの
-	//indexsは変更されるので、必要であればcloneしたものを渡す
-	public Expr get_full_Expr(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
-		Expr ex = this.get_Expr(cs);
-		Expr class_ex = this.class_object.get_full_Expr(indexs, cs);
-		Expr full_ex;
-		full_ex = cs.ctx.mkSelect((ArrayExpr)ex, class_ex);
-		for(int i=0; i<this.dims&&indexs.size()>0; i++){
-			full_ex = cs.ctx.mkSelect((ArrayExpr) full_ex, indexs.get(0));
-			indexs.remove(0);
-		}
-		return full_ex;
-	}
-	
-	public Expr get_full_Expr_assign(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
-		if(this == cs.instance_Field){//helper、メソッドの篩型の検証などでは、そのまま辿るのとinstancs_exprが同じにならない
-			for(int i=0; i<this.dims_sum()&&indexs.size()>0; i++){
-				indexs.remove(0);
+	//値を更新する
+	//配列の要素への代入でないならば、tmp_numを更新する
+	public void assign_value(Expr class_expr, ArrayList<IntExpr> indexs, Expr value, Check_status cs) throws Exception{
+		
+		if(indexs.size()>0){
+			Expr expr = cs.ctx.mkSelect(this.get_Expr(cs), class_expr);
+			for(int i = 0; i < indexs.size()-1; i++){
+				expr = cs.array_arrayref.index_access_array(expr, indexs.get(i), cs);
 			}
-			return cs.instance_expr;
-		}
-		Expr ex = this.get_Expr_assign(cs);
-		Expr class_ex = this.class_object.get_full_Expr(indexs, cs);
-		Expr full_ex;
-		full_ex = cs.ctx.mkSelect((ArrayExpr)ex, class_ex);
-		for(int i=0; i<this.dims&&indexs.size()>0; i++){
-			full_ex = cs.ctx.mkSelect((ArrayExpr) full_ex, indexs.get(0));
-			indexs.remove(0);
-		}
-		return full_ex;
-	}
-	
-	public int class_object_dims_sum(){
-		return this.class_object.dims_sum();
-	}
-	
-	public int dims_sum(){
-		return this.dims + this.class_object.dims_sum();
-	}
-	
-	
-	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Check_status cs) throws Exception{
-		Expr expr = value;
-		for(int i = indexs.size()-1; i >= this.class_object_dims_sum(); i--){
-			IntExpr index = indexs.get(i);
-			ArrayList<IntExpr> indexs_sub = new ArrayList<IntExpr>(indexs.subList(0, i));
-			ArrayExpr array = (ArrayExpr) get_full_Expr((ArrayList<IntExpr>) indexs_sub.clone(), cs);
-			ArrayExpr array_assign = (ArrayExpr) get_full_Expr_assign((ArrayList<IntExpr>) indexs_sub.clone(), cs);
-			expr = cs.ctx.mkStore(array, index, expr);
-			
-			//長さに関する制約
-			int array_dim = this.dims_sum() - i;
-			String array_type;
-			if(this.type.equals("int")){
-				array_type = "int";
-			}else if(this.type.equals("boolean")){
-				array_type = "boolean";
+			Array array = null;
+			if(indexs.size()>this.dims){
+				array = cs.array_arrayref;
 			}else{
-				array_type = "ref";
+				if(this.type.equals("int")){
+					array = cs.array_int;
+				}else if(this.type.equals("boolean")){
+					array = cs.array_int;
+				}else{
+					array = cs.array_ref;
+				}
 			}
-			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array.getSort(), cs.ctx.mkIntSort()), array);
-			IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array_assign.getSort(), cs.ctx.mkIntSort()), array_assign);
-			
-			cs.add_constraint(cs.ctx.mkEq(length, length_assign));
+			array.update_array(class_expr, indexs.get(indexs.size()-1), value, cs);
+		}else{
+			cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), cs.ctx.mkStore(this.get_Expr(cs), class_expr, value)));
+			this.tmp_plus_with_data_group(class_expr, cs);
 		}
-		
-		
-		return cs.ctx.mkStore(this.get_Expr(cs), this.class_object.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs), expr);
-	}
-	
-	//class_object_expr固定の場合
-	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Expr class_object_expr, Check_status cs) throws Exception{
-		Expr expr = value;
-		for(int i = indexs.size()-1; i >= this.class_object_dims_sum(); i--){
-			IntExpr index = indexs.get(i);
-			
-			ArrayList<IntExpr> indexs_sub = new ArrayList<IntExpr>(indexs.subList(this.class_object_dims_sum(), i));
-			ArrayExpr array = (ArrayExpr) cs.ctx.mkSelect(this.get_Expr(cs), class_object_expr);
-			ArrayExpr array_assign = (ArrayExpr) cs.ctx.mkSelect(this.get_Expr_assign(cs), class_object_expr);
-			for(IntExpr index_sub : indexs_sub){
-				array = (ArrayExpr) cs.ctx.mkSelect(array, index_sub);
-				array_assign = (ArrayExpr) cs.ctx.mkSelect(array_assign, index_sub);
-			}
-			
-			
-			expr = cs.ctx.mkStore(array, index, expr);
-			
-			//長さに関する制約
-			int array_dim = this.dims_sum() - i;
-			String array_type;
-			if(this.type.equals("int")){
-				array_type = "int";
-			}else if(this.type.equals("boolean")){
-				array_type = "boolean";
-			}else{
-				array_type = "ref";
-			}
-			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array.getSort(), cs.ctx.mkIntSort()), array);
-			IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array_assign.getSort(), cs.ctx.mkIntSort()), array_assign);
-			
-			cs.add_constraint(cs.ctx.mkEq(length, length_assign));
-		}
-		
-		
-		return cs.ctx.mkStore(this.get_Expr(cs), this.class_object.get_full_Expr((ArrayList<IntExpr>) indexs.clone(), cs), expr);
 	}
 	
 	
@@ -324,26 +220,22 @@ public class Field {
 	}
 	
 	
-	public boolean is_this_field(){
-		return this.class_object.is_this_field();
-	}
-	
-	
-	public BoolExpr assign_index_expr(List<IntExpr> index_expr, Check_status cs){
+	public BoolExpr assign_index_expr(Expr class_expr, List<IntExpr> index_expr, Check_status cs){
 		BoolExpr equal_cnsts = cs.ctx.mkBool(false);
 		BoolExpr not_equal_cnsts = cs.ctx.mkBool(true);
-		for(Pair<BoolExpr,List<List<IntExpr>>> assinable_cnst_index :assinable_cnst_indexs){
+		for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> assinable_cnst_index :assinable_cnst_indexs){
 			BoolExpr equal = cs.ctx.mkBool(false);
-			for(List<IntExpr> index : assinable_cnst_index.snd){
-				if(index.size()==0 && index.size() == index_expr.size()){
+			for(Pair<Expr, List<IntExpr>> expr_index : assinable_cnst_index.snd){
+				if(!expr_index.fst.equals(class_expr))break;//同じclass_exprだけ考える
+				if(expr_index.snd.size()==0 && expr_index.snd.size() == index_expr.size()){
 					equal = cs.ctx.mkBool(true);
-				}else if(index.size()>0 && index.size() == index_expr.size()){
+				}else if(expr_index.snd.size()>0 && expr_index.snd.size() == index_expr.size()){
 					BoolExpr index_equal = null;
-					for(int i = 0; i<index.size(); i++){
+					for(int i = 0; i<expr_index.snd.size(); i++){
 						if(index_equal == null){
-							index_equal = cs.ctx.mkEq(index_expr.get(i), index.get(i));
+							index_equal = cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i));
 						}else{
-							index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), index.get(i)));
+							index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i)));
 						}
 					}
 					equal = cs.ctx.mkOr(equal, index_equal);
@@ -357,21 +249,6 @@ public class Field {
 		return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);
 	}
 	
-	//インデックスをフレッシュとして、class_objectのExpr用に作る
-	public Pair<Expr, ArrayList<IntExpr>> fresh_index_full_expr(Check_status cs) throws Exception{
-		Pair<Expr, ArrayList<IntExpr>> expr_indexs = this.class_object.fresh_index_full_expr(cs);
-		Expr expr = expr_indexs.fst;
-		ArrayList<IntExpr> indexs = expr_indexs.snd;
-		expr = cs.ctx.mkSelect(this.get_Expr(cs), expr);
-		for(int i = 0; i < this.dims; i++){
-			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
-			IntExpr index = cs.ctx.mkIntConst(ret);
-			indexs.add(index);
-			expr = cs.ctx.mkSelect(expr, index);
-		}
-		
-		return new Pair(expr, indexs);
-	}
 	
 	public void add_refinement_constraint(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
 		add_refinement_constraint(cs, class_Expr, indexs, false);
@@ -401,11 +278,11 @@ public class Field {
 			}
 			
 			if(this.refinement_type_clause.refinement_type!=null){
-				this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+				this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, class_Expr, indexs, add_once);
 			}else if(this.refinement_type_clause.ident!=null){
-				refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+				refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.add_refinement_constraint(cs, this, ex, this.class_object, class_Expr, indexs, add_once);
+					rt.add_refinement_constraint(cs, this, ex, class_Expr, indexs, add_once);
 				}else{
 	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
 	            }
@@ -445,11 +322,11 @@ public class Field {
 			}
 			
 			if(this.refinement_type_clause.refinement_type!=null){
-				this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+				this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, class_Expr, indexs);
 			}else if(this.refinement_type_clause.ident!=null){
-				refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+				refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.assert_refinement(cs, this, ex, this.class_object, class_Expr, indexs);
+					rt.assert_refinement(cs, this, ex, class_Expr, indexs);
 				}else{
 	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
 	            }
@@ -482,7 +359,7 @@ public class Field {
 		if(this.refinement_type_clause.refinement_type!=null){
 			have = have || this.refinement_type_clause.refinement_type.have_index_access(cs);
 		}else if(this.refinement_type_clause.ident!=null){
-			refinement_type rt = cs.search_refinement_type(this.class_object.type, this.refinement_type_clause.ident);
+			refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
 			if(rt!=null){
 				have = have || rt.have_index_access(cs);
 			}else{
@@ -498,7 +375,7 @@ public class Field {
 	
 	//finalのフィールドにinitializerが付いていた場合
 	public void set_initialize(Expr class_expr, Check_status cs) throws Exception{
-		variable_definition vd = cs.Check_status_share.compilation_unit.search_field(class_object.type, this.field_name, false);
+		variable_definition vd = cs.Check_status_share.compilation_unit.search_field(class_type_name, this.field_name, false);
 		//initializerが付いていた場合
 		if(vd.variable_decls.initializer!=null && vd.modifiers.is_final){
 			Check_return init_Expr = vd.variable_decls.initializer.check(cs);

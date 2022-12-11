@@ -27,7 +27,7 @@ public class Variable extends Field{
 	
 	
 	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
-	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, Field class_object, BoolExpr alias_in_helper_or_consutructor) throws Exception{
+	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = - 1;
@@ -36,9 +36,8 @@ public class Variable extends Field{
 		this.dims = dims;
 		this.refinement_type_clause = refinement_type_clause;
 		this.modifiers = modifiers;
-		this.class_object = class_object;
 		this.new_array = false;
-
+		this.class_type_name = class_type_name;
 		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
 		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
 		
@@ -49,7 +48,7 @@ public class Variable extends Field{
 	
 	@Override
 	public Variable clone_e() throws Exception{
-		Variable ret = new  Variable(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_object, this.alias_in_helper_or_consutructor);
+		Variable ret = new  Variable(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_type_name, this.alias_in_helper_or_consutructor);
 		ret.temp_num = this.temp_num;
 		ret.alias = this.alias;
 		ret.alias_refined = this.alias_refined;

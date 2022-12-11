@@ -65,8 +65,8 @@ public class class_declaration implements Parser<String>{
 		ArrayList<Field> fields = new ArrayList<Field>();
 		fields.add(class_object);
 		for(variable_definition vd : this.class_block.variable_definitions){
-			Field field = cs.search_field(vd.variable_decls.ident, class_object, cs);
-			if(field == null)field = cs.search_model_field(vd.variable_decls.ident, class_object, cs);
+			Field field = cs.search_field(vd.variable_decls.ident, class_object.type, cs);
+			if(field == null)field = cs.search_model_field(vd.variable_decls.ident, class_object.type, cs);
 			if(field == null)throw new Exception(class_object.type + " don't have " + vd.variable_decls.ident);
 			
 			if(!vd.variable_decls.type_spec.type.type.equals("int") && !vd.variable_decls.type_spec.type.type.equals("boolean")){

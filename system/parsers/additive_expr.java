@@ -61,7 +61,7 @@ public class additive_expr implements Parser<String>{
 				expr = (IntExpr)cs.ctx.mkSub((IntExpr)expr, (IntExpr)me.check(cs).expr);
 			}
 		}
-		return new Check_return(expr, null, null);
+		return new Check_return(expr, null, null, null);
 	}
 	
 	public boolean have_index_access(Check_status cs){
@@ -85,7 +85,7 @@ public class additive_expr implements Parser<String>{
 				expr = (IntExpr)cs.ctx.mkSub((IntExpr)expr, (IntExpr)me.loop_assign(assigned_fields, cs).expr);
 			}
 		}
-		return new Check_return(expr, null, null);
+		return new Check_return(expr, null, null, null);
 	}
 	
 }

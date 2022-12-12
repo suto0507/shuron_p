@@ -11,6 +11,7 @@ import com.microsoft.z3.Status;
 
 import system.Check_return;
 import system.Check_status;
+import system.Dummy_Field;
 import system.Field;
 import system.Model_Field;
 import system.Pair;
@@ -47,22 +48,27 @@ public class postfix_expr implements Parser<String>{
 	
 	public Check_return check(Check_status cs) throws Exception{
 		Expr ex = null;
-		
 		Field f = null;
 		String ident = null;
+		Expr class_expr = null;
 		boolean is_refine_value = false;
 		
 
 		//suffixについて
 		List<IntExpr> indexs = new ArrayList<IntExpr>();
-		if(cs.instance_indexs!=null) indexs = (ArrayList<IntExpr>) cs.instance_indexs.clone();
 		
 		
 		if(this.primary_expr.is_this){
 			if(this.primary_suffixs.size() == 0 && cs.in_constructor){//this単体のコンストラクターでの使用
 				cs.constructor_refinement_check();
 			}
-			f = cs.instance_Field;
+			
+			if(cs.this_field.get_Expr(cs).equals(cs.instance_expr)){
+				f = cs.this_field;
+			}else{
+				f = new Dummy_Field(cs.instance_class_name, cs.instance_expr);
+			}
+			
 			ex = cs.instance_expr;
 			
 			
@@ -75,6 +81,7 @@ public class postfix_expr implements Parser<String>{
 			}else if(cs.in_refinement_predicate==true && this.primary_expr.ident.equals(cs.refinement_type_value)){
 				f = cs.refined_Field;
 				ex = cs.refined_Expr;
+				class_expr = cs.instance_expr;
 				is_refine_value = true;
 			}else{
 				//ローカル変数
@@ -85,7 +92,7 @@ public class postfix_expr implements Parser<String>{
 					}
 					
 				}else if(cs.in_refinement_predicate){//篩型
-					if((cs.instance_Field==null||cs.instance_Field.equals(cs.this_field, cs))&&cs.search_variable(this.primary_expr.ident)){
+					if(cs.search_variable(this.primary_expr.ident)){
 						f = cs.get_variable(this.primary_expr.ident);
 						ex = f.get_Expr(cs);
 					}
@@ -94,7 +101,7 @@ public class postfix_expr implements Parser<String>{
 					if(cs.search_variable(primary_expr.ident)){
 						f = cs.get_variable(primary_expr.ident);
 						ex = f.get_Expr(cs);
-						if(cs.in_postconditions && ((Variable)f).is_arg && f.dims==0){//メソッドの引数には暗黙のoldが付く
+						if(cs.in_postconditions && ((Variable)f).is_arg){//メソッドの引数には暗黙のoldが付く
 							f = cs.this_old_status.get_variable(primary_expr.ident);
 							ex = f.get_Expr(cs.this_old_status);
 						}
@@ -102,10 +109,11 @@ public class postfix_expr implements Parser<String>{
 				}
 				
 				if(f==null){//ローカル変数ではない場合
-					Field searched_field = cs.search_field(primary_expr.ident, cs.instance_Field ,cs);
+					Field searched_field = cs.search_field(primary_expr.ident, cs.instance_class_name ,cs);
 					if(searched_field != null){//フィールド
 						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.instance_expr);
+						class_expr = cs.instance_expr;
 						if(cs.can_not_use_mutable){
 							if(!f.modifiers.is_final){
 								new Exception("method depends on mutable field in refinenment type predicate.");
@@ -116,25 +124,27 @@ public class postfix_expr implements Parser<String>{
 						}
 						
 					}else{
-						Model_Field searched_model_field = cs.search_model_field(primary_expr.ident, cs.instance_Field ,cs);
+						Model_Field searched_model_field = cs.search_model_field(primary_expr.ident, cs.instance_class_name ,cs);
 						if(searched_model_field != null){//modelフィールド
 							f = searched_model_field;
-							ex = cs.ctx.mkSelect((ArrayExpr) ((Model_Field)f).get_Expr(cs.instance_expr, (ArrayList<IntExpr>) indexs, cs),cs.instance_expr);
+							ex = cs.ctx.mkSelect((ArrayExpr) ((Model_Field)f).get_Expr(cs.instance_expr, cs),cs.instance_expr);
+							class_expr = cs.instance_expr;
 							if(cs.can_not_use_mutable){
 								new Exception("method depends on model field in refinenment type predicate.");
 							}
 						}else if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//メソッド
 							ident = this.primary_expr.ident;
-							f = cs.instance_Field;
+							f = new Dummy_Field(cs.instance_class_name, cs.instance_expr);
 							ex = cs.instance_expr;
+							class_expr = cs.instance_expr;
 						}else{
-							throw new Exception(cs.instance_Field.type + " don't have " + this.primary_expr.ident);
+							throw new Exception(cs.instance_class_name + " don't have " + this.primary_expr.ident);
 						}
 					}
 				}
 
 				if(cs.in_refinement_predicate==true){
-					if(f.modifiers.is_final==false || f instanceof Model_Field){//篩型の中ではfinalである必要がある
+					if((f.modifiers!=null&&f.modifiers.is_final==false) || f instanceof Model_Field){//篩型の中ではfinalである必要がある
 						throw new Exception("can use only final variable in refinement type");
 					}
 				}
@@ -154,6 +164,7 @@ public class postfix_expr implements Parser<String>{
 			Check_return cr = this.primary_expr.bracket_expression.check(cs);
 			f = cr.field;
 			ex = cr.expr;
+			class_expr = cr.class_expr;
 			indexs = cr.indexs;
 		}else if(this.primary_expr.java_literal!=null){
 			if(this.primary_suffixs.size() == 0){
@@ -171,6 +182,7 @@ public class postfix_expr implements Parser<String>{
 					Check_return cr = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.old_status);
 					f = cr.field;
 					ex = cr.expr;
+					class_expr = cr.class_expr;
 					indexs = cr.indexs;
 				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
 					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
@@ -185,6 +197,7 @@ public class postfix_expr implements Parser<String>{
 					Check_return cr = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.this_old_status);
 					f = cr.field;
 					ex = cr.expr;
+					class_expr = cr.class_expr;
 					indexs = cr.indexs;
 				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
 					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
@@ -199,7 +212,7 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		if(f!=null && f.hava_refinement_type() && is_refine_value==false){//篩型			
-			add_refinement_constraint(cs, f, ex, cs.instance_Field, cs.instance_Field.get_Expr(cs), cs.instance_indexs);
+			add_refinement_constraint(cs, f, cs.instance_expr);
 		}
 		
 		
@@ -209,24 +222,17 @@ public class postfix_expr implements Parser<String>{
 			if(ps.is_field){
 				if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(i+1).is_method){
 					ident = ps.ident;
-				}else if(f.dims_sum() > indexs.size() && ps.ident.equals("length")){
+				}else if(f.dims > indexs.size() && ps.ident.equals("length")){
 					if(this.primary_suffixs.size()-1 != i) throw new Exception("length don't have suffix");
-					int array_dim = f.dims_sum() - indexs.size();
-					String array_type;
-					if(f.type.equals("int")){
-						array_type = "int";
-					}else if(f.type.equals("boolean")){
-						array_type = "boolean";
-					}else{
-						array_type = "ref";
-					}
-					ex = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
+					
+					ex = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), ex);
 					f = null;
+					class_expr = null;
 				}else{
 					Field pre_f = f;
-					Expr pre_ex = ex;
+					class_expr = ex;
 					
-					Field searched_field = cs.search_field(ps.ident, f, cs);
+					Field searched_field = cs.search_field(ps.ident, f.type, cs);
 					if(searched_field != null){
 						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
@@ -237,13 +243,13 @@ public class postfix_expr implements Parser<String>{
 						}
 
 						if(f.modifiers.is_final){
-							f.set_initialize(pre_ex, cs);
+							f.set_initialize(class_expr, cs);
 						}
 					}else{
-						Model_Field searched_model_field = cs.search_model_field(ps.ident, f, cs);
+						Model_Field searched_model_field = cs.search_model_field(ps.ident, f.type, cs);
 						if(searched_model_field != null){
 							f = searched_model_field;
-							ex = cs.ctx.mkSelect((ArrayExpr) ((Model_Field)f).get_Expr(ex, (ArrayList<IntExpr>) indexs, cs), ex);
+							ex = cs.ctx.mkSelect((ArrayExpr) ((Model_Field)f).get_Expr(ex, cs), ex);
 							if(cs.can_not_use_mutable){
 								new Exception("method depends on model field in refinenment type predicate.");
 							}
@@ -253,7 +259,7 @@ public class postfix_expr implements Parser<String>{
 					}
 					
 					if(f.hava_refinement_type()){//篩型
-						add_refinement_constraint(cs, f, ex, pre_f, pre_ex, (ArrayList<IntExpr>) indexs);
+						add_refinement_constraint(cs, f, class_expr);
 					}
 					
 					if(cs.in_refinement_predicate==true){//篩型の中ではfinalである必要がある
@@ -275,19 +281,12 @@ public class postfix_expr implements Parser<String>{
 					}
 				}
 				
+				indexs = new ArrayList<IntExpr>();
+				
 			}else if(ps.is_index){
 				IntExpr index =  (IntExpr) ps.expression.check(cs).expr;
-				//配列のbound check
-				int array_dim = f.dims_sum() - indexs.size();
-				String array_type;
-				if(f.type.equals("int")){
-					array_type = "int";
-				}else if(f.type.equals("boolean")){
-					array_type = "boolean";
-				}else{
-					array_type = "ref";
-				}
-				IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, ex.getSort(), cs.ctx.mkIntSort()), ex);
+				
+				IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), ex);
 				
 				BoolExpr index_bound = cs.ctx.mkGe(index, cs.ctx.mkInt(0));
 				
@@ -315,12 +314,14 @@ public class postfix_expr implements Parser<String>{
 				//関数の呼び出し
 				f = method(cs, ident, f, ex, (ArrayList<IntExpr>) indexs, ps);
 				ex = f.get_Expr(cs);
+				class_expr = null;
 				ident = null;
+				indexs = new ArrayList<IntExpr>();
 			}
 		}
 
 		
-		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs);
+		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr);
 	}
 	
 	public Field check_assign(Check_status cs) throws Exception{
@@ -755,19 +756,15 @@ public class postfix_expr implements Parser<String>{
 		return result;
 	}
 
-	void add_refinement_constraint(Check_status cs,Field f, Expr ex, Field class_Field, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
+	void add_refinement_constraint(Check_status cs, Field f, Expr class_Expr) throws Exception{
 	    System.out.println(f.field_name + " has refinement type");
-
-	    
-	        
+    
 	    cs.refinement_deep++;
 	    if(cs.refinement_deep <= cs.refinement_deep_limmit){
-	        f.add_refinement_constraint(cs, class_Expr, indexs);
+	        f.add_refinement_constraint(cs, class_Expr);
 	    }else{
 	        throw new Exception("The depth of refinement type's verification has reached its limit.");
 	    }
-	    
-	    
 	    cs.refinement_deep--;
 	}
 	

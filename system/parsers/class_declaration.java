@@ -59,27 +59,16 @@ public class class_declaration implements Parser<String>{
 		this.class_block.check(csc, summery, this);
 	}
 	
-	//全てのフィールドと、そのフィールドまで返す
-	public ArrayList<Field> all_field(int deep, int deep_limmit, Field class_object, Check_status cs) throws Exception{
-		if(deep >= deep_limmit) return new ArrayList<Field>();
+	//全てのフィールドを返す
+	public ArrayList<Field> all_field(Check_status cs) throws Exception{
 		ArrayList<Field> fields = new ArrayList<Field>();
-		fields.add(class_object);
+		
 		for(variable_definition vd : this.class_block.variable_definitions){
-			Field field = cs.search_field(vd.variable_decls.ident, class_object.type, cs);
-			if(field == null)field = cs.search_model_field(vd.variable_decls.ident, class_object.type, cs);
-			if(field == null)throw new Exception(class_object.type + " don't have " + vd.variable_decls.ident);
+			Field field = cs.search_field(vd.variable_decls.ident, class_name, cs);
+			if(field == null)field = cs.search_model_field(vd.variable_decls.ident, class_name, cs);
+			if(field == null)throw new Exception(class_name + " don't have " + vd.variable_decls.ident);
 			
-			if(!vd.variable_decls.type_spec.type.type.equals("int") && !vd.variable_decls.type_spec.type.type.equals("boolean")){
-				class_declaration cd = cs.Check_status_share.compilation_unit.search_class(vd.variable_decls.type_spec.type.type);
-				if(cd != null){
-					ArrayList<Field> field_fields = cd.all_field(deep+1, deep_limmit, field, cs);
-					fields.addAll(field_fields);
-				}else{
-					throw new Exception("class " + vd.variable_decls.type_spec.type.type + " don't exist.");
-				}
-			}else{
-				if(!(deep+1 >= deep_limmit))fields.add(field);
-			}
+			fields.add(field);
 		}
 
 		return fields;

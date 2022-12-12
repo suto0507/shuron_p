@@ -73,91 +73,47 @@ public class Variable extends Field{
 			//クラス
 			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
 			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("Ref"));
-		}else if(this.type.equals("int")&&this.dims>0){ //配列
+		}else if(this.dims>0){ //配列
 			String ret = field_name + "_temp_" + this.id + "_" + this.temp_num;
-			Sort arraysort = cs.ctx.mkIntSort();
-			for(int i = 0; i < this.dims-1; i++){
-				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
-			}
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
-		}else if(this.type.equals("boolean")&&this.dims>0){
-			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			Sort arraysort = cs.ctx.mkBoolSort();
-			for(int i = 0; i < this.dims-1; i++){
-				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
-			}
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
-		}else if(this.dims>0){
-			String ret = field_name + "_temp_" + this.id + "_"  + this.temp_num;
-			Sort arraysort = cs.ctx.mkUninterpretedSort("Ref");
-			for(int i = 0; i < this.dims-1; i++){
-				arraysort = cs.ctx.mkArraySort(cs.ctx.mkIntSort(), arraysort);
-			}
-			return cs.ctx.mkArrayConst(ret, cs.ctx.mkIntSort(), arraysort);
+			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"));
 		}
 		throw new Exception("unexpect variable");
 	}
 	
-	public Expr get_full_Expr(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
-		Expr ex = this.get_Expr(cs);
-		for(int i=0; i<this.dims&&indexs.size()>0; i++){
-			ex = cs.ctx.mkSelect((ArrayExpr) ex, indexs.get(0));
-			indexs.remove(0);
-		}
-		return ex;
-	}
 	
-	public Expr get_full_Expr_assign(ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
-		Expr ex = this.get_Expr_assign(cs);
-		for(int i=0; i<this.dims&&indexs.size()>0; i++){
-			ex = cs.ctx.mkSelect((ArrayExpr) ex, indexs.get(0));
-			indexs.remove(0);
-		}
-		return ex;
-	}
-	
-	public int class_object_dims_sum(){
-		return 0;
-	}
-	
-	public int dims_sum(){
-		return this.dims;
-	}
-	
-	//長さに関する制約も追加する
-	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Check_status cs) throws Exception{
-		Expr expr = value;
-		for(int i = indexs.size()-1; i >= 0; i--){
-			IntExpr index = indexs.get(i);
-			ArrayList<IntExpr> indexs_sub = new ArrayList<IntExpr>(indexs.subList(0, i));
-			ArrayExpr array = (ArrayExpr) get_full_Expr((ArrayList<IntExpr>) indexs_sub.clone(), cs);
-			ArrayExpr array_assign = (ArrayExpr) get_full_Expr_assign((ArrayList<IntExpr>) indexs_sub.clone(), cs);
-			expr = cs.ctx.mkStore(array, index, expr);
-			
-			//長さに関する制約
-			int array_dim = this.dims_sum() - i;
-			String array_type;
-			if(this.type.equals("int")){
-				array_type = "int";
-			}else if(this.type.equals("boolean")){
-				array_type = "boolean";
-			}else{
-				array_type = "ref";
+	//値を更新する
+	//配列の要素への代入でないならば、tmp_numを更新する
+	public void assign_value(Expr class_expr, ArrayList<IntExpr> indexs, Expr value, Check_status cs) throws Exception{
+		if(indexs.size()>0){
+			Expr expr = this.get_Expr(cs);
+			for(int i = 0; i < indexs.size()-1; i++){
+				expr = cs.array_arrayref.index_access_array(expr, indexs.get(i), cs);
 			}
-			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array.getSort(), cs.ctx.mkIntSort()), array);
-			IntExpr length_assign = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length_" + array_dim + "d_" + array_type, array_assign.getSort(), cs.ctx.mkIntSort()), array_assign);
+			Array array = null;
+			if(indexs.size()<this.dims){
+				array = cs.array_arrayref;
+			}else{
+				if(this.type.equals("int")){
+					array = cs.array_int;
+				}else if(this.type.equals("boolean")){
+					array = cs.array_boolean;
+				}else{
+					array = cs.array_ref;
+				}
+			}
+			array.update_array(expr, indexs.get(indexs.size()-1), value, cs);
 			
-			cs.add_constraint(cs.ctx.mkEq(length, length_assign));
+			//配列への代入でも、modelフィールドは変わる
+			for(Model_Field mf : this.model_fields){
+				mf.tmp_plus_with_data_group(class_expr, cs);
+			}
+		}else{
+			cs.add_constraint(cs.ctx.mkEq(this.get_Expr_assign(cs), value));
+			this.tmp_plus_with_data_group(class_expr, cs);
 		}
-		
-		
-		return expr;
 	}
 	
-	//class_object_expr固定の場合
-	public Expr assign_value(ArrayList<IntExpr> indexs, Expr value, Expr class_object_expr, Check_status cs) throws Exception{
-		return assign_value(indexs, value, cs);//ローカル変数は気にしなくていい
-	}
+	
 	
 	@Override
 	public Expr get_Expr_assign(Check_status cs) throws Exception{
@@ -165,28 +121,6 @@ public class Variable extends Field{
 		Expr ex =  this.get_Expr(cs);
 		this.temp_num --;
 		return ex;
-	}
-	
-	public boolean is_this_field(){
-		if(this.field_name.equals("this")){
-			return true;
-		}else{
-			return false;
-		}
-	}
-	
-	//インデックスをフレッシュとして、class_objectのExpr用に作る
-	public Pair<Expr, ArrayList<IntExpr>> fresh_index_full_expr(Check_status cs) throws Exception{
-		Expr expr = this.get_Expr(cs);
-		ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
-		for(int i = 0; i < this.dims; i++){
-			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
-			IntExpr index = cs.ctx.mkIntConst(ret);
-			indexs.add(index);
-			expr = cs.ctx.mkSelect(expr, index);
-		}
-		
-		return new Pair(expr, indexs);
 	}
 	
 }

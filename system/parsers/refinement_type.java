@@ -55,7 +55,7 @@ public class refinement_type implements Parser<String>{
 	}
 	
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
-	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
+	public void assert_refinement(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr) throws Exception{
 		
 		
 		
@@ -108,7 +108,7 @@ public class refinement_type implements Parser<String>{
 		}else{
 			refinement_type rt = cs.search_refinement_type(this.class_type_name, type.type);
 			if(rt!=null){
-				rt.assert_refinement(cs, refined_Field, refined_Expr, class_Expr, indexs);
+				rt.assert_refinement(cs, refined_Field, refined_Expr, class_Expr);
 			}else{
 				throw new Exception("can't find refinement type " + type.type);
 			}
@@ -125,13 +125,13 @@ public class refinement_type implements Parser<String>{
 		cs.ban_default_visibility = pre_ban_default_visibility;
 	}
 	
-	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
-		add_refinement_constraint(cs, refined_Field, refined_Expr, class_Expr, indexs, false);
+	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr) throws Exception{
+		add_refinement_constraint(cs, refined_Field, refined_Expr, class_Expr, false);
 	}
 	
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
 	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
-	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
+	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr, boolean add_once) throws Exception{
 		if(!add_once){
 			if(cs.in_helper)return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
 			if((cs.in_constructor && !(refined_Field instanceof Variable) && !class_Expr.equals(cs.this_field.get_Expr(cs))))return;//コンストラクタ内では篩型は保証されない
@@ -189,7 +189,7 @@ public class refinement_type implements Parser<String>{
 		}else{
 			refinement_type rt = cs.search_refinement_type(this.class_type_name, type.type);
 			if(rt!=null){
-				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Expr, indexs, add_once);
+				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Expr, add_once);
 			}else{
 				throw new Exception("can't find refinement type " + type.type);
 			}
@@ -208,13 +208,13 @@ public class refinement_type implements Parser<String>{
 	
 	// subtype <= this
 	// addしてしまうので、必要であればcs.solver.push()をしておく必要はある。
-	public void check_subtype(Variable refined_variable, Expr class_Expr, ArrayList<IntExpr> indexs, refinement_type sub_type, Field sub_type_class_Field, Expr sub_type_class_Expr, ArrayList<IntExpr> sub_type_indexs, Check_status cs) throws Exception{
+	public void check_subtype(Variable refined_variable, Expr class_Expr, refinement_type sub_type, Field sub_type_class_Field, Expr sub_type_class_Expr, Check_status cs) throws Exception{
 		cs.in_refinement_predicate = true;
 		
 		
 		
-		sub_type.add_refinement_constraint(cs, refined_variable, refined_variable.get_Expr(cs) , class_Expr, indexs);
-		this.assert_refinement(cs, refined_variable, refined_variable.get_Expr(cs) , class_Expr, indexs);
+		sub_type.add_refinement_constraint(cs, refined_variable, refined_variable.get_Expr(cs) , class_Expr);
+		this.assert_refinement(cs, refined_variable, refined_variable.get_Expr(cs) , class_Expr);
 		
 		
 		

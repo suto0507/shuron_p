@@ -55,7 +55,7 @@ public class Model_Field extends Field{
 	}
 	
 	//class_exprを渡すこと場合、representsに関する制約も追加する
-	public Expr get_Expr(Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
+	public Expr get_Expr(Expr class_expr, Check_status cs) throws Exception{
 		Expr expr = get_Expr(cs);
 		if(this.represents_clause!=null){
 			Expr full_expr = cs.ctx.mkSelect(expr, class_expr);
@@ -127,7 +127,7 @@ public class Model_Field extends Field{
 	
 	//class_Fieldは篩型を持つフィールド、変数を持つクラス
 	//add_onceは、一度だけhelperやin_cnstructorの制約を無視して篩型の述語をaddする//つまり、篩型の述語の中に記述されたフィールドの篩型は無視したい時に使う
-	public void add_refinement_constraint(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs, boolean add_once) throws Exception{
+	public void add_refinement_constraint(Check_status cs, Expr class_Expr, boolean add_once) throws Exception{
 		boolean root_check = false;
 		if(cs.checked_refinement_type_field.size()==0){
 			root_check = true;
@@ -140,15 +140,15 @@ public class Model_Field extends Field{
 		}
 		cs.checked_refinement_type_field.add(new Pair(this, class_Expr));
 		
-		Expr ex = cs.ctx.mkSelect(get_Expr(class_Expr, indexs, cs), class_Expr);//ここでget_Exprでrepresentsの制約を追加する
+		Expr ex = cs.ctx.mkSelect(get_Expr(class_Expr, cs), class_Expr);//ここでget_Exprでrepresentsの制約を追加する
 		
 		if(this.refinement_type_clause!=null){
 			if(this.refinement_type_clause.refinement_type!=null){
-				this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, class_Expr, indexs, add_once);
+				this.refinement_type_clause.refinement_type.add_refinement_constraint(cs, this, ex, class_Expr, add_once);
 			}else if(this.refinement_type_clause.ident!=null){
 				refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.add_refinement_constraint(cs, this, ex, class_Expr, indexs, add_once);
+					rt.add_refinement_constraint(cs, this, ex, class_Expr, add_once);
 				}else{
 	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
 	            }
@@ -156,7 +156,7 @@ public class Model_Field extends Field{
 		}
 		
 		for(Model_Field mf : this.model_fields){
-			mf.add_refinement_constraint(cs, class_Expr, indexs, add_once);
+			mf.add_refinement_constraint(cs, class_Expr, add_once);
 		}
 		
 		if(root_check){
@@ -165,7 +165,7 @@ public class Model_Field extends Field{
 		
 	}
 	
-	public void assert_refinement(Check_status cs, Expr class_Expr, ArrayList<IntExpr> indexs) throws Exception{
+	public void assert_refinement(Check_status cs, Expr class_Expr) throws Exception{
 		
 		boolean root_check = false;
 		if(cs.checked_refinement_type_field.size()==0){
@@ -179,15 +179,15 @@ public class Model_Field extends Field{
 		}
 		cs.checked_refinement_type_field.add(new Pair(this, class_Expr));
 		
-		Expr ex = cs.ctx.mkSelect(get_Expr(class_Expr, indexs, cs), class_Expr);//ここでget_Exprでrepresentsの制約を追加する
+		Expr ex = cs.ctx.mkSelect(get_Expr(class_Expr, cs), class_Expr);//ここでget_Exprでrepresentsの制約を追加する
 		
 		if(this.refinement_type_clause!=null){
 			if(this.refinement_type_clause.refinement_type!=null){
-				this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, class_Expr, indexs);
+				this.refinement_type_clause.refinement_type.assert_refinement(cs, this, ex, class_Expr);
 			}else if(this.refinement_type_clause.ident!=null){
 				refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.assert_refinement(cs, this, ex, class_Expr, indexs);
+					rt.assert_refinement(cs, this, ex, class_Expr);
 				}else{
 	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
 	            }
@@ -195,7 +195,7 @@ public class Model_Field extends Field{
 		}
 		
 		for(Model_Field mf : this.model_fields){
-			mf.assert_refinement(cs, class_Expr, indexs);
+			mf.assert_refinement(cs, class_Expr);
 		}
 		
 		if(root_check){

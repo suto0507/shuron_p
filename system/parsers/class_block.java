@@ -110,7 +110,7 @@ public class class_block implements Parser<String>{
 	
 					for(variable_definition vd : cb.variable_definitions){
 						if(vd.modifiers.is_model){
-							csc.search_model_field(vd.variable_decls.ident, csc.this_field, csc);
+							csc.search_model_field(vd.variable_decls.ident, csc.this_field.type, csc);
 						}else{
 							//データグループのリストを作る
 							ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
@@ -124,12 +124,12 @@ public class class_block implements Parser<String>{
 								
 								String pre_type = csc.this_field.type;
 								csc.this_field.type = class_type;
-								data_groups.add(csc.search_model_field(gn.ident, csc.this_field, csc));
+								data_groups.add(csc.search_model_field(gn.ident, csc.this_field.type, csc));
 								csc.this_field.type = pre_type;
 							}
 							
 							Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
-									, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field, csc.this_field.type, alias_2d, data_groups);
+									, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field.type, alias_2d, data_groups);
 							
 							//initializerが付いていた場合
 							if(vd.variable_decls.initializer!=null && (method.type_spec==null || (vd.modifiers != null && vd.modifiers.is_final))){
@@ -141,10 +141,15 @@ public class class_block implements Parser<String>{
 								}
 							}
 							
-							//これはassignableの処理の前の話　assignableで触れられるものに関しては、あとでassinable_cnst_indexsが上書きされる
-							List<List<IntExpr>> indexs = new ArrayList<List<IntExpr>>();
-							indexs.add(new ArrayList<IntExpr>());
-							f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<List<IntExpr>>>(csc.ctx.mkBool(false), indexs));
+							//コンストラクタでは、自分のフィールドには問答無用で代入できる
+							if(method.type_spec==null){
+								List<Pair<Expr, List<IntExpr>>> indexs = new ArrayList<Pair<Expr, List<IntExpr>>>();
+								indexs.add(new Pair<Expr, List<IntExpr>>(csc.this_field.get_Expr(csc), new ArrayList<IntExpr>()));
+								f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(csc.ctx.mkBool(true), indexs));
+							}
+							
+							if(f.modifiers!=null && f.modifiers.is_final) f.final_initialized = false;
+							
 							
 							csc.fields.add(f);
 						}

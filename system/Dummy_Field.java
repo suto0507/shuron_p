@@ -6,8 +6,8 @@ public class Dummy_Field extends Field {
 	//this‚Æ‚©‚Ì‚½‚ß‚ÉŽg‚¤
 	Expr expr;
 	
-	public Dummy_Field(String class_type_name, Expr expr){
-		this.class_type_name = class_type_name;
+	public Dummy_Field(String type, Expr expr){
+		this.type = type;
 		this.expr = expr;
 		dims = 0;
 	}

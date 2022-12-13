@@ -7,7 +7,10 @@ import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
+import system.Array;
+import system.Check_return;
 import system.Check_status;
+import system.Dummy_Field;
 import system.Field;
 import system.Pair;
 import system.Parser;
@@ -37,100 +40,89 @@ public class store_ref_expression implements Parser<String>{
 		return st;
 	}
 	
-	public Pair<Field, List<IntExpr>> check(Check_status cs) throws Exception{
+	public Check_return check(Check_status cs) throws Exception{
 		Expr ex = null;
 		Field f = null;
+		Expr class_expr = null;
 		List<IntExpr> indexs = new ArrayList<IntExpr>();
-		if(cs.instance_indexs!=null) indexs = (ArrayList<IntExpr>) cs.instance_indexs.clone();
-		if(this.store_ref_name_suffix.size() == 0){
-			if(this.store_ref_name.is_this){
+		
+
+		if(this.store_ref_name.is_this){
+			if(this.store_ref_name_suffix.size() == 0){
 				throw new Exception("Cannot be assigned to \"this\"");
-			}else if(this.store_ref_name.ident!=null){
-				//ローカル変数
-				if(cs.in_method_call){//関数呼び出し
-					if(cs.search_called_method_arg(this.store_ref_name.ident)){
-						f = cs.get_called_method_arg(this.store_ref_name.ident);
-						ex = f.get_Expr(cs);
-						f.class_object_expr = cs.instance_expr;
-					}
-				}else{
-					if(cs.search_variable(this.store_ref_name.ident)){
-						f = cs.get_variable(this.store_ref_name.ident);
-						ex = f.get_Expr(cs);
-						f.class_object_expr = cs.this_field.get_Expr(cs);
-					}
-				}
-				
-				if(f==null){
-					Field searched_field = cs.search_field(this.store_ref_name.ident, cs.instance_Field, cs);
-					
-					if(searched_field != null){
-						f = searched_field;
-						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
-						f.class_object_expr = cs.this_field.get_Expr(cs);
-					}else{
-						throw new Exception(cs.this_field.type + " don't have " + this.store_ref_name.ident);
-					}
-				}
 			}
-		}else{
-			if(this.store_ref_name.is_this){
-				f = cs.instance_Field;
-				ex = cs.instance_expr;
-			}else if(this.store_ref_name.ident!=null){
-				//ローカル変数
-				if(cs.in_method_call){//関数呼び出し
-					if(cs.search_called_method_arg(this.store_ref_name.ident)){
-						f = cs.get_called_method_arg(this.store_ref_name.ident);
-						ex = f.get_Expr(cs);
-						f.class_object_expr = cs.instance_expr;
-					}
-				}else{
-					if(cs.search_variable(this.store_ref_name.ident)){
-						f = cs.get_variable(this.store_ref_name.ident);
-						ex = f.get_Expr(cs);
-						f.class_object_expr = cs.this_field.get_Expr(cs);
-					}
-				}
-				
-				if(f==null){
-					Field searched_field = cs.search_field(this.store_ref_name.ident, cs.instance_Field, cs);
-					if(searched_field != null){
-						f = searched_field;
-						ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
-						f.class_object_expr = cs.this_field.get_Expr(cs);
-					}else{
-						throw new Exception(cs.this_field.type + " don't have " + this.store_ref_name.ident);
-					}
-				}
-				
+			if(cs.this_field.get_Expr(cs).equals(cs.instance_expr)){
+				f = cs.this_field;
+			}else{
+				f = new Dummy_Field(cs.instance_class_name, cs.instance_expr);
 			}
-			//suffixについて
-			for(int i = 0; i < this.store_ref_name_suffix.size(); i++){
-				store_ref_name_suffix ps = this.store_ref_name_suffix.get(i);
-				if(ps.is_field){
-					if(ps.ident!=null){
-						Field searched_field = cs.search_field(ps.ident, f, cs);
-						if(searched_field != null){
-							f = searched_field;
-							f.class_object_expr = ex;
-							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
-						}else{
-							throw new Exception(ps.ident + " dont exist");
-						}
-					}
-					
-				}else if(ps.is_index){
-					IntExpr index = (IntExpr) ps.spec_array_ref_expr.spec_expression.check(cs).expr;
-					ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
-					indexs.add(index);
+			
+			ex = cs.instance_expr;
+		}else if(this.store_ref_name.ident!=null){
+			//ローカル変数
+			if(cs.in_method_call){//関数呼び出し
+				if(cs.search_called_method_arg(this.store_ref_name.ident)){
+					f = cs.get_called_method_arg(this.store_ref_name.ident);
+					ex = f.get_Expr(cs);
+					class_expr = cs.instance_expr;
+				}
+			}else{
+				if(cs.search_variable(this.store_ref_name.ident)){
+					f = cs.get_variable(this.store_ref_name.ident);
+					ex = f.get_Expr(cs);
+					class_expr = cs.this_field.get_Expr(cs);
 				}
 			}
 			
-
+			if(f==null){
+				Field searched_field = cs.search_field(this.store_ref_name.ident, cs.instance_class_name, cs);
+				if(searched_field != null){
+					f = searched_field;
+					ex = cs.ctx.mkSelect((ArrayExpr) f.get_Expr(cs), cs.this_field.get_Expr(cs));
+					class_expr = cs.this_field.get_Expr(cs);
+				}else{
+					throw new Exception(cs.this_field.type + " don't have " + this.store_ref_name.ident);
+				}
+			}
+			
 		}
-		
-		return new Pair<Field, List<IntExpr>>(f, indexs);
+		//suffixについて
+		for(int i = 0; i < this.store_ref_name_suffix.size(); i++){
+			store_ref_name_suffix ps = this.store_ref_name_suffix.get(i);
+			if(ps.is_field){
+				if(ps.ident!=null){
+					Field searched_field = cs.search_field(ps.ident, f.type, cs);
+					if(searched_field != null){
+						f = searched_field;
+						class_expr = ex;
+						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+					}else{
+						throw new Exception(ps.ident + " don't exist");
+					}
+				}
+				
+				indexs = new ArrayList<IntExpr>();
+				
+			}else if(ps.is_index){
+				IntExpr index = (IntExpr) ps.spec_array_ref_expr.spec_expression.check(cs).expr;
+				indexs.add(index);
+				
+				Array array;
+				if(indexs.size()<f.dims){
+				    array = cs.array_arrayref;
+				}else{
+				    if(f.type.equals("int")){
+				        array = cs.array_int;
+				    }else if(f.type.equals("boolean")){
+				        array = cs.array_int;
+				    }else{
+				        array = cs.array_ref;
+				    }
+				}
+				ex = array.index_access_array(ex, index, cs);
+			}
+		}
+		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr);
 	}
 
 }

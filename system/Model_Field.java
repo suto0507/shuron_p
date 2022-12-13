@@ -19,8 +19,8 @@ public class Model_Field extends Field{
 	
 	represents_clause represents_clause;
 	
-	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
-	public Model_Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
+	//新しくフィールドを作る時には、alias_1d_in_helperとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+	public Model_Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, BoolExpr alias_1d_in_helper, ArrayList<Model_Field> model_fields) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = 0;
@@ -32,18 +32,18 @@ public class Model_Field extends Field{
 		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
-		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
-		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.alias_1d_in_helper = alias_1d_in_helper;
+		this.alias_in_consutructor_or_2d_in_helper = alias_1d_in_helper;
 		this.model_fields = model_fields;
 	}
 	
 	public Model_Field clone_e() throws Exception{
-		Model_Field ret = new Model_Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, class_type_name, alias_in_helper_or_consutructor, model_fields);
+		Model_Field ret = new Model_Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, class_type_name, alias_1d_in_helper, model_fields);
 		ret.temp_num = this.temp_num;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		
 		ret.final_initialized = final_initialized;
-		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+		ret.alias_in_consutructor_or_2d_in_helper = this.alias_in_consutructor_or_2d_in_helper;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 		
 		ret.represents_clause = this.represents_clause;
 		return ret;

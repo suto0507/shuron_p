@@ -100,7 +100,7 @@ public class relational_expr implements Parser<String>{
 			}else if(this.op.equals(">")){
 				expr = cs.ctx.mkGt((IntExpr)this.additive_expr1.check(cs).expr,(IntExpr)this.additive_expr2.check(cs).expr);
 			}
-			return new Check_return(expr, null, null);
+			return new Check_return(expr, null, null, null);
 		}
 	}
 	
@@ -123,7 +123,7 @@ public class relational_expr implements Parser<String>{
 			}else if(this.op.equals(">")){
 				expr = cs.ctx.mkGt((IntExpr)this.additive_expr1.loop_assign(assigned_fields, cs).expr,(IntExpr)this.additive_expr2.loop_assign(assigned_fields, cs).expr);
 			}
-			return new Check_return(expr, null, null);
+			return new Check_return(expr, null, null, null);
 		}
 	}
 	

@@ -34,15 +34,15 @@ public class Field {
 	public String class_type_name;
 	
 	//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-	//対応するclass_exprが含まれていない場合はtrueとして扱う
-	public ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor;
-	public ArrayList<Pair<Expr, BoolExpr>> alias_2d_in_helper_or_consutructor;
+	//これが関係あるのは、ローカル変数かコンストラクタの中のthisのフィールドだけなので、class_exprはいらない
+	public BoolExpr alias_1d_in_helper;
+	public BoolExpr alias_in_consutructor_or_2d_in_helper;//コンストラクタでは、エイリアスした次元数に関係なく、エイリアス後は篩型を満たす必要がある。
 	
 	//データフィールド
 	public ArrayList<Model_Field> model_fields;
 	
-	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
-	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor, ArrayList<Model_Field> model_fields) throws Exception{
+	//新しくフィールドを作る時には、alias_1d_in_helperとalias_in_consutructor_or_2d_in_helperは同じ引数から初期化する
+	public Field(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, BoolExpr alias_1d_in_helper, ArrayList<Model_Field> model_fields) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = 0;
@@ -54,21 +54,22 @@ public class Field {
 		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
-		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
-		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.alias_1d_in_helper = alias_1d_in_helper;
+		this.alias_in_consutructor_or_2d_in_helper = alias_1d_in_helper;
 		this.model_fields = model_fields;
+		this.final_initialized = true;
 	}
 	
 	public Field(){}
 	
 	
 	public Field clone_e() throws Exception{
-		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, class_type_name, alias_in_helper_or_consutructor, model_fields);
+		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, class_type_name, alias_1d_in_helper, model_fields);
 		ret.temp_num = this.temp_num;
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		
 		ret.final_initialized = final_initialized;
-		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+		ret.alias_in_consutructor_or_2d_in_helper = this.alias_in_consutructor_or_2d_in_helper;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 		return ret;
 	}
 	
@@ -250,20 +251,19 @@ public class Field {
 		for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> assinable_cnst_index :assinable_cnst_indexs){
 			BoolExpr equal = cs.ctx.mkBool(false);
 			for(Pair<Expr, List<IntExpr>> expr_index : assinable_cnst_index.snd){
-				if(expr_index.fst.equals(class_expr)){//class_exprと一致するものだけ考える
-					if(expr_index.snd.size()==0 && expr_index.snd.size() == index_expr.size()){
-						equal = cs.ctx.mkBool(true);
-					}else if(expr_index.snd.size()>0 && expr_index.snd.size() == index_expr.size()){
-						BoolExpr index_equal = null;
-						for(int i = 0; i<expr_index.snd.size(); i++){
-							if(index_equal == null){
-								index_equal = cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i));
-							}else{
-								index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i)));
-							}
+				if(expr_index.snd.size()==0 && expr_index.snd.size() == index_expr.size()){
+					equal = cs.ctx.mkOr(equal, cs.ctx.mkEq(expr_index.fst, class_expr));//class_exprと一致するものだけ考える
+				}else if(expr_index.snd.size()>0 && expr_index.snd.size() == index_expr.size()){
+					BoolExpr index_equal = null;
+					for(int i = 0; i<expr_index.snd.size(); i++){
+						if(index_equal == null){
+							index_equal = cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i));
+						}else{
+							index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i)));
 						}
-						equal = cs.ctx.mkOr(equal, index_equal);
 					}
+					index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(expr_index.fst, class_expr));//class_exprと一致するものだけ考える
+					equal = cs.ctx.mkOr(equal, index_equal);
 				}
 			}
 			BoolExpr not_equal = cs.ctx.mkNot(equal);
@@ -409,7 +409,6 @@ public class Field {
 		}
 	}
 	
-	//このフィールドが持つinvariantに関しての制約を返す
 	//このフィールドのフィールドに関しても制約を返す
 	public BoolExpr all_invariants_expr(int deep, int deep_limmit, Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
 		
@@ -496,23 +495,20 @@ public class Field {
 		return ret_expr;
 	}
 	
-	//このフィールドが持つinvariantに関しての制約を返す
 	//このフィールドのフィールドに関しても制約を返す
-	public void assert_all_refinement_type(int deep, int deep_limmit, Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
-		
+	public void assert_all_refinement_type(int deep, int deep_limmit, Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{		
 		if(deep >= deep_limmit) return;
 		
 		ArrayList<IntExpr> fresh_indexs = (ArrayList<IntExpr>) indexs.clone();
 
-		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(type);
-		if(cd==null) throw new Exception("cannot find class " + type);
-		
 		Expr expr = this.get_Expr(cs);
 		if(!(this instanceof Variable))expr = cs.ctx.mkSelect(this.get_Expr(cs), class_expr);
 		
 		//篩型の検証
 		this.assert_refinement(cs, class_expr);
 		
+		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(type);
+		if(cd==null) return;//intやboolフィールド
 		
 		for(int i = 0; i < this.dims; i++){
 			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
@@ -530,7 +526,77 @@ public class Field {
 			        array = cs.array_ref;
 			    }
 			}
+			expr = array.index_access_array(expr, fresh_index, cs);
+			fresh_indexs.add(fresh_index);
+		}
+	
+		for(Field f : cd.all_field(cs)){
+			f.assert_all_refinement_type(deep+1, deep_limmit, class_expr, fresh_indexs, cs);
+		}
+	}
+	
+	//helperメソッド内で、配列の代入前に篩型の検証を行なわなければならないときに使う
+	//このフィールドのフィールドに関しても制約を返す
+	public void assert_all_array_assign_in_helper(int deep, int deep_limmit, Expr class_expr, BoolExpr condition, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{		
+		if(deep >= deep_limmit) return;
+		
+		if(!(this.dims >= 1 && this.hava_refinement_type() && this.have_index_access(cs) && cs.in_helper))return;
+		
+		ArrayList<IntExpr> fresh_indexs = (ArrayList<IntExpr>) indexs.clone();
+
+		Expr expr = this.get_Expr(cs);
+		if(!(this instanceof Variable))expr = cs.ctx.mkSelect(this.get_Expr(cs), class_expr);
+		
+		//篩型の検証
+		cs.solver.push();
+		
+		//エイリアスしているときだけでいい
+		cs.add_constraint(this.alias_1d_in_helper);
+		
+		cs.add_constraint(condition);
+		Field v = this;
+		Field old_v = cs.this_old_status.search_internal_id(v.internal_id);
+
+
+		Expr old_assign_field_expr = null;
+		Expr assign_field_expr = null;
+		if(v instanceof Variable){
+			assign_field_expr = v.get_Expr(cs);
+		}else{
+			old_assign_field_expr = cs.ctx.mkSelect(old_v.get_Expr(cs.this_old_status), class_expr);
+			assign_field_expr = cs.ctx.mkSelect(v.get_Expr(cs), class_expr);
+		}
+		
+		//メソッドの最初では篩型が満たしていることを仮定していい
+		//フィールドだけ
+		if(cs.in_helper && !(v instanceof Variable)){
+			old_v.add_refinement_constraint(cs.this_old_status, class_expr, true);
+		}
+		
+		v.assert_refinement(cs, class_expr);
+		
+		cs.solver.pop();
+		
+		//次のフィールド
+		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(type);
+		if(cd==null) return;//intやboolフィールド
+		
+		for(int i = 0; i < this.dims; i++){
+			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
+			IntExpr fresh_index = cs.ctx.mkIntConst(ret);
 			
+			Array array;
+			if(i<this.dims-1){
+			    array = cs.array_arrayref;
+			}else{
+			    if(this.type.equals("int")){
+			        array = cs.array_int;
+			    }else if(this.type.equals("boolean")){
+			        array = cs.array_boolean;
+			    }else{
+			        array = cs.array_ref;
+			    }
+			}
 			expr = array.index_access_array(expr, fresh_index, cs);
 			fresh_indexs.add(fresh_index);
 		}

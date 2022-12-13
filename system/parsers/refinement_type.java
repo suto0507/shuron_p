@@ -208,13 +208,13 @@ public class refinement_type implements Parser<String>{
 	
 	// subtype <= this
 	// addしてしまうので、必要であればcs.solver.push()をしておく必要はある。
-	public void check_subtype(Variable refined_variable, Expr class_Expr, refinement_type sub_type, Field sub_type_class_Field, Expr sub_type_class_Expr, Check_status cs) throws Exception{
+	public void check_subtype(Variable refined_variable, Expr class_Expr, refinement_type sub_type, Check_status cs) throws Exception{
 		cs.in_refinement_predicate = true;
 		
 		
 		
-		sub_type.add_refinement_constraint(cs, refined_variable, refined_variable.get_Expr(cs) , class_Expr);
-		this.assert_refinement(cs, refined_variable, refined_variable.get_Expr(cs) , class_Expr);
+		sub_type.add_refinement_constraint(cs, refined_variable, refined_variable.get_Expr(cs), class_Expr);
+		this.assert_refinement(cs, refined_variable, refined_variable.get_Expr(cs), class_Expr);
 		
 		
 		

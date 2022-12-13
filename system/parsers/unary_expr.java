@@ -46,7 +46,7 @@ public class unary_expr  implements Parser<String>{
 	
 	public Check_return check(Check_status cs) throws Exception{
 		if(unary_expr != null && op == "-"){
-			return new Check_return(cs.ctx.mkSub((IntExpr)cs.ctx.mkInt(0), (IntExpr)(unary_expr.check(cs).expr)), null, null);
+			return new Check_return(cs.ctx.mkSub((IntExpr)cs.ctx.mkInt(0), (IntExpr)(unary_expr.check(cs).expr)), null, null, null);
 		}else{
 			return postfix_expr.check(cs);
 		}
@@ -59,7 +59,7 @@ public class unary_expr  implements Parser<String>{
 	
 	public Check_return loop_assign(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs) throws Exception{
 		if(unary_expr != null && op == "-"){
-			return new Check_return(cs.ctx.mkSub((IntExpr)cs.ctx.mkInt(0), (IntExpr)(unary_expr.loop_assign(assigned_fields, cs).expr)), null, null);
+			return new Check_return(cs.ctx.mkSub((IntExpr)cs.ctx.mkInt(0), (IntExpr)(unary_expr.loop_assign(assigned_fields, cs).expr)), null, null, null);
 		}else{
 			return postfix_expr.loop_assign(assigned_fields, cs);
 		}

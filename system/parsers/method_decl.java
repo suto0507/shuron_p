@@ -106,7 +106,7 @@ public class method_decl implements Parser<String>{
 		//色々の処理を後で追加
 		try{//returnの準備
 			if(this.type_spec!=null){
-				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field, cs.ctx.mkBool(false));
+				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field.type, cs.ctx.mkBool(false));
 				cs.return_v.temp_num++;
 				cs.return_v.alias = cs.ctx.mkBool(true);
 			}else{
@@ -174,7 +174,7 @@ public class method_decl implements Parser<String>{
 				Pair<List<F_Assign>, BoolExpr> assign_cnsts = this.method_specification.assignables(cs);
 				//各フィールドの代入条件を各フィールドに持たせる
 				for(F_Assign fa : assign_cnsts.fst){
-					fa.field.assinable_cnst_indexs = fa.cnst_array;
+					fa.field.assinable_cnst_indexs.addAll(fa.cnst_array);
 				}
 				//どのフィールドにも代入できる条件
 				cs.assinable_cnst_all = assign_cnsts.snd;
@@ -247,11 +247,11 @@ public class method_decl implements Parser<String>{
 		//なので、cs.return_exprを篩型が持つ変数の値として渡すためにここはそのまま
 		if(this.type_spec!=null&&cs.return_v.refinement_type_clause!=null){
 			if(cs.return_v.refinement_type_clause.refinement_type!=null){
-				cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+				cs.return_v.refinement_type_clause.refinement_type.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field.get_Expr(cs));
 			}else if(cs.return_v.refinement_type_clause.ident!=null){
-				refinement_type rt = cs.search_refinement_type(cs.return_v.class_object.type, cs.return_v.refinement_type_clause.ident);
+				refinement_type rt = cs.search_refinement_type(cs.this_field.type, cs.return_v.refinement_type_clause.ident);
 				if(rt!=null){
-					rt.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+					rt.assert_refinement(cs, cs.return_v, cs.return_expr, cs.this_field.get_Expr(cs));
 				}else{
 					throw new Exception("can't find refinement type " + cs.return_v.refinement_type_clause.ident);
 				}
@@ -268,7 +268,7 @@ public class method_decl implements Parser<String>{
 			//コンストラクタ内で初期化されていないfinalがないか
 			for(Field f : cs.fields){
 				if(f.modifiers!=null && f.modifiers.is_final){
-					if(f.class_object!=null && f.class_object.equals(cs.this_field) && f.final_initialized==false){
+					if(f.final_initialized==false){
 						throw new Exception("final variable " + f.field_name + " was not initialized.");
 					}
 				}
@@ -303,10 +303,10 @@ public class method_decl implements Parser<String>{
 				//メソッドの最初では篩型が満たしていることを仮定していい
 				//フィールドだけ
 				if(!(v instanceof Variable)){
-					old_v.add_refinement_constraint(cs.this_old_status, v_class_object_expr, assigned_fields.indexs, true);
+					old_v.add_refinement_constraint(cs.this_old_status, v_class_object_expr, true);
 				}
 				
-				v.assert_refinement(cs, v_class_object_expr, assigned_fields.indexs);
+				v.assert_refinement(cs, v_class_object_expr);
 				
 				cs.solver.pop();
 			}
@@ -406,8 +406,7 @@ public class method_decl implements Parser<String>{
 		
 		//初期化
 		cs.instance_expr = this_field.get_Expr(cs);
-		cs.instance_Field = this_field;
-		cs.instance_indexs = new ArrayList<IntExpr>();
+		cs.instance_class_name = this_field.type;
 		
 		//各引数のチェック
 		for(int i = 0; i < this.formals.param_declarations.size(); i++){
@@ -453,7 +452,7 @@ public class method_decl implements Parser<String>{
 						if(super_refinement_type==null) throw new Exception("can't find refinement type " + super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
 					}
 					
-					this_refinement_type.check_subtype(v, this_field, this_field.get_Expr(cs), new ArrayList<IntExpr>(), super_refinement_type, super_this_field, super_this_field.get_Expr(cs), new ArrayList<IntExpr>(), cs);
+					this_refinement_type.check_subtype(v, this_field.get_Expr(cs), super_refinement_type, cs);
 					break;
 					
 				}else{//篩型を持つ親クラスが見つかった場合、かつ篩型を持っていなかった場合

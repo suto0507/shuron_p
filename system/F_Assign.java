@@ -23,20 +23,19 @@ public class F_Assign{
 		for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> assinable_cnst_index :cnst_array){
 			BoolExpr equal = cs.ctx.mkBool(false);
 			for(Pair<Expr, List<IntExpr>> expr_index : assinable_cnst_index.snd){
-				if(expr_index.fst.equals(class_expr)){//class_exprと一致するものだけ考える
-					if(expr_index.snd.size()==0 && expr_index.snd.size() == index_expr.size()){
-						equal = cs.ctx.mkBool(true);
-					}else if(expr_index.snd.size()>0 && expr_index.snd.size() == index_expr.size()){//同じ次元への代入だけ考える
-						BoolExpr index_equal = null;
-						for(int i = 0; i<expr_index.snd.size(); i++){
-							if(index_equal == null){
-								index_equal = cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i));
-							}else{
-								index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i)));
-							}
+				if(expr_index.snd.size()==0 && expr_index.snd.size() == index_expr.size()){
+					equal = cs.ctx.mkOr(equal, cs.ctx.mkEq(expr_index.fst, class_expr));//class_exprと一致するものだけ考える
+				}else if(expr_index.snd.size()>0 && expr_index.snd.size() == index_expr.size()){//同じ次元への代入だけ考える
+					BoolExpr index_equal = null;
+					for(int i = 0; i<expr_index.snd.size(); i++){
+						if(index_equal == null){
+							index_equal = cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i));
+						}else{
+							index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i)));
 						}
-						equal = cs.ctx.mkOr(equal, index_equal);
 					}
+					index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(expr_index.fst, class_expr));//class_exprと一致するものだけ考える
+					equal = cs.ctx.mkOr(equal, index_equal);
 				}
 			}
 			BoolExpr not_equal = cs.ctx.mkNot(equal);

@@ -76,11 +76,12 @@ public class Check_status {
 	public ArrayList<Pair<Field, Expr>> checked_refinement_type_field;//篩型の制約を既に追加したもの　Fieldとclass_objectのExprのPair    使い切りなのでcloneでは中身は気にしなくていい
 	
 	//配列のポインターから配列
-	//追加しただけ　あとでコンストラクタで書く
-	Array array_arrayref;
-	Array array_int;
-	Array array_boolean;
-	Array array_ref;
+	public Array array_arrayref;
+	public Array array_int;
+	public Array array_boolean;
+	public Array array_ref;
+	
+	public BoolExpr this_alias; //コンストラクタの検証において、thisを渡してしまった条件
 	
 	
 	public Check_status(compilation_unit cu){
@@ -101,6 +102,8 @@ public class Check_status {
 		array_int = new Array(this.ctx.mkIntSort(), this);
 		array_boolean = new Array(this.ctx.mkBoolSort(), this);
 		array_ref = new Array(this.ctx.mkUninterpretedSort("Ref"), this);
+		
+		this_alias = this.ctx.mkBool(false);
 	}
 	
 	Check_status(){
@@ -163,7 +166,7 @@ public class Check_status {
 			data_groups.add(search_model_field(gn.ident, class_type, this));
 		}
 		
-		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, vd.class_type_name, new ArrayList<Pair<Expr, BoolExpr>>(), data_groups);
+		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, vd.class_type_name, cs.ctx.mkBool(true), data_groups);
 		
 		
 		
@@ -210,7 +213,7 @@ public class Check_status {
 			data_groups.add(search_model_field(gn.ident, class_type, this));
 		}
 		
-		Model_Field mf = new Model_Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, vd.class_type_name, new ArrayList<Pair<Expr, BoolExpr>>(), data_groups);
+		Model_Field mf = new Model_Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, vd.class_type_name, cs.ctx.mkBool(true), data_groups);
 		mf.set_repersents(cs);
 
 		
@@ -323,7 +326,7 @@ public class Check_status {
 		this.solver.pop();
 	}
 	
-	public Variable add_variable(String variable, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, ArrayList<Pair<Expr, BoolExpr>> alias_2d) throws Exception{
+	public Variable add_variable(String variable, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, BoolExpr alias_2d) throws Exception{
 		Variable v = new Variable(this.Check_status_share.get_tmp_num(), variable, type, dims, refinement_type_clause, modifiers, this.this_field.type, alias_2d);
 		this.variables.add(v);
 		return v;
@@ -402,8 +405,12 @@ public class Check_status {
 		
 		cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 		
-
+		cs.array_arrayref = this.array_arrayref;
+		cs.array_int = this.array_int;
+		cs.array_boolean = this.array_boolean;
+		cs.array_ref = this.array_ref;
 		
+		cs.this_alias = this.this_alias;
 		
 		return cs;
 	}

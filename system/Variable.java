@@ -25,9 +25,8 @@ public class Variable extends Field{
 	
 	public Field arg_field;//この変数がメソッド呼び出しの引数であるとき、引数として渡されたField
 	
-	
-	//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
-	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, ArrayList<Pair<Expr, BoolExpr>> alias_in_helper_or_consutructor) throws Exception{
+	//新しくフィールドを作る時には、alias_1d_in_helperとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+	public Variable(int id, String field_name, String type, int dims, refinement_type_clause refinement_type_clause, modifiers modifiers, String class_type_name, BoolExpr alias_1d_in_helper) throws Exception{
 		this.id = id;
 		this.internal_id = id;
 		this.temp_num = - 1;
@@ -38,8 +37,8 @@ public class Variable extends Field{
 		this.modifiers = modifiers;
 		this.new_array = false;
 		this.class_type_name = class_type_name;
-		this.alias_in_helper_or_consutructor = alias_in_helper_or_consutructor;
-		this.alias_2d_in_helper_or_consutructor = alias_in_helper_or_consutructor;
+		this.alias_1d_in_helper = alias_1d_in_helper;
+		this.alias_in_consutructor_or_2d_in_helper = alias_1d_in_helper;
 		
 		this.model_fields = new ArrayList<Model_Field>();
 	}
@@ -48,12 +47,12 @@ public class Variable extends Field{
 	
 	@Override
 	public Variable clone_e() throws Exception{
-		Variable ret = new  Variable(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_type_name, this.alias_in_helper_or_consutructor);
+		Variable ret = new  Variable(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, this.class_type_name, this.alias_1d_in_helper);
 		ret.temp_num = this.temp_num;
 		ret.alias = this.alias;
 		ret.alias_refined = this.alias_refined;
 		ret.out_loop_v = this.out_loop_v;
-		ret.alias_2d_in_helper_or_consutructor = this.alias_2d_in_helper_or_consutructor;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+		ret.alias_in_consutructor_or_2d_in_helper = this.alias_in_consutructor_or_2d_in_helper;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 		return ret;
 	}
 	

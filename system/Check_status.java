@@ -538,7 +538,7 @@ public class Check_status {
 		return ret_expr;
 	}
 	
-	public void check_array_alias(Field f1, Expr f1_expr, Expr f1_class_object_expr, ArrayList<IntExpr> f1_indexs, Field f2, Expr f2_expr, Expr f2_class_object_expr, ArrayList<IntExpr> f2_indexs) throws Exception{
+	public void check_array_alias(Field f1, Expr f1_class_object_expr, ArrayList<IntExpr> f1_indexs, Field f2, Expr f2_class_object_expr, ArrayList<IntExpr> f2_indexs) throws Exception{
 		//”z—ñ‚Ìâ¿Œ^‚ªˆÀ‘S‚©‚Ç‚¤‚©
 		BoolExpr pathcondition;
 		if(this.pathcondition==null){
@@ -801,5 +801,12 @@ public class Check_status {
 		
 		cs.solver.pop();
 
+	}
+	
+	public void refresh_all_array(BoolExpr condition) throws Exception{
+		this.array_arrayref.refresh(condition, this);
+		this.array_int.refresh(condition, this);
+		this.array_boolean.refresh(condition, this);
+		this.array_ref.refresh(condition, this);
 	}
 }

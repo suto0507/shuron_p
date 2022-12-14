@@ -2,6 +2,7 @@ package system;
 
 import java.util.ArrayList;
 
+import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Sort;
@@ -40,6 +41,18 @@ public class Array {
 		Expr new_array_value = cs.ctx.mkStore(cs.ctx.mkSelect(array, ref_expr), index, value);
 		cs.add_constraint(cs.ctx.mkEq(expr, cs.ctx.mkStore(array, ref_expr, new_array_value)));
 		array = expr;
+	}
+	
+	public void refresh(BoolExpr condition, Check_status cs) throws Exception{
+		Expr pre_array = array;
+		
+		String fresh_ret = "fresh_array" + "_" + cs.Check_status_share.get_tmp_num();
+		Expr fresh_array = cs.ctx.mkArrayConst(fresh_ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
+		
+		String ret = "Array" + "_" + cs.Check_status_share.get_tmp_num();
+		array = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
+		
+		cs.add_constraint(cs.ctx.mkEq(array, cs.ctx.mkITE(condition, fresh_array, pre_array)));
 	}
 	
 }

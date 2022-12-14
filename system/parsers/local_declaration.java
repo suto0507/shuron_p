@@ -41,65 +41,79 @@ public class local_declaration implements Parser<String>{
 				BoolExpr expr = cs.ctx.mkEq(cs.get_variable(this.variable_decls.ident).get_Expr_assign(cs), rc.expr);
 				cs.add_constraint(expr);
 				cs.get_variable(this.variable_decls.ident).temp_num++;
-				
-				
+
 				
 				//配列の篩型が安全かどうか
-				Expr rc_assign_field_expr = null;
-				Expr rc_class_field_expr = null;
-				if(rc.field!=null){
-					rc_assign_field_expr = rc.field.get_full_Expr(new ArrayList<IntExpr>(rc.indexs.subList(0, rc.field.class_object_dims_sum())), cs);
-					rc_class_field_expr = rc.field.class_object.get_full_Expr((ArrayList<IntExpr>) rc.indexs.clone(), cs);
-				}
-				cs.check_array_alias(v, v.get_Expr(cs), v.class_object.get_Expr(cs), indexs, rc.field, rc_assign_field_expr, rc_class_field_expr, rc.indexs);
-				
+				cs.check_array_alias(v, null, new ArrayList<IntExpr>(), rc.field, rc.class_expr, rc.indexs);
 				
 				
 				//1次元以上の配列としてエイリアスした場合には、それ以降配列を代入する前に篩型の検証を行わなければならない
 				if(v.hava_refinement_type() && v.have_index_access(cs) 
-						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) && indexs.size()+1 <= v.dims_sum() ){
+						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
+						&& v.dims >= 1){
+					
 					if(cs.in_helper){
-						if(v instanceof Variable)v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_in_helper_or_consutructor, cs.get_pathcondition());
-						if(rc.field instanceof Variable)rc.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
+						if(v instanceof Variable){
+							v.alias_1d_in_helper = cs.ctx.mkOr(v.alias_1d_in_helper, cs.get_pathcondition());
+						}
+						if(rc.field instanceof Variable){
+							rc.field.alias_1d_in_helper = cs.ctx.mkOr(rc.field.alias_1d_in_helper, cs.get_pathcondition());
+						}
 					}else if(cs.in_constructor){
-						if(!(rc.field instanceof Variable) && rc.field.class_object != null && rc.field.class_object.equals(cs.this_field, cs)){
-							rc.field.alias_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_in_helper_or_consutructor, cs.get_pathcondition());
+						if(!(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+							rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
 					}
 				}
 				//2次元以上の配列としてエイリアスした場合には、それ以降篩型を満たさなければいけない
 				if(v.hava_refinement_type() && v.have_index_access(cs) 
-						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) && indexs.size()+2 <= v.dims_sum() ){
+						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
+						&& v.dims >= 2){
+					
 					if(cs.in_helper){
-						if(v instanceof Variable)v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
-						if(rc.field instanceof Variable)rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
-						
-						//篩型の検証値は代入した後なので、どちらを検証しても同じ
-						if(v.have_index_access(cs) && rc.field.have_index_access(cs)){
-							v.assert_refinement(cs, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+						if(v instanceof Variable){
+							v.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(v.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
-					}else if(cs.in_constructor){
-						if(!(rc.field instanceof Variable) && rc.field.class_object != null && rc.field.class_object.equals(cs.this_field, cs)){
-							rc.field.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(rc.field.alias_2d_in_helper_or_consutructor, cs.get_pathcondition());
-							
-							//篩型の検証値は代入した後なので、どちらを検証しても同じ
-							if(v.have_index_access(cs) && rc.field.have_index_access(cs)){
-								v.assert_refinement(cs, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
-							}
+						if(rc.field instanceof Variable){
+							rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
 					}
 				}
 				
 
-				if(!cs.in_helper){
-					//篩型の検証
-					if(v.hava_refinement_type()){
-						v.assert_refinement(cs, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+				
+				//篩型の検証
+				if(v.hava_refinement_type()){
+					if(cs.in_helper){
+						if(v.dims >= 2 && v.have_index_access(cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
+							cs.solver.push();
+							cs.add_constraint(v.alias_in_consutructor_or_2d_in_helper);
+
+							v.assert_refinement(cs, null);
+							cs.solver.pop();
+						}
+						
+					}else{
+						v.assert_refinement(cs, null);
+					}
+				}
+				//配列がエイリアスしたときに、右辺の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
+				if(cs.in_helper){
+					if(v.hava_refinement_type() && v.have_index_access(cs) 
+							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
+							&& v.dims >= 2){
+						rc.field.assert_refinement(cs, rc.class_expr);
+					}
+				}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+					if(v.hava_refinement_type() && v.have_index_access(cs) 
+							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
+							&& v.dims >= 1){
+						rc.field.assert_refinement(cs, rc.class_expr);
 					}
 				}
 			}
 			if(v.hava_refinement_type() && cs.in_helper){
-				Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), v, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>());
+				Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), v, cs.this_field.get_Expr(cs));
 				cs.helper_assigned_fields.add(assigned_field);
 			}
 			

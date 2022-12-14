@@ -53,8 +53,7 @@ public class class_declaration implements Parser<String>{
 		csc.this_field = this_field;
 		//‰Šú‰»
 		csc.instance_expr = this_field.get_Expr(csc);
-		csc.instance_Field = this_field;
-		csc.instance_indexs = new ArrayList<IntExpr>();
+		csc.instance_class_name = this.class_name;
 		
 		this.class_block.check(csc, summery, this);
 	}

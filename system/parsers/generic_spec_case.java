@@ -87,8 +87,8 @@ public BoolExpr requires_expr(Check_status cs) throws Exception{
 		BoolExpr expr = null;
 			
 			
-		String pre_class_type_name = cs.instance_Field.type;
-		cs.instance_Field.type = this.class_type_name;
+		String pre_class_type_name = cs.instance_class_name;
+		cs.instance_class_name = this.class_type_name;
 		
 		List<requires_clause> rcs = this.get_requires();
 		if(rcs == null || rcs.size()==0){
@@ -109,7 +109,7 @@ public BoolExpr requires_expr(Check_status cs) throws Exception{
 		}
 		
 		
-		cs.instance_Field.type = pre_class_type_name;
+		cs.instance_class_name = pre_class_type_name;
 		
 		
 		if(expr == null) expr = cs.ctx.mkBool(true);

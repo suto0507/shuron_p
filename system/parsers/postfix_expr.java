@@ -305,7 +305,7 @@ public class postfix_expr implements Parser<String>{
 				    if(f.type.equals("int")){
 				        array = cs.array_int;
 				    }else if(f.type.equals("boolean")){
-				        array = cs.array_int;
+				        array = cs.array_boolean;
 				    }else{
 				        array = cs.array_ref;
 				    }
@@ -445,7 +445,7 @@ public class postfix_expr implements Parser<String>{
 					    if(f.type.equals("int")){
 					        array = cs.array_int;
 					    }else if(f.type.equals("boolean")){
-					        array = cs.array_int;
+					        array = cs.array_boolean;
 					    }else{
 					        array = cs.array_ref;
 					    }
@@ -485,7 +485,7 @@ public class postfix_expr implements Parser<String>{
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(class_type_name);
 		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident);
 		if(md == null){
-			throw new Exception("can't find method " + ident);
+			throw new Exception("can't find method " + ident + "in class " + class_type_name);
 		}
 		
 		if(md.formals.param_declarations.size()!=ps.expression_list.expressions.size()){

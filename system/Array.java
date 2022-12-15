@@ -18,6 +18,12 @@ public class Array {
 		array = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
 	}
 	
+	public Array clone(Check_status cs){
+		Array new_array = new Array(this.elements_Sort, cs);
+		new_array.array = this.array;
+		return new_array;
+	}
+	
 	public Expr index_access_array(Expr ref_expr, IntExpr index, Check_status cs){
 		return cs.ctx.mkSelect(cs.ctx.mkSelect(array, ref_expr), index);
 	}
@@ -29,7 +35,7 @@ public class Array {
 	//配列自体を丸ごと更新
 	public void update_array(Expr ref_expr, Expr value, Check_status cs) throws Exception{
 		String ret = "Array" + "_" + cs.Check_status_share.get_tmp_num();
-		Expr expr = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkUninterpretedSort("Ref")));
+		Expr expr = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
 		cs.add_constraint(cs.ctx.mkEq(expr, cs.ctx.mkStore(array, ref_expr, value)));
 		array = expr;
 	}
@@ -37,10 +43,20 @@ public class Array {
 	//配列の中身の、特定の要素だけ更新
 	public void update_array(Expr ref_expr, IntExpr index, Expr value, Check_status cs) throws Exception{
 		String ret = "Array" + "_" + cs.Check_status_share.get_tmp_num();
-		Expr expr = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkUninterpretedSort("Ref")));
+		Expr expr = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
 		Expr new_array_value = cs.ctx.mkStore(cs.ctx.mkSelect(array, ref_expr), index, value);
 		cs.add_constraint(cs.ctx.mkEq(expr, cs.ctx.mkStore(array, ref_expr, new_array_value)));
 		array = expr;
+	}
+	
+	//分岐後のマージ
+	public void merge_array(BoolExpr condition, Array array1, Array array2, Check_status cs) throws Exception{
+		Expr new_array = cs.ctx.mkITE(condition, array1.array, array2.array);
+		
+		String ret = "Array" + "_" + cs.Check_status_share.get_tmp_num();
+		array = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
+		
+		cs.add_constraint(cs.ctx.mkEq(array, new_array));
 	}
 	
 	public void refresh(BoolExpr condition, Check_status cs) throws Exception{
@@ -53,6 +69,11 @@ public class Array {
 		array = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
 		
 		cs.add_constraint(cs.ctx.mkEq(array, cs.ctx.mkITE(condition, fresh_array, pre_array)));
+	}
+	
+	public void refresh(Check_status cs) throws Exception{
+		String ret = "Array" + "_" + cs.Check_status_share.get_tmp_num();
+		array = cs.ctx.mkArrayConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkArraySort(cs.ctx.mkIntSort(), elements_Sort));
 	}
 	
 }

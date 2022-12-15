@@ -120,7 +120,7 @@ public class Field {
 			    if(this.type.equals("int")){
 			        array = cs.array_int;
 			    }else if(this.type.equals("boolean")){
-			        array = cs.array_int;
+			        array = cs.array_boolean;
 			    }else{
 			        array = cs.array_ref;
 			    }
@@ -453,7 +453,7 @@ public class Field {
 			BoolExpr pre_pathcondition = cs.pathcondition;
 			
 			cs.instance_expr = expr;
-			cs.instance_class_name = this.class_type_name;
+			cs.instance_class_name = this.type;
 			
 			for(invariant invariant : cd.class_block.invariants){
 				if(invariant.is_private==true){//‰Â‹«‚ª“¯‚¶‚à‚Ì‚µ‚©g‚¦‚È‚¢
@@ -531,7 +531,7 @@ public class Field {
 		}
 	
 		for(Field f : cd.all_field(cs)){
-			f.assert_all_refinement_type(deep+1, deep_limmit, class_expr, fresh_indexs, cs);
+			f.assert_all_refinement_type(deep+1, deep_limmit, expr, fresh_indexs, cs);
 		}
 	}
 	
@@ -602,7 +602,7 @@ public class Field {
 		}
 	
 		for(Field f : cd.all_field(cs)){
-			f.assert_all_refinement_type(deep+1, deep_limmit, class_expr, fresh_indexs, cs);
+			f.assert_all_refinement_type(deep+1, deep_limmit, expr, fresh_indexs, cs);
 		}
 	}
 	

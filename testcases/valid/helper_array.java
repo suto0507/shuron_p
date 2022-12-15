@@ -54,6 +54,7 @@ class A{
         local = arg_array;
     }
 
+    //@requires arg_array != nat_array;
     //@helper
     void test4_m(int[]/*`@ refinement_type NatArray*/ arg_array){
         int[]/*`@ refinement_type NatArray*/ local = new int[3];

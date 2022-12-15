@@ -21,14 +21,15 @@ import system.Variable;
 import system.F_Assign;
 
 public class new_expr implements Parser<String>{
-	type type;
+	String type;
 	new_suffix new_suffix;
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st = "";
 		st = st + new string("new").parse(s, ps);
 		st = st + new spaces().parse(s, ps);
-		this.type = new type();
-		st = st + this.type.parse(s, ps);
+		type type = new type();
+		st = st + type.parse(s, ps);
+		this.type = type.type;
 		st = st + new spaces().parse(s, ps);
 		this.new_suffix = new new_suffix();
 		st = st + this.new_suffix.parse(s, ps);
@@ -41,7 +42,7 @@ public class new_expr implements Parser<String>{
 	public Variable check(Check_status cs) throws Exception{
 		if(this.new_suffix.is_index){
 			Variable ret = null;
-			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type.type + "_array_tmp", this.type.type, this.new_suffix.array_decl.dims, null, new modifiers(), cs.this_field.type, cs.ctx.mkBool(false));
+			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type + "_array_tmp", this.type, this.new_suffix.array_decl.dims, null, new modifiers(), cs.this_field.type, cs.ctx.mkBool(false));
 			ret.temp_num++;
 			ret.new_array = true;
 			
@@ -103,7 +104,7 @@ public class new_expr implements Parser<String>{
 				    if(this.type.equals("int")){
 				        array = cs.array_int;
 				    }else if(this.type.equals("boolean")){
-				        array = cs.array_int;
+				        array = cs.array_boolean;
 				    }else{
 				        array = cs.array_ref;
 				    }
@@ -120,10 +121,10 @@ public class new_expr implements Parser<String>{
 				tmp_list.add(index);
 			}
 			
-			if(this.type.type.equals("int")){
+			if(this.type.equals("int")){
 				BoolExpr value_cnst = cs.ctx.mkEq(cs.ctx.mkInt(0), ex);
 				cs.add_constraint(cs.ctx.mkForall(tmps_full, cs.ctx.mkImplies(guard, value_cnst), 1, null, null, null, null));
-			}else if(this.type.type.equals("boolean")){
+			}else if(this.type.equals("boolean")){
 				BoolExpr value_cnst = cs.ctx.mkEq(cs.ctx.mkBool(false), ex);
 				cs.add_constraint(cs.ctx.mkForall(tmps_full, cs.ctx.mkImplies(guard, value_cnst), 1, null, null, null, null));
 			}
@@ -143,13 +144,13 @@ public class new_expr implements Parser<String>{
 			cs.in_refinement_predicate = false;
 			
 			
-			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type.type);
+			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type);
 			if(cd == null){
-				throw new Exception("can't find class " + this.type.type);
+				throw new Exception("can't find class " + this.type);
 			}
-			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type.type, this.type.type);
+			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type);
 			if(md == null){
-				throw new Exception("can't find method " + this.type.type);
+				throw new Exception("can't find method " + this.type);
 			}
 			cs.in_method_call = true;
 			//à¯êîÇÃèàóù
@@ -177,7 +178,7 @@ public class new_expr implements Parser<String>{
 
 			
 			//ï‘ÇËíl
-			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type.type + "_constructor_tmp", this.type.type, 0, null, md.modifiers, this.type.type, cs.ctx.mkBool(false));
+			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type + "_constructor_tmp", this.type, 0, null, md.modifiers, this.type, cs.ctx.mkBool(false));
 			result.temp_num++;
 			cs.result = result;
 			
@@ -185,7 +186,7 @@ public class new_expr implements Parser<String>{
 			String pre_instance_class_name = cs.instance_class_name;
 			
 			cs.instance_expr = result.get_Expr(cs);
-			cs.instance_class_name = this.type.type;
+			cs.instance_class_name = this.type;
 			
 			
 			for(int j = 0; j < md.formals.param_declarations.size(); j++){
@@ -392,13 +393,13 @@ public class new_expr implements Parser<String>{
 	
 	public Field loop_assign_method(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs, new_suffix ps)throws Exception{
 		
-		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type.type);
+		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type);
 		if(cd == null){
-			throw new Exception("can't find class " + this.type.type);
+			throw new Exception("can't find class " + this.type);
 		}
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type.type, this.type.type);
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type);
 		if(md == null){
-			throw new Exception("can't find method " + this.type.type);
+			throw new Exception("can't find method " + this.type);
 		}
 		
 		
@@ -414,7 +415,7 @@ public class new_expr implements Parser<String>{
 		cs.called_method_args = new ArrayList<Variable>();
 		
 		//ï‘ÇËíl
-		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type.type + "_constructor_tmp", this.type.type, 0, null, md.modifiers, this.type.type, cs.ctx.mkBool(false));
+		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type + "_constructor_tmp", this.type, 0, null, md.modifiers, this.type, cs.ctx.mkBool(false));
 		result.temp_num++;
 		cs.result = result;
 		
@@ -422,7 +423,7 @@ public class new_expr implements Parser<String>{
 		String pre_instance_class_name = cs.instance_class_name;
 		
 		cs.instance_expr = result.get_Expr(cs);
-		cs.instance_class_name = this.type.type;
+		cs.instance_class_name = this.type;
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);

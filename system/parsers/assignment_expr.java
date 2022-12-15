@@ -93,7 +93,6 @@ public class assignment_expr implements Parser<String>{
 			
 		}
 		Check_return rc = this.implies_expr.check(cs);
-		Expr implies_tmp = rc.expr;
 		
 		
 		
@@ -136,7 +135,7 @@ public class assignment_expr implements Parser<String>{
 			
 			
 			//’l‚ð‘ã“ü‚·‚é
-			assign_cr.field.assign_value(assign_cr.class_expr, assign_cr.indexs, implies_tmp, cs);
+			assign_cr.field.assign_value(assign_cr.class_expr, assign_cr.indexs, rc.expr, cs);
 			
 			
 			//refinement_type

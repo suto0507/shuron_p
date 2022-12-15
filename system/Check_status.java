@@ -405,10 +405,10 @@ public class Check_status {
 		
 		cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 		
-		cs.array_arrayref = this.array_arrayref;
-		cs.array_int = this.array_int;
-		cs.array_boolean = this.array_boolean;
-		cs.array_ref = this.array_ref;
+		cs.array_arrayref = this.array_arrayref.clone(cs);
+		cs.array_int = this.array_int.clone(cs);
+		cs.array_boolean = this.array_boolean.clone(cs);
+		cs.array_ref = this.array_ref.clone(cs);
 		
 		cs.this_alias = this.this_alias;
 		

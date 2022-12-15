@@ -114,7 +114,7 @@ public class store_ref_expression implements Parser<String>{
 				    if(f.type.equals("int")){
 				        array = cs.array_int;
 				    }else if(f.type.equals("boolean")){
-				        array = cs.array_int;
+				        array = cs.array_boolean;
 				    }else{
 				        array = cs.array_ref;
 				    }

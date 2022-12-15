@@ -131,6 +131,8 @@ public class class_block implements Parser<String>{
 							Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
 									, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field.type, alias_2d, data_groups);
 							
+							if(f.modifiers!=null && f.modifiers.is_final) f.final_initialized = false;
+							
 							//initializerÇ™ïtÇ¢ÇƒÇ¢ÇΩèÍçá
 							if(vd.variable_decls.initializer!=null && (method.type_spec==null || (vd.modifiers != null && vd.modifiers.is_final))){
 								Check_return init_Expr = vd.variable_decls.initializer.check(csc);
@@ -148,7 +150,7 @@ public class class_block implements Parser<String>{
 								f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(csc.ctx.mkBool(true), indexs));
 							}
 							
-							if(f.modifiers!=null && f.modifiers.is_final) f.final_initialized = false;
+							
 							
 							
 							csc.fields.add(f);

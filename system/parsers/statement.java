@@ -171,13 +171,7 @@ import system.F_Assign;
 				Check_return rc = this.expression.check(cs);
 				
 				//配列の篩型が安全かどうか
-				Expr rc_assign_field_expr = null;
-				Expr rc_class_field_expr = null;
-				if(rc.field!=null){
-					rc_assign_field_expr = rc.field.get_full_Expr(new ArrayList<IntExpr>(rc.indexs.subList(0, rc.field.class_object_dims_sum())), cs);
-					rc_class_field_expr = rc.field.class_object.get_full_Expr((ArrayList<IntExpr>) rc.indexs.clone(), cs);
-				}
-				cs.check_array_alias(cs.return_v, rc.expr, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), rc.field, rc_assign_field_expr, rc_class_field_expr, rc.indexs);
+				cs.check_array_alias(cs.return_v, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), rc.field, rc.class_expr, rc.indexs);
 				
 				
 				//返す値
@@ -245,8 +239,8 @@ import system.F_Assign;
 					}
 					
 					//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
-					v.alias_in_helper_or_consutructor = v_then.alias_in_helper_or_consutructor;
-					v.alias_2d_in_helper_or_consutructor = v_then.alias_2d_in_helper_or_consutructor;
+					v.alias_1d_in_helper = v_then.alias_1d_in_helper;
+					v.alias_in_consutructor_or_2d_in_helper = v_then.alias_in_consutructor_or_2d_in_helper;
 				}else{
 					Variable v_then = cs_then.get_variable(v.field_name);
 					Variable v_else = cs_else.get_variable(v.field_name);
@@ -259,15 +253,15 @@ import system.F_Assign;
 					}
 					
 					//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
-					v.alias_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_in_helper_or_consutructor, v_else.alias_in_helper_or_consutructor);
-					v.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(v_then.alias_2d_in_helper_or_consutructor, v_else.alias_2d_in_helper_or_consutructor);
+					v.alias_1d_in_helper = cs.ctx.mkOr(v_then.alias_1d_in_helper, v_else.alias_1d_in_helper);
+					v.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(v_then.alias_in_consutructor_or_2d_in_helper, v_else.alias_in_consutructor_or_2d_in_helper);
 				}
 			}
 
 			
 			//cs.fields、model_fieldに含まれないものがあれば追加する
 			for(Field f : cs_then.fields){
-				Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+				Field cs_f = cs.search_field(f.field_name, f.class_type_name, cs);
 				if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 					int pre_tmp_num = f.temp_num;
 					f.temp_num = 0;
@@ -278,7 +272,7 @@ import system.F_Assign;
 				}
 			}
 			for(Model_Field mf : cs_then.model_fields){
-				Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+				Field cs_mf = cs.search_model_field(mf.field_name, mf.class_type_name, cs);
 				if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 					int pre_tmp_num = mf.temp_num;
 					mf.temp_num = 0;
@@ -290,7 +284,7 @@ import system.F_Assign;
 			}
 			if(cs_else != null){
 				for(Field f : cs_else.fields){
-					Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+					Field cs_f = cs.search_field(f.field_name, f.class_type_name, cs);
 					if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 						int pre_tmp_num = f.temp_num;
 						f.temp_num = 0;
@@ -301,7 +295,7 @@ import system.F_Assign;
 					}
 				}
 				for(Model_Field mf : cs_else.model_fields){
-					Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+					Field cs_mf = cs.search_model_field(mf.field_name, mf.class_type_name, cs);
 					if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 						int pre_tmp_num = mf.temp_num;
 						mf.temp_num = 0;
@@ -316,7 +310,7 @@ import system.F_Assign;
 			
 			for(Field f : cs.fields){
 				if(cs_else==null){
-					Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
+					Field f_then = cs_then.search_field(f.field_name, f.class_type_name, cs);
 					if(f.temp_num!=f_then.temp_num){
 						Expr e1 = f.get_Expr(cs);
 						Expr e2 = f_then.get_Expr(cs_then);
@@ -330,11 +324,11 @@ import system.F_Assign;
 					}
 					
 					//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
-					f.alias_in_helper_or_consutructor = f_then.alias_in_helper_or_consutructor;
-					f.alias_2d_in_helper_or_consutructor = f_then.alias_2d_in_helper_or_consutructor;
+					f.alias_1d_in_helper = f_then.alias_1d_in_helper;
+					f.alias_in_consutructor_or_2d_in_helper = f_then.alias_in_consutructor_or_2d_in_helper;
 				}else{
-					Field f_then = cs_then.search_field(f.field_name, f.class_object, cs);
-					Field f_else = cs_else.search_field(f.field_name, f.class_object, cs);
+					Field f_then = cs_then.search_field(f.field_name, f.class_type_name, cs);
+					Field f_else = cs_else.search_field(f.field_name, f.class_type_name, cs);
 					if(f.temp_num!=f_then.temp_num || f.temp_num!=f_else.temp_num){
 						Expr e1 = f_else.get_Expr(cs);
 						Expr e2 = f_then.get_Expr(cs_then);
@@ -353,14 +347,14 @@ import system.F_Assign;
 					}
 					
 					//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-					f.alias_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_in_helper_or_consutructor, f_else.alias_in_helper_or_consutructor);
-					f.alias_2d_in_helper_or_consutructor = cs.ctx.mkOr(f_then.alias_2d_in_helper_or_consutructor, f_else.alias_2d_in_helper_or_consutructor);
+					f.alias_1d_in_helper = cs.ctx.mkOr(f_then.alias_1d_in_helper, f_else.alias_1d_in_helper);
+					f.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(f_then.alias_in_consutructor_or_2d_in_helper, f_else.alias_in_consutructor_or_2d_in_helper);
 				}
 			}
 			
 			for(Model_Field mf : cs.model_fields){
 				if(cs_else==null){
-					Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
+					Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_type_name, cs);
 					if(mf.temp_num!=mf_then.temp_num){
 						Expr e1 = mf.get_Expr(cs);
 						Expr e2 = mf_then.get_Expr(cs_then);
@@ -369,8 +363,8 @@ import system.F_Assign;
 						mf.temp_num++;
 					}
 				}else{
-					Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_object, cs);
-					Model_Field mf_else = cs_else.search_model_field(mf.field_name, mf.class_object, cs);
+					Model_Field mf_then = cs_then.search_model_field(mf.field_name, mf.class_type_name, cs);
+					Model_Field mf_else = cs_else.search_model_field(mf.field_name, mf.class_type_name, cs);
 					if(mf.temp_num!=mf_then.temp_num || mf.temp_num!=mf_else.temp_num){
 						Expr e1 = mf_else.get_Expr(cs);
 						Expr e2 = mf_then.get_Expr(cs_then);
@@ -380,6 +374,20 @@ import system.F_Assign;
 					}
 				}
 			}
+			//配列についての値の更新
+			if(cs_else==null){
+				cs.array_arrayref.merge_array(pc, cs_then.array_arrayref, cs.array_arrayref, cs);
+				cs.array_int.merge_array(pc, cs_then.array_int, cs.array_int, cs);
+				cs.array_boolean.merge_array(pc, cs_then.array_boolean, cs.array_boolean, cs);
+				cs.array_ref.merge_array(pc, cs_then.array_ref, cs.array_ref, cs);
+			}else{
+				cs.array_arrayref.merge_array(pc, cs_then.array_arrayref, cs_else.array_arrayref, cs);
+				cs.array_int.merge_array(pc, cs_then.array_int, cs_else.array_int, cs);
+				cs.array_boolean.merge_array(pc, cs_then.array_boolean, cs_else.array_boolean, cs);
+				cs.array_ref.merge_array(pc, cs_then.array_ref, cs_else.array_ref, cs);
+			}
+			
+			
 			
 			//returnのやつ
 			if(cs_else!=null&& cs_then.after_return&&cs_else.after_return){
@@ -412,6 +420,11 @@ import system.F_Assign;
 			//インスタンスの生成
 			Check_status cs_loop_assign_check = cs.clone();
 			this.refresh_list(cs_loop_assign_check);
+			//配列の中身は保証しない
+			cs_loop_assign_check.array_arrayref.refresh(cs);
+			cs_loop_assign_check.array_int.refresh(cs);
+			cs_loop_assign_check.array_boolean.refresh(cs);
+			cs_loop_assign_check.array_ref.refresh(cs);
 			
 			for(Variable v : cs_loop_assign_check.variables){
 				v.temp_num++;
@@ -455,7 +468,7 @@ import system.F_Assign;
 			
 			//cs.fieldsに含まれないものがあれば追加する
 			for(Field f : cs_loop_assign_check.fields){
-				Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+				Field cs_f = cs.search_field(f.field_name, f.class_type_name, cs);
 				if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 					int pre_tmp_num = f.temp_num;
 					f.temp_num = 0;
@@ -539,14 +552,14 @@ import system.F_Assign;
 			for(Variable v : cs_loop_assign_check.variables){
 				Field cs_v = cs.search_internal_id(v.internal_id);
 				if(cs_v!=null){//ループ内で追加されたローカル変数の場合はnullになる
-					cs_v.alias_in_helper_or_consutructor = v.alias_in_helper_or_consutructor;
-					cs_v.alias_2d_in_helper_or_consutructor = v.alias_2d_in_helper_or_consutructor;
+					cs_v.alias_1d_in_helper = v.alias_1d_in_helper;
+					cs_v.alias_in_consutructor_or_2d_in_helper = v.alias_in_consutructor_or_2d_in_helper;
 				}
 			}
 			for(Field f : cs_loop_assign_check.fields){
 				Field cs_f = cs.search_internal_id(f.internal_id);
-				cs_f.alias_in_helper_or_consutructor = f.alias_in_helper_or_consutructor;
-				cs_f.alias_2d_in_helper_or_consutructor = f.alias_2d_in_helper_or_consutructor;
+				cs_f.alias_1d_in_helper = f.alias_1d_in_helper;
+				cs_f.alias_in_consutructor_or_2d_in_helper = f.alias_in_consutructor_or_2d_in_helper;
 			}
 			
 			
@@ -622,6 +635,11 @@ import system.F_Assign;
 				f_loop.tmp_plus_with_data_group(assigned_fields.snd, cs_loop);
 				cs_loop.add_constraint(cs.ctx.mkEq(f_loop.get_Expr(cs_loop_assign_check), cs.ctx.mkITE(assigned_fields.snd, cs.ctx.mkConst("fresh_value_" + cs.Check_status_share.get_tmp_num(), pre_expr.getSort()), pre_expr)));
 			}
+			//なんでも代入できる時には、配列の要素も更新しなければならない。
+			cs_loop.array_arrayref.refresh(assigned_fields.snd, cs);
+			cs_loop.array_int.refresh(assigned_fields.snd, cs);
+			cs_loop.array_boolean.refresh(assigned_fields.snd, cs);
+			cs_loop.array_ref.refresh(assigned_fields.snd, cs);
 			
 			//外で定義された変数
 			for(Variable v : cs_loop.variables){
@@ -661,7 +679,7 @@ import system.F_Assign;
 			//変更されていたものは統合する
 			//cs.fieldsに含まれないものがあれば追加する
 			for(Field f : cs_loop.fields){
-				Field cs_f = cs.search_field(f.field_name, f.class_object, cs);
+				Field cs_f = cs.search_field(f.field_name, f.class_type_name, cs);
 				if(f.internal_id!=cs_f.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 					int pre_tmp_num = f.temp_num;
 					f.temp_num = 0;
@@ -673,7 +691,7 @@ import system.F_Assign;
 			}
 			//cs.model_fieldsに含まれないものがあれば追加する
 			for(Model_Field mf : cs_loop.model_fields){
-				Model_Field cs_mf = cs.search_model_field(mf.field_name, mf.class_object, cs);
+				Model_Field cs_mf = cs.search_model_field(mf.field_name, mf.class_type_name, cs);
 				if(mf.internal_id!=cs_mf.internal_id){//ループ内で追加されたものは、初期値が同じであるという制約を加える
 					int pre_tmp_num = mf.temp_num;
 					mf.temp_num = 0;
@@ -684,7 +702,7 @@ import system.F_Assign;
 				}
 			}
 			for(Field f : cs.fields){//フィールドに関して値を更新
-				Field f_loop = cs_loop.search_field(f.field_name,f.class_object, cs);
+				Field f_loop = cs_loop.search_field(f.field_name,f.class_type_name, cs);
 				if(f.temp_num<f_loop.temp_num){
 					if(cs.in_constructor && f.modifiers!=null && f.modifiers.is_final){//コンストラクタのfinalの初期化はloopのなかではできない
 						if(f.final_initialized==false&&f_loop.final_initialized==true){
@@ -699,10 +717,11 @@ import system.F_Assign;
 				}
 				
 				//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-				f.alias_2d_in_helper_or_consutructor = f_loop.alias_2d_in_helper_or_consutructor;
+				f.alias_1d_in_helper = f_loop.alias_1d_in_helper;
+				f.alias_in_consutructor_or_2d_in_helper = f_loop.alias_in_consutructor_or_2d_in_helper;
 			}
 			for(Model_Field mf : cs.model_fields){//モデルフィールドに関して値を更新
-				Model_Field mf_loop = cs_loop.search_model_field(mf.field_name, mf.class_object, cs);
+				Model_Field mf_loop = cs_loop.search_model_field(mf.field_name, mf.class_type_name, cs);
 				if(mf.temp_num<mf_loop.temp_num){
 					Expr e1 = mf.get_Expr(cs);
 					Expr e2 = mf_loop.get_Expr(cs_loop);
@@ -728,8 +747,14 @@ import system.F_Assign;
 				}
 				
 				//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-				v.alias_2d_in_helper_or_consutructor = v_loop.alias_2d_in_helper_or_consutructor;
+				v.alias_1d_in_helper = v_loop.alias_1d_in_helper;
+				v.alias_in_consutructor_or_2d_in_helper = v_loop.alias_in_consutructor_or_2d_in_helper;
 			}
+			//配列についての値の更新
+			cs.array_arrayref.merge_array(enter_loop_condition, cs_loop.array_arrayref, cs.array_arrayref, cs);
+			cs.array_int.merge_array(enter_loop_condition, cs_loop.array_int, cs.array_int, cs);
+			cs.array_boolean.merge_array(enter_loop_condition, cs_loop.array_boolean, cs.array_boolean, cs);
+			cs.array_ref.merge_array(enter_loop_condition, cs_loop.array_ref, cs.array_ref, cs);
 			
 			
 			//helperメソッドの代入されたフィールド
@@ -807,9 +832,6 @@ import system.F_Assign;
 			//それぞれのFieldの中身を差し替え
 			if(cs.fields!=null){
 				for(Field f : cs.fields){
-					if(f.class_object!=cs.this_field){
-						f.class_object = cs.search_internal_id(f.class_object.internal_id);
-					}
 					ArrayList<Model_Field> model_fields = new ArrayList<Model_Field>();
 					for(Model_Field mf : f.model_fields){
 						model_fields.add((Model_Field) cs.search_internal_id(mf.internal_id));
@@ -819,9 +841,6 @@ import system.F_Assign;
 			}
 			if(cs.model_fields!=null){
 				for(Model_Field f : cs.model_fields){
-					if(f.class_object!=cs.this_field){
-						f.class_object = cs.search_internal_id(f.class_object.internal_id);
-					}
 					ArrayList<Model_Field> model_fields = new ArrayList<Model_Field>();
 					for(Model_Field mf : f.model_fields){
 						model_fields.add((Model_Field) cs.search_internal_id(mf.internal_id));

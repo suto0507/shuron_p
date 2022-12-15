@@ -6,6 +6,7 @@ class array_field{
     //@ requires a_array.length == 10;
     //@ requires (\forall int i ; 0 <= i && i < 10 ; a_array[i].int_array.length == 2);
     //@ requires a_array[0] != a_array[1];
+    //@ requires a_array[0].int_array != a_array[1].int_array;
     // requires a_array.length == 10 && (\forall int i ; 0 <= i && i < 10 ; a_array[i].int_array.length == 2);
     void test(){
         int x = 0;

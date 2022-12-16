@@ -157,6 +157,7 @@ public class assignment_expr implements Parser<String>{
 
 	
 			//篩型の検証
+			System.out.println("check refinement type");
 			if(assign_cr.field.hava_refinement_type()){
 				if(cs.in_helper){
 					if(assign_cr.field.dims >= 2 && assign_cr.field.have_index_access(cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない

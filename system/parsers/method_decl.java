@@ -126,6 +126,13 @@ public class method_decl implements Parser<String>{
 			//引数
 			this.formals.check(cs);
 			
+			//newで作るものと参照が被らない
+			cs.this_field.ref_constraint(0, cs.invariant_refinement_type_deep_limmit+1, null, new ArrayList<IntExpr>(), cs);
+			//ローカル変数も
+			for(Variable v : cs.variables){
+				v.ref_constraint(0, cs.invariant_refinement_type_deep_limmit+1, null, new ArrayList<IntExpr>(), cs);
+			}
+			
 			//old用
 			Check_status csc = cs.clone();
 			csc.clone_list();

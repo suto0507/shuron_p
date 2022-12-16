@@ -5,6 +5,7 @@ import java.util.List;
 
 import system.Check_status;
 import system.Field;
+import system.Option;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -42,20 +43,11 @@ public class class_declaration implements Parser<String>{
 		return "class " + class_name + " " + extends_clause + content;
 	}
 	
-	public void check(Check_status cs, Summery summery) throws Exception{
+	public void check(Option option, compilation_unit cu, Summery summery) throws Exception{
 		System.out.println("Verify class " + this.class_name);
-		Check_status csc =  cs.clone();
-		modifiers m = new modifiers();
-		m.is_final = true;
-		Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", this.class_name, 0, null, m, null, cs.ctx.mkBool(false));
-		this_field.temp_num = 0;
-		//csc.fields.add(this_field);
-		csc.this_field = this_field;
-		//初期化
-		csc.instance_expr = this_field.get_Expr(csc);
-		csc.instance_class_name = this.class_name;
 		
-		this.class_block.check(csc, summery, this);
+		
+		this.class_block.check(option, cu, this, summery);
 	}
 	
 	//全てのフィールドを返す

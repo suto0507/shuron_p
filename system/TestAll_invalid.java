@@ -58,7 +58,8 @@ public class TestAll_invalid {
 				System.out.println(parsed + "is parsed");
 				s.is_parsed(summery);
 				cu.preprocessing(ps.extends_pairs, summery);
-				cu.check(10, 10, summery);
+				Option option = new Option();
+				cu.check(option, summery);
 			}catch (Exception e){
 				System.out.println(e);
 				System.out.println("Exception!!!");

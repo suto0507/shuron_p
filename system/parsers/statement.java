@@ -415,6 +415,35 @@ import system.F_Assign;
 		public void check_loop(Check_status cs) throws Exception{
 			System.out.println("loop verification");
 			
+			//本番用のCSを先に作る　ループの不変条件の検証のため
+			Check_status cs_loop = cs.clone();
+			this.refresh_list(cs_loop);
+
+			//local_declarationの処理
+			Variable v_local=null;
+			if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
+				v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
+			}
+			
+			BoolExpr enter_loop_condition = null;//ループ全体に突入する条件
+			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
+				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
+			}else{
+				enter_loop_condition = cs.ctx.mkBool(true);
+			}
+			
+			//PCにループに入る条件を加える
+			System.out.println("loop init condition");
+			cs_loop.add_path_condition(enter_loop_condition);
+			
+			//ループに突入するなら、ループの不変条件を満たしていなければいけない
+			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
+				BoolExpr ex = li.predicate.check(cs_loop);
+				cs_loop.assert_constraint(ex);
+			}
+			
+			
+			
 			/////////////どのフィールドが変更されるかの検証
 			System.out.println("check assigned fields");
 			//インスタンスの生成
@@ -565,35 +594,12 @@ import system.F_Assign;
 			
 			////////////ここからが本番の検証
 			System.out.println("check loop");
-			//インスタンスの生成
-			Check_status cs_loop = cs.clone();
-			this.refresh_list(cs_loop);
 
 			//local_declarationの処理
-			Variable v_local=null;
 			if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
-				v_local = this.possibly_annotated_loop.loop_stmt.local_declaration.check(cs_loop);
 				if(assign_check_local_v!=null){
 					v_local.internal_id = assign_check_local_v.internal_id;
 				}
-			}
-			
-			BoolExpr enter_loop_condition = null;//ループ全体に突入する条件
-			if(this.possibly_annotated_loop.loop_stmt.expression!=null){
-				enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs_loop).expr;
-			}else{
-				enter_loop_condition = cs.ctx.mkBool(true);
-			}
-			
-			
-			
-			//PCにループに入る条件を加える
-			System.out.println("loop init condition");
-			cs_loop.add_path_condition(enter_loop_condition);
-			
-			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
-				BoolExpr ex = li.predicate.check(cs_loop);
-				cs_loop.assert_constraint(ex);
 			}
 			
 			//中身用に変数を一新

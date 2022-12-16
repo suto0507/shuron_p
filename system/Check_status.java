@@ -85,10 +85,10 @@ public class Check_status {
 	
 	
 	public Check_status(compilation_unit cu){
-		variables = new ArrayList<Variable>();
-		this.Check_status_share = new Check_status_share(cu);
 		this.ctx = new Context(new HashMap<>());
 		this.solver = ctx.mkSolver();
+		variables = new ArrayList<Variable>();
+		this.Check_status_share = new Check_status_share(cu);
 		this.local_refinements = new ArrayList<Pair<String, refinement_type>>();
 		this.fields = new ArrayList<Field>();
 		this.model_fields = new ArrayList<Model_Field>();
@@ -336,12 +336,12 @@ public class Check_status {
 	
 	public Check_status clone(){
 		Check_status cs = new Check_status();
+		cs.ctx = this.ctx;
+		cs.solver = this.solver;
 		cs.md = this.md;
 		cs.Check_status_share = this.Check_status_share;
-		cs.ctx = this.ctx;
 		cs.pathcondition = this.pathcondition;
 		cs.return_conditions = this.return_conditions;
-		cs.solver = this.solver;
 		cs.variables = new ArrayList<Variable>();
 		for(Variable v : this.variables){
 			cs.variables.add(v);
@@ -405,10 +405,10 @@ public class Check_status {
 		
 		cs.checked_refinement_type_field = new ArrayList<Pair<Field, Expr>>();
 		
-		cs.array_arrayref = this.array_arrayref.clone(cs);
-		cs.array_int = this.array_int.clone(cs);
-		cs.array_boolean = this.array_boolean.clone(cs);
-		cs.array_ref = this.array_ref.clone(cs);
+		cs.array_arrayref = this.array_arrayref.clone(this);
+		cs.array_int = this.array_int.clone(this);
+		cs.array_boolean = this.array_boolean.clone(this);
+		cs.array_ref = this.array_ref.clone(this);
 		
 		cs.this_alias = this.this_alias;
 		
@@ -666,8 +666,19 @@ public class Check_status {
 		//変数のtmp_numを破壊してしまってもいいように、cloneしてから作業する
 		Check_status cs = this.clone();
 		cs.clone_list();
-		field_1 = cs.search_internal_id(field_1.internal_id);
-		field_2 = cs.search_internal_id(field_2.internal_id);
+		Field cs_field_1 = cs.search_internal_id(field_1.internal_id);
+		Field cs_field_2 = cs.search_internal_id(field_2.internal_id);
+		if(cs_field_1!=null){
+			field_1 = cs_field_1;
+		}else{//variablesやfieldsに含まれない場合
+			field_1 = field_1.clone_e();
+		}
+		if(cs_field_2!=null){
+			field_2 = cs_field_2;
+		}else{//variablesやfieldsに含まれない場合
+			field_2 = field_2.clone_e();
+		}
+		
 		
 		//変数は全て値をフレッシュにする
 		cs.solver.push();
@@ -714,7 +725,7 @@ public class Check_status {
 		
 		Expr expr_1 = field_1.get_Expr_with_indexs(class_Expr_1, indexs_1, cs);
 		
-		Expr expr_2 = field_2.get_Expr_with_indexs(class_Expr_2, indexs_1, cs);
+		Expr expr_2 = field_2.get_Expr_with_indexs(class_Expr_2, indexs_2, cs);
 		
 		
 		//エイリアスする部分は変わらない
@@ -724,7 +735,7 @@ public class Check_status {
 			
 			cs.add_constraint(cs.ctx.mkEq(alias_ex, ex));
 		}
-		for(int i = 0; i <= indexs_1.size(); i++){
+		for(int i = 0; i <= indexs_2.size(); i++){
 			Expr alias_ex = field_2_alias_exprs.get(i);
 			Expr ex = field_2.get_Expr_with_indexs(class_Expr_2, new ArrayList<IntExpr>(indexs_2.subList(0, i)), cs);
 			

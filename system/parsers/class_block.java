@@ -1,9 +1,11 @@
 package system.parsers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
@@ -11,11 +13,13 @@ import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Model_Field;
+import system.Option;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.Summery;
+import system.Variable;
 
 public class class_block implements Parser<String>{
 	
@@ -91,53 +95,65 @@ public class class_block implements Parser<String>{
 		return ret;
 	}
 	
-	public void check(Check_status cs, Summery summery, class_declaration cd) throws Exception{
+	public void check(Option option, compilation_unit cu, class_declaration cd, Summery summery) throws Exception{
 		//invariantとフィールドについて書く
 		
 		for(method_decl method :method_decls){
 			if(!(method.modifiers != null && method.modifiers.is_model)){//modelメソッドは検証する必要はない
-				Check_status csc =  cs.clone();
-				csc.solver = csc.ctx.mkSolver();
+				Check_status cs = new Check_status(cu);
+				cs.refinement_deep_limmit = option.refinement_deep_limmit;
+				cs.invariant_refinement_type_deep_limmit = option.invariant_refinement_type_deep_limmit;
+				
+				modifiers m = new modifiers();
+				m.is_final = true;
+				Field this_field = new Variable(cs.Check_status_share.get_tmp_num(), "this", cd.class_name, 0, null, m, null, cs.ctx.mkBool(false));
+				this_field.temp_num = 0;
+				//csc.fields.add(this_field);
+				cs.this_field = this_field;
+				//初期化
+				cs.instance_expr = this_field.get_Expr(cs);
+				cs.instance_class_name = cd.class_name;
+				
 				
 				//初期化
-				
+				class_declaration class_value = cd;
 				//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため
-				while(cd!=null){
-					class_block cb = cd.class_block;
+				while(class_value!=null){
+					class_block cb = class_value.class_block;
 					
-					BoolExpr alias_2d = csc.ctx.mkBool(true);
-					if(method.type_spec==null) alias_2d = csc.ctx.mkBool(false);//コンストラクタ
+					BoolExpr alias_2d = cs.ctx.mkBool(true);
+					if(method.type_spec==null) alias_2d = cs.ctx.mkBool(false);//コンストラクタ
 	
 					for(variable_definition vd : cb.variable_definitions){
 						if(vd.modifiers.is_model){
-							csc.search_model_field(vd.variable_decls.ident, csc.this_field.type, csc);
+							cs.search_model_field(vd.variable_decls.ident, cs.this_field.type, cs);
 						}else{
 							//データグループのリストを作る
 							ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
 							for(group_name gn : vd.group_names){
 								String class_type = null;
 								if(gn.is_super){
-									class_type = cd.super_class.class_name;
+									class_type = class_value.super_class.class_name;
 								}else{
-									class_type = cd.class_name;
+									class_type = class_value.class_name;
 								}
 								
-								String pre_type = csc.this_field.type;
-								csc.this_field.type = class_type;
-								data_groups.add(csc.search_model_field(gn.ident, csc.this_field.type, csc));
-								csc.this_field.type = pre_type;
+								String pre_type = cs.this_field.type;
+								cs.this_field.type = class_type;
+								data_groups.add(cs.search_model_field(gn.ident, cs.this_field.type, cs));
+								cs.this_field.type = pre_type;
 							}
 							
-							Field f = new Field(csc.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
-									, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, csc.this_field.type, alias_2d, data_groups);
+							Field f = new Field(cs.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
+									, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, cs.this_field.type, alias_2d, data_groups);
 							
 							if(f.modifiers!=null && f.modifiers.is_final) f.final_initialized = false;
 							
 							//initializerが付いていた場合
 							if(vd.variable_decls.initializer!=null && (method.type_spec==null || (vd.modifiers != null && vd.modifiers.is_final))){
-								Check_return init_Expr = vd.variable_decls.initializer.check(csc);
-								Expr field_Expr = csc.ctx.mkSelect(f.get_Expr(csc), csc.this_field.get_Expr(csc));
-								csc.add_constraint(csc.ctx.mkEq(field_Expr, init_Expr.expr));
+								Check_return init_Expr = vd.variable_decls.initializer.check(cs);
+								Expr field_Expr = cs.ctx.mkSelect(f.get_Expr(cs), cs.this_field.get_Expr(cs));
+								cs.add_constraint(cs.ctx.mkEq(field_Expr, init_Expr.expr));
 								if(method.type_spec==null && (vd.modifiers != null && vd.modifiers.is_final)){
 									f.final_initialized = true;
 								}
@@ -146,20 +162,20 @@ public class class_block implements Parser<String>{
 							//コンストラクタでは、自分のフィールドには問答無用で代入できる
 							if(method.type_spec==null){
 								List<Pair<Expr, List<IntExpr>>> indexs = new ArrayList<Pair<Expr, List<IntExpr>>>();
-								indexs.add(new Pair<Expr, List<IntExpr>>(csc.this_field.get_Expr(csc), new ArrayList<IntExpr>()));
-								f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(csc.ctx.mkBool(true), indexs));
+								indexs.add(new Pair<Expr, List<IntExpr>>(cs.this_field.get_Expr(cs), new ArrayList<IntExpr>()));
+								f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(cs.ctx.mkBool(true), indexs));
 							}
 							
 							
 							
 							
-							csc.fields.add(f);
+							cs.fields.add(f);
 						}
 					}
-					cd = cd.super_class;
+					class_value = class_value.super_class;
 				}
 	
-				method.check(csc, summery);
+				method.check(cs, summery);
 			}
 		}
 	}

@@ -352,7 +352,7 @@ public class postfix_expr implements Parser<String>{
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
 					class_expr = cs.this_field.get_Expr(cs);
-					ex = f.get_Expr(cs);
+					ex = ((Variable)f).get_Expr(cs, true);
 				}else if(searched_field != null){
 					f = searched_field;
 					class_expr = cs.this_field.get_Expr(cs);
@@ -380,7 +380,7 @@ public class postfix_expr implements Parser<String>{
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
 					class_expr = cs.this_field.get_Expr(cs);
-					ex = f.get_Expr(cs);
+					ex = ((Variable)f).get_Expr(cs, true);
 				}else if(searched_field != null){
 					f = searched_field;
 					class_expr = cs.this_field.get_Expr(cs);
@@ -658,8 +658,7 @@ public class postfix_expr implements Parser<String>{
 				System.out.println("assign " + fa.field.field_name);
 				
 				
-				//配列の要素に代入
-				//そのフィールドにたどり着くまでに配列アクセスをしていた場合も
+				//代入
 				if(fa.cnst_array.size()>0){
 					fa.assign_fresh_value(cs);
 				}
@@ -870,8 +869,19 @@ public class postfix_expr implements Parser<String>{
 				IntExpr index =  (IntExpr) ps.expression.loop_assign(assigned_fields, cs).expr;
 				
 				indexs.add(index);
-				
-				ex = cs.ctx.mkSelect((ArrayExpr) ex, index);
+				Array array;
+				if(indexs.size()<f.dims){
+				    array = cs.array_arrayref;
+				}else{
+				    if(f.type.equals("int")){
+				        array = cs.array_int;
+				    }else if(f.type.equals("boolean")){
+				        array = cs.array_boolean;
+				    }else{
+				        array = cs.array_ref;
+				    }
+				}
+				ex = array.index_access_array(ex, index, cs);
 				ident = null;
 				
 			}else if(ps.is_method){
@@ -929,9 +939,10 @@ public class postfix_expr implements Parser<String>{
 			
 		}
 		
-		
 		//assign
 		if(md.method_specification != null){
+			md.method_specification.requires_expr(cs);//事前条件は作る必要がある	
+			
 			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 			for(F_Assign fa : assign_cnsts.fst){
 				

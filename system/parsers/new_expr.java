@@ -57,6 +57,11 @@ public class new_expr implements Parser<String>{
 			
 			Expr ex = ret.get_Expr(cs);
 			
+			//newで新しく作ったrefは被らないことを表すための制約
+			ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
+			BoolExpr constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, ex), cs.ctx.mkInt(cs.Check_status_share.get_tmp_num()));
+			cs.add_constraint(constraint);
+			
 			
 			for(int i = 0; i < lengths.size(); i++){
 				
@@ -98,8 +103,10 @@ public class new_expr implements Parser<String>{
 				
 				//次のex
 				Array array;
+				alloc = null;
 				if(i<lengths.size()-1){
 				    array = cs.array_arrayref;
+			        alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
 				}else{
 				    if(this.type.equals("int")){
 				        array = cs.array_int;
@@ -107,9 +114,42 @@ public class new_expr implements Parser<String>{
 				        array = cs.array_boolean;
 				    }else{
 				        array = cs.array_ref;
+				        alloc = cs.ctx.mkArrayConst("alloc", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
 				    }
 				}
+				
+				Expr pre_ex = ex;
 				ex = array.index_access_array(ex, index, cs);
+				
+				//newで新しく作ったrefは被らないことを表すための制約
+				if(alloc != null){//配列か、参照型
+					constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, ex), cs.ctx.mkInt(cs.Check_status_share.get_tmp_num()));
+					
+					IntExpr[] fresh_tmps = new IntExpr[tmp_list.size()];
+					for(int j = 0; j < tmp_list.size(); j++){
+						fresh_tmps[j] = tmp_list.get(i);
+					}
+					constraint = cs.ctx.mkForall(fresh_tmps, cs.ctx.mkImplies(guard, constraint), 1, null, null, null, null);
+					
+					cs.add_constraint(constraint);
+					
+					//この配列の要素同士が別の参照であるということの制約を加える
+					IntExpr index_another = cs.ctx.mkIntConst("tmpIdex_another" + cs.Check_status_share.get_tmp_num());
+					BoolExpr elements_guard = cs.ctx.mkAnd(
+							guard
+							, cs.ctx.mkGe(index, cs.ctx.mkInt(0)), cs.ctx.mkGt(lengths.get(i), index_another)
+							, cs.ctx.mkDistinct(index, index_another));
+					Expr ex_another = array.index_access_array(pre_ex, index_another, cs);
+					IntExpr[] fresh_tmps_another = new IntExpr[tmp_list.size()+1];
+					for(int j = 0; j < tmp_list.size(); j++){
+						fresh_tmps_another[j] = tmp_list.get(i);
+					}
+					fresh_tmps_another[tmp_list.size()] = index_another;
+					BoolExpr elements_constraint = cs.ctx.mkForall(fresh_tmps_another, cs.ctx.mkImplies(elements_guard, cs.ctx.mkDistinct(ex, ex_another)), 1, null, null, null, null);
+					
+					cs.add_constraint(elements_constraint);
+				}
+				
 				
 			}
 			
@@ -181,6 +221,11 @@ public class new_expr implements Parser<String>{
 			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type + "_constructor_tmp", this.type, 0, null, md.modifiers, this.type, cs.ctx.mkBool(false));
 			result.temp_num++;
 			cs.result = result;
+			
+			//newで新しく作ったrefは被らないことを表すための制約
+			ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+			BoolExpr constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, result.get_Expr(cs)), cs.ctx.mkInt(cs.Check_status_share.get_tmp_num()));
+			cs.add_constraint(constraint);
 			
 			Expr pre_instance_expr = cs.instance_expr;
 			String pre_instance_class_name = cs.instance_class_name;
@@ -303,8 +348,7 @@ public class new_expr implements Parser<String>{
 					System.out.println("assign " + fa.field.field_name);
 					
 					
-					//配列の要素に代入
-					//そのフィールドにたどり着くまでに配列アクセスをしていた場合も
+					//代入
 					if(fa.cnst_array.size()>0){
 						fa.assign_fresh_value(cs);
 						
@@ -442,6 +486,9 @@ public class new_expr implements Parser<String>{
 		
 		//assign
 		if(md.method_specification != null){
+			md.method_specification.requires_expr(cs);//事前条件は作る必要がある	
+			
+			
 			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 			for(F_Assign fa : assign_cnsts.fst){
 				

@@ -51,7 +51,12 @@ public class F_Assign{
 		for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> ca: cnst_array){
 			for(Pair<Expr, List<IntExpr>> expr_indexs: ca.snd){
 				if(expr_indexs.snd.size()>0){
-					Expr expr = cs.ctx.mkSelect(field.get_Expr(cs), expr_indexs.fst);
+					Expr expr;
+					if(field instanceof Variable){
+						expr = field.get_Expr(cs);
+					}else{
+						expr = cs.ctx.mkSelect(field.get_Expr(cs), expr_indexs.fst);
+					}
 					for(int i = 0; i < expr_indexs.snd.size()-1; i++){
 						expr = cs.array_arrayref.index_access_array(expr, expr_indexs.snd.get(i), cs);
 					}
@@ -67,7 +72,9 @@ public class F_Assign{
 							array = cs.array_ref;
 						}
 					}
-					array.update_array(expr, expr_indexs.snd.get(expr_indexs.snd.size()-1), cs.ctx.mkConst("freshValue_" + cs.Check_status_share.get_tmp_num(), array.elements_Sort), cs);
+					Expr pre_value = array.index_access_array(expr,  expr_indexs.snd.get(expr_indexs.snd.size()-1), cs);
+					Expr fresh_value = cs.ctx.mkITE(ca.fst, cs.ctx.mkConst("freshValue_" + cs.Check_status_share.get_tmp_num(), array.elements_Sort), pre_value);
+					array.update_array(expr, expr_indexs.snd.get(expr_indexs.snd.size()-1), fresh_value, cs);
 					
 					//配列への代入でも、modelフィールドは変わる
 					for(Model_Field mf : field.model_fields){
@@ -76,9 +83,11 @@ public class F_Assign{
 				}else{
 					Expr expr;
 					if(field instanceof Variable){
-						expr = field.get_fresh_value(cs);
+						Expr pre_expr = field.get_Expr(cs);
+						expr = cs.ctx.mkITE(ca.fst, field.get_fresh_value(cs), pre_expr);
 					}else{
-						expr = cs.ctx.mkStore(field.get_Expr(cs), expr_indexs.fst, field.get_fresh_value(cs));
+						Expr pre_expr = cs.ctx.mkSelect(field.get_Expr(cs), expr_indexs.fst);
+						expr = cs.ctx.mkStore(field.get_Expr(cs), expr_indexs.fst, cs.ctx.mkITE(ca.fst, field.get_fresh_value(cs), pre_expr));
 					}
 					cs.add_constraint(cs.ctx.mkEq(field.get_Expr_assign(cs), expr));
 					field.tmp_plus_with_data_group(expr_indexs.fst, cs);

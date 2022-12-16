@@ -58,7 +58,11 @@ public class Variable extends Field{
 	
 	@Override
 	public Expr get_Expr(Check_status cs) throws Exception{
-		if(this.temp_num==-1)throw new Exception("this variable " + this.field_name +  " did not initialized");
+		return get_Expr(cs, false);
+	}
+	
+	public Expr get_Expr(Check_status cs, boolean leftside) throws Exception{
+		if(this.temp_num==-1 && !leftside)throw new Exception("this variable " + this.field_name +  " did not initialized");
 		if(this.type.equals("int")&&this.dims==0){
 			String ret = field_name + "_temp_" + this.id + "_" + this.temp_num;
 			return cs.ctx.mkIntConst(ret);

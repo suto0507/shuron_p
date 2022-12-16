@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import system.Check_status;
+import system.Option;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -152,13 +153,10 @@ public class compilation_unit implements Parser<String>{
 		}
 	}
 	
-	public void check(int refinement_deep_limmit, int invariant_refinement_type_deep_limmit, Summery summery) throws Exception{
+	public void check(Option option, Summery summery) throws Exception{
 		for(class_declaration class_decl :classes){
 			try{
-				Check_status cs = new Check_status(this);
-				cs.refinement_deep_limmit = refinement_deep_limmit;
-				cs.invariant_refinement_type_deep_limmit = invariant_refinement_type_deep_limmit;
-				class_decl.check(cs, summery);
+				class_decl.check(option, this, summery);
 			}catch(Exception e){
 				System.out.println(e);
 				System.out.println("class " + class_decl.class_name + " is wrong");

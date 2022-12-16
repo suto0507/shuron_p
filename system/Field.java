@@ -381,20 +381,21 @@ public class Field {
 	public boolean have_index_access(Check_status cs) throws Exception{
 		boolean have = false;
 		
-		if(this.refinement_type_clause.refinement_type!=null){
-			have = have || this.refinement_type_clause.refinement_type.have_index_access(cs);
-		}else if(this.refinement_type_clause.ident!=null){
-			refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
-			if(rt!=null){
-				have = have || rt.have_index_access(cs);
-			}else{
-                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
-            }
+		if(this.refinement_type_clause!=null){
+			if(this.refinement_type_clause.refinement_type!=null){
+				have = have || this.refinement_type_clause.refinement_type.have_index_access(cs);
+			}else if(this.refinement_type_clause.ident!=null){
+				refinement_type rt = cs.search_refinement_type(this.class_type_name, this.refinement_type_clause.ident);
+				if(rt!=null){
+					have = have || rt.have_index_access(cs);
+				}else{
+	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	            }
+			}
+			for(Model_Field mf : this.model_fields){
+				have = have || mf.have_index_access(cs);
+			}
 		}
-		for(Model_Field mf : this.model_fields){
-			have = have || mf.have_index_access(cs);
-		}
-
 		return have;
 	}
 	
@@ -424,10 +425,19 @@ public class Field {
 		Expr expr = this.get_Expr(cs);
 		if(!(this instanceof Variable))expr = cs.ctx.mkSelect(this.get_Expr(cs), class_expr);
 		
-		
+		BoolExpr bound_guard = null;
 		for(int i = 0; i < this.dims; i++){
 			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
 			IntExpr fresh_index = cs.ctx.mkIntConst(ret);
+			
+			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), expr);
+			BoolExpr index_bound = cs.ctx.mkGe(fresh_index, cs.ctx.mkInt(0));
+			index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, fresh_index));
+			if(bound_guard == null){
+				bound_guard = index_bound;
+			}else{
+				bound_guard = cs.ctx.mkAnd(bound_guard, index_bound);
+			}
 			
 			Array array;
 			if(i<this.dims-1){
@@ -482,13 +492,13 @@ public class Field {
 				for(int i = 0; i < fresh_indexs.size(); i++){
 					tmps[i] = fresh_indexs.get(i);
 				}
-				ret_expr = cs.ctx.mkForall(tmps, ret_expr, 1, null, null, null, null);
+				ret_expr = cs.ctx.mkForall(tmps, cs.ctx.mkImplies(bound_guard, ret_expr), 1, null, null, null, null);
 			}
 		}
 		
 		for(Field f : cd.all_field(cs)){
 			if(!(f.type.equals("int") || f.type.equals("boolean"))){
-				ret_expr = cs.ctx.mkOr(ret_expr, f.all_invariants_expr(deep+1, deep_limmit, expr, fresh_indexs, cs));
+				ret_expr = cs.ctx.mkAnd(ret_expr, f.all_invariants_expr(deep+1, deep_limmit, expr, fresh_indexs, cs));
 			}
 		}
 		
@@ -496,6 +506,7 @@ public class Field {
 	}
 	
 	//このフィールドのフィールドに関しても制約を返す
+	//assertなので、forallを使う必要はなさそう
 	public void assert_all_refinement_type(int deep, int deep_limmit, Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{		
 		if(deep >= deep_limmit) return;
 		
@@ -513,6 +524,11 @@ public class Field {
 		for(int i = 0; i < this.dims; i++){
 			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
 			IntExpr fresh_index = cs.ctx.mkIntConst(ret);
+			
+			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), expr);
+			BoolExpr index_bound = cs.ctx.mkGe(fresh_index, cs.ctx.mkInt(0));
+			index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, fresh_index));
+			cs.add_constraint(index_bound);
 			
 			Array array;
 			if(i<this.dims-1){
@@ -537,6 +553,7 @@ public class Field {
 	
 	//helperメソッド内で、配列の代入前に篩型の検証を行なわなければならないときに使う
 	//このフィールドのフィールドに関しても制約を返す
+	//assertなので、forallを使う必要はなさそう
 	public void assert_all_array_assign_in_helper(int deep, int deep_limmit, Expr class_expr, BoolExpr condition, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{		
 		if(deep >= deep_limmit) return;
 		
@@ -585,6 +602,11 @@ public class Field {
 			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
 			IntExpr fresh_index = cs.ctx.mkIntConst(ret);
 			
+			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), expr);
+			BoolExpr index_bound = cs.ctx.mkGe(fresh_index, cs.ctx.mkInt(0));
+			index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, fresh_index));
+			cs.add_constraint(index_bound);
+			
 			Array array;
 			if(i<this.dims-1){
 			    array = cs.array_arrayref;
@@ -606,5 +628,89 @@ public class Field {
 		}
 	}
 	
+	//new などで新しく作ったrefと被らないことを表すための制約
+	public void ref_constraint(int deep, int deep_limmit, Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
+		if(deep >= deep_limmit) return;
+		
+		if(!(this.dims >= 1 && this.hava_refinement_type() && this.have_index_access(cs) && cs.in_helper))return;
+		
+		ArrayList<IntExpr> fresh_indexs = (ArrayList<IntExpr>) indexs.clone();
+
+		Expr expr = this.get_Expr(cs);
+		if(!(this instanceof Variable))expr = cs.ctx.mkSelect(this.get_Expr(cs), class_expr);
+		
+		//クラス型の制約
+		ArrayExpr alloc = null;
+		if(this.dims == 0 && !(this.type.equals("int") || this.type.equals("boolean"))){
+			alloc = cs.ctx.mkArrayConst("alloc", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+		}else if(this.dims > 0){
+			alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
+		}
+		if(alloc != null){
+			BoolExpr constraint = cs.ctx.mkLt(cs.ctx.mkSelect(alloc, expr), cs.ctx.mkInt(0));
+			if(fresh_indexs.size() > 0){
+				IntExpr[] tmps = new IntExpr[fresh_indexs.size()];
+				for(int i = 0; i < fresh_indexs.size(); i++){
+					tmps[i] = fresh_indexs.get(i);
+				}
+				constraint = cs.ctx.mkForall(tmps, constraint, 1, null, null, null, null);
+			}
+			cs.add_constraint(constraint);
+		}
+		
+		
+		BoolExpr bound_guard = null;
+		for(int i = 0; i < this.dims; i++){
+			String ret = "tmpIndex" + cs.Check_status_share.get_tmp_num();
+			IntExpr fresh_index = cs.ctx.mkIntConst(ret);
+			
+			IntExpr length = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), expr);
+			BoolExpr index_bound = cs.ctx.mkGe(fresh_index, cs.ctx.mkInt(0));
+			index_bound = cs.ctx.mkAnd(index_bound, cs.ctx.mkGt(length, fresh_index));
+			if(bound_guard == null){
+				bound_guard = index_bound;
+			}else{
+				bound_guard = cs.ctx.mkAnd(bound_guard, index_bound);
+			}
+			
+			alloc = null;
+			Array array;
+			if(i<this.dims-1){
+			    array = cs.array_arrayref;
+		        alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
+			}else{
+			    if(this.type.equals("int")){
+			        array = cs.array_int;
+			    }else if(this.type.equals("boolean")){
+			        array = cs.array_boolean;
+			    }else{
+			        array = cs.array_ref;
+			        alloc = cs.ctx.mkArrayConst("alloc", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+			    }
+			}
+			expr = array.index_access_array(expr, fresh_index, cs);
+			fresh_indexs.add(fresh_index);
+			
+			if(alloc != null){
+				BoolExpr constraint = cs.ctx.mkLt(cs.ctx.mkSelect(alloc, expr), cs.ctx.mkInt(0));
+				
+				IntExpr[] tmps = new IntExpr[fresh_indexs.size()];
+				for(int j = 0; j < fresh_indexs.size(); j++){
+					tmps[j] = fresh_indexs.get(i);
+				}
+				constraint = cs.ctx.mkForall(tmps, cs.ctx.mkImplies(bound_guard, constraint), 1, null, null, null, null);
+			
+				cs.add_constraint(constraint);
+			}
+		}
+		
+		//次のフィールド
+		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(type);
+		if(cd==null) return;//intやboolフィールド
+	
+		for(Field f : cd.all_field(cs)){
+			f.assert_all_refinement_type(deep+1, deep_limmit, expr, fresh_indexs, cs);
+		}
+	}
 
 }

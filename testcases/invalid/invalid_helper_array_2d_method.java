@@ -62,6 +62,8 @@ class A{
         if(x <= 0)local2[0][0] = 1;
     }
 
+    //↓はただしい
+
     //@requires x < 0;
     //@assignable \nothing;
     //@also
@@ -75,6 +77,5 @@ class A{
         if(x >= 0){
             nat_array2 = new int[5][5];
         }
-        //@assert false;
     }
 }

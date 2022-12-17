@@ -103,10 +103,12 @@ public class assignment_expr implements Parser<String>{
 					&& assign_cr.field.dims - assign_cr.indexs.size() >= 1){
 				
 				if(cs.in_helper){
-					if(assign_cr.field instanceof Variable){
+					if(assign_cr.field instanceof Variable
+							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
 						assign_cr.field.alias_1d_in_helper = cs.ctx.mkOr(assign_cr.field.alias_1d_in_helper, cs.get_pathcondition());
 					}
-					if(rc.field instanceof Variable){
+					if(rc.field instanceof Variable
+							|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
 						rc.field.alias_1d_in_helper = cs.ctx.mkOr(rc.field.alias_1d_in_helper, cs.get_pathcondition());
 					}
 				}else if(cs.in_constructor){
@@ -124,10 +126,12 @@ public class assignment_expr implements Parser<String>{
 					&& assign_cr.field.dims - assign_cr.indexs.size() >= 2){
 				
 				if(cs.in_helper){
-					if(assign_cr.field instanceof Variable){
+					if(assign_cr.field instanceof Variable
+							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
 						assign_cr.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(assign_cr.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
-					if(rc.field instanceof Variable){
+					if(rc.field instanceof Variable
+							|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
 						rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
 				}
@@ -162,22 +166,25 @@ public class assignment_expr implements Parser<String>{
 				if(cs.in_helper){
 					if(assign_cr.field.dims >= 2 && assign_cr.field.have_index_access(cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
 						cs.solver.push();
-						cs.add_constraint(assign_cr.field.alias_in_consutructor_or_2d_in_helper);
-
+						if(assign_cr.field instanceof Variable
+								|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
+							cs.add_constraint(assign_cr.field.alias_in_consutructor_or_2d_in_helper);
+						}
 						assign_cr.field.assert_refinement(cs, assign_cr.class_expr);
 						cs.solver.pop();
 					}
 					
 					Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), assign_cr.field, assign_cr.class_expr);
 					cs.helper_assigned_fields.add(assigned_field);
-				}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr)){
+				}else if(cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr)){
+					
+					
+					cs.solver.push();
 					BoolExpr condition = cs.this_alias;//thisをどこかに渡した後には、篩型の検証をする必要がある
 					if(assign_cr.field.dims >= 1 && assign_cr.field.have_index_access(cs)){//配列としてエイリアスしている場合には、篩型の検証をしないといけない
 						condition = cs.ctx.mkOr(condition, assign_cr.field.alias_in_consutructor_or_2d_in_helper);
 					}
-					
-					cs.solver.push();
-					cs.add_constraint(assign_cr.field.alias_in_consutructor_or_2d_in_helper);
+					cs.add_constraint(condition);
 
 					assign_cr.field.assert_refinement(cs, assign_cr.class_expr);
 					cs.solver.pop();

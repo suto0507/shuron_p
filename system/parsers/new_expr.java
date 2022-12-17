@@ -549,6 +549,13 @@ public class new_expr implements Parser<String>{
 						v.arg_field.alias_1d_in_helper = cs.ctx.mkOr(v.arg_field.alias_1d_in_helper, condition);
 					}
 				}
+				if(in_constructor){
+					for(Field v : cs.fields){
+						if(v.dims>=1 && v.hava_refinement_type() && v.have_index_access(cs)){
+							v.alias_1d_in_helper = cs.ctx.mkOr(v.alias_1d_in_helper, condition);
+						}
+					}
+				}
 			}else if(in_constructor){//コンストラクタでは、それ以降篩型を満たさなければいけない
 				for(Field v : cs.fields){
 					if(v.dims>=1 && v.hava_refinement_type() && v.have_index_access(cs)){
@@ -563,6 +570,13 @@ public class new_expr implements Parser<String>{
 				for(Variable v : cs.called_method_args){
 					if(v.arg_field!=null && v.arg_field instanceof Variable && v.dims>=2 && v.hava_refinement_type() && v.have_index_access(cs)){
 						v.arg_field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(v.arg_field.alias_in_consutructor_or_2d_in_helper, condition);
+					}
+				}
+				if(in_constructor){
+					for(Field v : cs.fields){
+						if(v.dims>=1 && v.hava_refinement_type() && v.have_index_access(cs)){
+							v.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(v.alias_in_consutructor_or_2d_in_helper, condition);
+						}
 					}
 				}
 			}

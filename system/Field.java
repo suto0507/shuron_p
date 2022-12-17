@@ -34,7 +34,7 @@ public class Field {
 	public String class_type_name;
 	
 	//helperメソッドやコンストラクターの中で、２次元以上の配列としてエイリアスした場合
-	//これが関係あるのは、ローカル変数かコンストラクタの中のthisのフィールドだけなので、class_exprはいらない
+	//これが関係あるのは、ローカル変数かコンストラクタの中のthisのフィールドだけなので、class_exprはいらない (thisのフィールドでのみ使う)
 	public BoolExpr alias_1d_in_helper;
 	public BoolExpr alias_in_consutructor_or_2d_in_helper;//コンストラクタでは、エイリアスした次元数に関係なく、エイリアス後は篩型を満たす必要がある。
 	
@@ -568,7 +568,11 @@ public class Field {
 		cs.solver.push();
 		
 		//エイリアスしているときだけでいい
-		cs.add_constraint(this.alias_1d_in_helper);
+		if(this instanceof Variable
+				|| (cs.in_constructor && !(this instanceof Variable) && cs.this_field.get_Expr(cs).equals(class_expr))){
+			cs.add_constraint(this.alias_1d_in_helper);
+		}
+		
 		
 		cs.add_constraint(condition);
 		Field v = this;

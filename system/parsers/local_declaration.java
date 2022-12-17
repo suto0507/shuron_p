@@ -56,7 +56,8 @@ public class local_declaration implements Parser<String>{
 						if(v instanceof Variable){
 							v.alias_1d_in_helper = cs.ctx.mkOr(v.alias_1d_in_helper, cs.get_pathcondition());
 						}
-						if(rc.field instanceof Variable){
+						if(rc.field instanceof Variable
+								|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
 							rc.field.alias_1d_in_helper = cs.ctx.mkOr(rc.field.alias_1d_in_helper, cs.get_pathcondition());
 						}
 					}else if(cs.in_constructor){
@@ -74,7 +75,8 @@ public class local_declaration implements Parser<String>{
 						if(v instanceof Variable){
 							v.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(v.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
-						if(rc.field instanceof Variable){
+						if(rc.field instanceof Variable
+								|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
 							rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
 					}
@@ -96,6 +98,8 @@ public class local_declaration implements Parser<String>{
 					}else{
 						v.assert_refinement(cs, null);
 					}
+					Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), v, cs.this_field.get_Expr(cs));
+					cs.helper_assigned_fields.add(assigned_field);
 				}
 				//配列がエイリアスしたときに、右辺の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
 				if(cs.in_helper){
@@ -111,10 +115,6 @@ public class local_declaration implements Parser<String>{
 						rc.field.assert_refinement(cs, rc.class_expr);
 					}
 				}
-			}
-			if(v.hava_refinement_type() && cs.in_helper){
-				Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), v, cs.this_field.get_Expr(cs));
-				cs.helper_assigned_fields.add(assigned_field);
 			}
 			
 			return v;

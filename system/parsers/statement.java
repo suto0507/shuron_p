@@ -173,6 +173,21 @@ import system.F_Assign;
 				//配列の篩型が安全かどうか
 				cs.check_array_alias(cs.return_v, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), rc.field, rc.class_expr, rc.indexs);
 				
+				//配列がエイリアスしたときに、右辺(返す値の変数)の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
+				if(cs.in_helper){
+					if(cs.return_v.hava_refinement_type() && cs.return_v.have_index_access(cs) 
+							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
+							&& cs.return_v.dims >= 2){
+						rc.field.assert_refinement(cs, rc.class_expr);
+					}
+				}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+					if(cs.return_v.hava_refinement_type() && cs.return_v.have_index_access(cs) 
+							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
+							&& cs.return_v.dims >= 1){
+						rc.field.assert_refinement(cs, rc.class_expr);
+					}
+				}
+				
 				
 				//返す値
 				cs.return_expr = rc.expr;

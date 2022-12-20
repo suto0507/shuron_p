@@ -466,7 +466,7 @@ public class Check_status {
 		}else{
 			this.pathcondition = this.ctx.mkAnd(this.pathcondition, expr);
 		}
-		/*これはOpneJMLではやっていない？　やらなくていいかも
+		
 		this.solver.push();
 		if(this.pathcondition!=null){
 			this.solver.add(this.pathcondition);
@@ -477,7 +477,6 @@ public class Check_status {
         	throw new Exception("Unreachable. when path condition is " + this.pathcondition);
         }
 		this.solver.pop();
-		*/
 	}
 	
 	//論理式内でのパスコンディションなど

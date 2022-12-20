@@ -20,9 +20,10 @@ class A{
         if(x > 0)nat_array[0] = -1;
         //@maintaining nat_array.length == 5;
         //@maintaining (\forall int i; 0 <= i && i < nat_array.length; nat_array[i] >= 0);
-        for(;x < 0;){
+        for(int i = -100; i < 100 && x < 0; i = i+1){
             nat_array = new int[5];
         }
+
         if(x > 0)nat_array[0] = 1;
     }
 
@@ -40,8 +41,8 @@ class A{
     void test3_m(int x){
         if(x < 0)nat_array[0] = -1;
         //@maintaining nat_array.length == 5;
-        //@maintaining (\forall int i; 0 <= i && i < nat_array.length; nat_array[i] >= 0);
-        for(int i = 0; i < x; i = i+1){
+        //@maintaining (\forall int i; 0 <= i && i < nat_array.length; (x >= 0 || i != 0) ==>  nat_array[i] >= 0);
+        for(int i = -100; i < 100; i = i+1){
             assign(x);
         }
         if(x < 0)nat_array[0] = 1;

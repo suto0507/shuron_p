@@ -496,10 +496,10 @@ import system.F_Assign;
 			}
 			cs_loop_assign_check.add_path_condition_tmp(enter_loop_condition_assign_check);
 			
-			//ループ不変条件の制約の追加
+			//ループ不変条件の制約の追加  
 			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 				BoolExpr ex = li.predicate.check(cs_loop_assign_check);
-				cs_loop_assign_check.add_constraint(ex);
+				cs_loop_assign_check.add_constraint(cs.ctx.mkImplies(enter_loop_condition, ex));
 			}
 			
 			//中身
@@ -680,7 +680,7 @@ import system.F_Assign;
 			//ループ不変条件の制約の追加
 			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 				BoolExpr ex = li.predicate.check(cs_loop);
-				cs_loop.add_constraint(ex);
+				cs_loop.add_constraint(cs.ctx.mkImplies(enter_loop_condition, ex));
 			}
 			
 			//中身

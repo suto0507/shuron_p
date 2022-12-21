@@ -192,7 +192,7 @@ public class new_expr implements Parser<String>{
 			if(md == null){
 				throw new Exception("can't find method " + this.type);
 			}
-			cs.in_method_call = true;
+			
 			//ˆø”‚Ìˆ—
 			if(md.formals.param_declarations.size()!=ps.expression_list.expressions.size()){
 				throw new Exception("wrong number of arguments");
@@ -478,7 +478,7 @@ public class new_expr implements Parser<String>{
 			v.temp_num = 0;
 			//ˆø”‚É’l‚ğ•R‚Ã‚¯‚é
 			cs.add_constraint(cs.ctx.mkEq(v.get_Expr(cs), method_arg_valuse.get(j).expr));
-			if(!((v.type.equals("int") || v.type.equals("boolean")) && v.dims==0))v.arg_field =  method_arg_valuse.get(j).field;
+			v.arg_field =  method_arg_valuse.get(j).field;
 			if(method_arg_valuse.get(j).field!=null) v.internal_id = method_arg_valuse.get(j).field.internal_id;
 			
 		}

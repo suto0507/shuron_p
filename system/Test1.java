@@ -54,7 +54,7 @@ public class Test1 {
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\method_in_helper.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_method_in_helper.java");
 		
-		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\helper_array.java");
+		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\helper_array.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_helper_array.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\valid\\helper_array_2d.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron\\src\\testcases\\invalid\\invalid_helper_array_2d.java");
@@ -78,7 +78,7 @@ public class Test1 {
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\invalid_examples\\helper_bad_array_assign.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\invalid_examples\\helper_bad_array_assign_2d.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\10_3_zemi\\ok_local_alias.java");
-		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\10_3_zemi\\no_local_alias_ok_2.java");
+		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\no_local_alias_ok_2.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\10_3_zemi\\if_alias.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\10_3_zemi\\while_alias.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\refinement_type_example.java");

@@ -35,6 +35,9 @@ public class Model_Field extends Field{
 		this.alias_1d_in_helper = alias_1d_in_helper;
 		this.alias_in_consutructor_or_2d_in_helper = alias_1d_in_helper;
 		this.model_fields = model_fields;
+		if(this.modifiers.is_final){
+			throw new Exception("model fields can't be modified with final");
+		}
 	}
 	
 	public Model_Field clone_e() throws Exception{

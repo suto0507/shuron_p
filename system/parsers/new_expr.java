@@ -351,7 +351,6 @@ public class new_expr implements Parser<String>{
 					//‘ã“ü
 					if(fa.cnst_array.size()>0){
 						fa.assign_fresh_value(cs);
-						
 					}
 					
 					

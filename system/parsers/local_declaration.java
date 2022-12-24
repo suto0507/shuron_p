@@ -34,11 +34,10 @@ public class local_declaration implements Parser<String>{
 		if(cs.search_variable(this.variable_decls.ident)==false){
 			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null, cs.ctx.mkBool(false));
 			if(this.variable_decls.initializer != null){
-				ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 				
 				Check_return rc = this.variable_decls.initializer.check(cs);
 				
-				BoolExpr expr = cs.ctx.mkEq(cs.get_variable(this.variable_decls.ident).get_Expr_assign(cs), rc.expr);
+				BoolExpr expr = cs.ctx.mkEq(v.get_Expr_assign(cs), rc.expr);
 				cs.add_constraint(expr);
 				cs.get_variable(this.variable_decls.ident).temp_num++;
 

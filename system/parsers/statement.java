@@ -478,6 +478,7 @@ import system.F_Assign;
 			}
 			
 			
+			
 			//ループ内での代入
 			Pair<List<F_Assign>,BoolExpr> assigned_fields = new Pair<List<F_Assign>,BoolExpr>(new ArrayList<F_Assign>(), cs.ctx.mkBool(false));
 
@@ -496,11 +497,13 @@ import system.F_Assign;
 			}
 			cs_loop_assign_check.add_path_condition_tmp(enter_loop_condition_assign_check);
 			
+			
 			//ループ不変条件の制約の追加  
+			/*
 			for(loop_invariant li : this.possibly_annotated_loop.loop_invariants){
 				BoolExpr ex = li.predicate.check(cs_loop_assign_check);
 				cs_loop_assign_check.add_constraint(cs.ctx.mkImplies(enter_loop_condition, ex));
-			}
+			}*/
 			
 			//中身
 			this.possibly_annotated_loop.loop_stmt.statement.loop_assign(assigned_fields, cs_loop_assign_check);
@@ -901,6 +904,9 @@ import system.F_Assign;
 			}else if(this.is_return){
 				//なにもしない
 			}else if(this.possibly_annotated_loop!=null){
+				if(this.possibly_annotated_loop.loop_stmt.local_declaration!=null){
+					this.possibly_annotated_loop.loop_stmt.local_declaration.loop_assign(assigned_fields, cs);
+				}
 				BoolExpr enter_loop_condition = null;
 				if(this.possibly_annotated_loop.loop_stmt.expression!=null){
 					enter_loop_condition = (BoolExpr) this.possibly_annotated_loop.loop_stmt.expression.check(cs).expr;

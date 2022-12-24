@@ -13,33 +13,32 @@ public class Test_shuron_examples {
 	public static void main(String[] args) throws Exception {
 		List<Path> paths = new ArrayList<Path>(); 
 		
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\refinement_type_example.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\override_type_example.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\inheritance_1_2.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\inheritance_1.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\inheritance_2.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\inheritance_3.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\model_refinement_type.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\model_example.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\no_local_alias_ok_2.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\no_local_alias_ok_2_helper.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\ok_local_alias.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\if_alias.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\while_alias.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\method_call_in_rt_bad.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\method_call_in_rt_good.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\helper_example.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\helper_array.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\while_alias.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\refinement_type_example.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\override_type_example.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\inheritance_1_2.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\inheritance_1.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\inheritance_2.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\inheritance_3.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\model_refinement_type.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\model_example.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\no_local_alias_ok_2.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\no_local_alias_ok_2_helper.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\ok_local_alias.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\if_alias.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\while_alias.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\method_call_in_rt_bad.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\method_call_in_rt_good.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\helper_example.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\helper_array.java"));
 		
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\invalid_examples\\helper_array_loop_invalid.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\invalid_examples\\helper_bad_array_assign_2d.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\invalid_examples\\helper_bad_array_assign.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\invalid_examples\\helper_array_loop_invalid.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\invalid_examples\\helper_bad_array_assign_2d.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\invalid_examples\\helper_bad_array_assign.java"));
 		
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\benchmark\\Clock\\clock_sjml.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\benchmark\\Clock\\clock_sjml_refinement_type.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\benchmark\\Clock\\clock_sjml_no_comment.java"));
-		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\benchmark\\Clock\\clock_sjml_refinement_type_no_comment.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\benchmark\\Clock\\clock_sjml.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\benchmark\\Clock\\clock_sjml_refinement_type.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\benchmark\\Clock\\clock_sjml_no_comment.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\benchmark\\Clock\\clock_sjml_refinement_type_no_comment.java"));
 		
 		Summery summery = new Summery();
 		

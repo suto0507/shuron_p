@@ -837,7 +837,6 @@ public class postfix_expr implements Parser<String>{
 		}else if(this.primary_expr.jml_primary!=null){
 			//jml内は見ない
 		}else if(this.primary_expr.new_expr!=null){
-			//新しく作るオブジェクトも関係ない
 			this.primary_expr.new_expr.loop_assign(assigned_fields, cs);
 		}else{
 			//return null;

@@ -391,15 +391,10 @@ public class new_expr implements Parser<String>{
 			
 			
 			//–ŒãğŒ
-			BoolExpr post_invariant_expr = null;
-			if(cd.class_block.invariants!=null&&cd.class_block.invariants.size()>0){
-				for(invariant inv : cd.class_block.invariants){
-					if(post_invariant_expr == null){
-						post_invariant_expr = (BoolExpr) inv.check(cs);
-					}else{
-						post_invariant_expr = cs.ctx.mkAnd(post_invariant_expr, (BoolExpr)inv.check(cs));
-					}
-				}
+			if(!md.modifiers.is_helper){
+				BoolExpr post_invariant_expr = cs.all_invariant_expr();
+				//¶¬‚µ‚½ƒNƒ‰ƒX‚Ì•s•ÏğŒ‚à’Ç‰Á‚·‚é
+				post_invariant_expr = cs.ctx.mkAnd(post_invariant_expr, result.all_invariants_expr(0, cs.invariant_refinement_type_deep_limmit, null, new ArrayList<IntExpr>(), cs));
 				cs.add_constraint(post_invariant_expr);
 			}
 			BoolExpr ensures_expr = null;

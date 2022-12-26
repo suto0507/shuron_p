@@ -83,6 +83,8 @@ public class Check_status {
 	
 	public BoolExpr this_alias; //コンストラクタの検証において、thisを渡してしまった条件
 	
+	public ArrayList<method_decl> used_methods;//メソッドの事前条件、事後条件にそのメソッド自身を書いた場合、制約のないただの値として返される。
+	
 	
 	public Check_status(compilation_unit cu){
 		this.ctx = new Context(new HashMap<>());
@@ -104,6 +106,8 @@ public class Check_status {
 		array_ref = new Array(this.ctx.mkUninterpretedSort("Ref"), this);
 		
 		this_alias = this.ctx.mkBool(false);
+		
+		used_methods = new ArrayList<method_decl>();
 	}
 	
 	Check_status(){
@@ -411,6 +415,8 @@ public class Check_status {
 		cs.array_ref = this.array_ref.clone(this);
 		
 		cs.this_alias = this.this_alias;
+		
+		cs.used_methods = this.used_methods;
 		
 		return cs;
 	}

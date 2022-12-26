@@ -446,6 +446,17 @@ public class new_expr implements Parser<String>{
 		}
 		
 		
+		
+		
+		//返り値
+		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type + "_constructor_tmp", this.type, 0, null, md.modifiers, this.type, cs.ctx.mkBool(false));
+		result.temp_num++;
+		
+		//メソッドの事前条件、事後条件にそのメソッド自身を書いた場合、制約のないただの値として返される。
+		if(cs.in_jml_predicate && cs.used_methods.contains(md))return result;
+		
+		cs.result = result;
+		
 		//引数の処理
 		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
@@ -457,16 +468,13 @@ public class new_expr implements Parser<String>{
 		
 		cs.called_method_args = new ArrayList<Variable>();
 		
-		//返り値
-		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type + "_constructor_tmp", this.type, 0, null, md.modifiers, this.type, cs.ctx.mkBool(false));
-		result.temp_num++;
-		cs.result = result;
-		
 		Expr pre_instance_expr = cs.instance_expr;
 		String pre_instance_class_name = cs.instance_class_name;
 		
 		cs.instance_expr = result.get_Expr(cs);
 		cs.instance_class_name = this.type;
+		
+		cs.used_methods.add(md);
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
@@ -533,6 +541,8 @@ public class new_expr implements Parser<String>{
 		
 		cs.instance_expr = pre_instance_expr;
 		cs.instance_class_name = pre_instance_class_name;
+		
+		cs.used_methods.remove(md);
 		
 		return result;
 	}

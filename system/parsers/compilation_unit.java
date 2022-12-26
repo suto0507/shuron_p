@@ -153,6 +153,12 @@ public class compilation_unit implements Parser<String>{
 		}
 	}
 	
+	public void add_constructor(){
+		for(class_declaration class_decl :classes){
+			//書く
+		}
+	}
+	
 	public void check(Option option, Summery summery) throws Exception{
 		for(class_declaration class_decl :classes){
 			try{
@@ -188,6 +194,45 @@ public class compilation_unit implements Parser<String>{
 					for(method_decl md : super_class.class_block.method_decls){
 						if(md.ident.equals(method_name)){
 							return md;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	//オーバーロード対応版
+	public method_decl search_method(String class_name, String method_name , ArrayList<String> arg_types){
+		for(class_declaration cd : classes){
+			if(cd.class_name.equals(class_name)){
+				for(method_decl md : cd.class_block.method_decls){
+					if(md.ident.equals(method_name) && md.formals.param_declarations.size() == arg_types.size()){
+						boolean euqal_types = true;
+						for(int i = 0; i < md.formals.param_declarations.size(); i++){
+							if(!md.formals.param_declarations.get(i).type_spec.type.type.equals(arg_types.get(i))){
+								euqal_types = false;
+								break;
+							}
+						}
+						
+						if(euqal_types) return md;
+					}
+				}
+				class_declaration super_class = cd;
+				while(super_class.super_class != null){
+					super_class = super_class.super_class;
+					for(method_decl md : super_class.class_block.method_decls){
+						if(md.ident.equals(method_name)){
+							boolean euqal_types = true;
+							for(int i = 0; i < md.formals.param_declarations.size(); i++){
+								if(!md.formals.param_declarations.get(i).type_spec.type.type.equals(arg_types.get(i))){
+									euqal_types = false;
+									break;
+								}
+							}
+							
+							if(euqal_types) return md;
 						}
 					}
 				}

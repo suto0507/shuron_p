@@ -476,10 +476,6 @@ public class postfix_expr implements Parser<String>{
 		
 		System.out.println("call method " + ident);
 		
-		boolean pre_can_not_use_mutable = cs.can_not_use_mutable;
-		if(cs.in_refinement_predicate) cs.can_not_use_mutable = true;
-		boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
-		cs.in_refinement_predicate = false;
 		
 		
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(class_type_name);
@@ -498,6 +494,22 @@ public class postfix_expr implements Parser<String>{
 		if(cs.use_only_helper_method && !md.modifiers.is_helper){
 			throw new Exception("non helper method in invarinat or in refinement type");
 		}
+		
+		//返り値
+		modifiers m_tmp = new modifiers();
+		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, class_type_name, cs.ctx.mkBool(true));
+		result.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
+		result.temp_num++;
+		
+		//メソッドの事前条件、事後条件にそのメソッド自身を書いた場合、制約のないただの値として返される。
+		if(cs.in_jml_predicate && cs.used_methods.contains(md))return result;
+		
+
+		boolean pre_can_not_use_mutable = cs.can_not_use_mutable;
+		if(cs.in_refinement_predicate) cs.can_not_use_mutable = true;
+		boolean pre_in_refinement_predicate = cs.in_refinement_predicate;
+		cs.in_refinement_predicate = false;
+		
 		
 		//コンストラクタでの自インスタンスの関数呼び出し
 		if(cs.in_constructor && ex.equals(cs.this_field.get_Expr(cs))){
@@ -529,7 +541,7 @@ public class postfix_expr implements Parser<String>{
 		cs.instance_expr = ex;
 		cs.instance_class_name = class_type_name;
 		
-		
+		cs.used_methods.add(md);
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
@@ -702,11 +714,7 @@ public class postfix_expr implements Parser<String>{
 		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
 				
 		
-		//返り値
-		modifiers m_tmp = new modifiers();
-		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, class_type_name, cs.ctx.mkBool(true));
-		result.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
-		result.temp_num++;
+		//返り値の処理
 		cs.result = result;
 		if(result.hava_refinement_type()){
 			result.add_refinement_constraint(cs, ex, true);
@@ -737,6 +745,7 @@ public class postfix_expr implements Parser<String>{
 		cs.can_not_use_mutable = pre_can_not_use_mutable;
 		cs.in_refinement_predicate = pre_in_refinement_predicate;
 		
+		cs.used_methods.remove(md);
 		
 		return result;
 	}

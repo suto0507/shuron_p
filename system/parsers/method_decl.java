@@ -100,6 +100,7 @@ public class method_decl implements Parser<String>{
 		cs.md = this;
 		cs.return_conditions = new ArrayList<BoolExpr>();
 		
+		
 		if(this.modifiers.is_helper) cs.in_helper = true;
 		
 		
@@ -139,6 +140,8 @@ public class method_decl implements Parser<String>{
 			cs.this_old_status = csc;
 			csc.this_old_status = cs;
 
+			cs.used_methods.add(this);
+			
 			if(this.type_spec!=null){
 				
 				//éñëOèåè
@@ -170,7 +173,7 @@ public class method_decl implements Parser<String>{
 				cs.ban_private_visibility = false;
 			}
 			
-			
+			cs.used_methods.remove(this);
 		
 			
 
@@ -201,13 +204,14 @@ public class method_decl implements Parser<String>{
 			cs.this_field.type = pre_class_type_name;
 			
 			//returnÇµÇ»Ç©Ç¡ÇΩèÍçáÇÃåüèÿ
+			cs.used_methods.add(this);
 			if(cs.after_return==false && (this.type_spec==null||this.type_spec.type.type.equals("void"))){
 				this.check_post_condition(cs);
 			}
 			if(cs.after_return==false && !(this.type_spec==null||this.type_spec.type.type.equals("void"))){
 				throw new Exception("In some cases, \"return\" has not been done.");
 			}
-			
+			cs.used_methods.remove(this);
 			
 			System.out.println("method \"" + this.ident + "\" is valid\n\n");
 			summery.valids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + summery.file.toString());
@@ -226,6 +230,7 @@ public class method_decl implements Parser<String>{
 		
 		//éñå„èåè
 		cs.in_postconditions = true;
+		cs.used_methods.add(this);
 		System.out.println("postcondition invariant");
 		if(!cs.in_helper){
 			BoolExpr post_invariant_expr = cs.all_invariant_expr();
@@ -264,7 +269,8 @@ public class method_decl implements Parser<String>{
 				}
 			}
 		}
-		
+
+		cs.used_methods.remove(this);
 		
 		
 		

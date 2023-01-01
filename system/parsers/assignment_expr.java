@@ -84,7 +84,7 @@ public class assignment_expr implements Parser<String>{
 			
 			//左辺のExpr
 			
-			if(cs.in_helper){
+			if(cs.in_helper || cs.in_no_refinement_type){
 				//helperメソッド、コンストラクタでは、配列を代入前に検証が必要な場合がある
 				if(assign_cr.indexs.size() < assign_cr.field.dims){
 					assign_cr.field.assert_all_array_assign_in_helper(0, 1, assign_cr.class_expr, cs.ctx.mkBool(true), new ArrayList<IntExpr>(), cs);
@@ -102,7 +102,7 @@ public class assignment_expr implements Parser<String>{
 					&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 					&& assign_cr.field.dims - assign_cr.indexs.size() >= 1){
 				
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(assign_cr.field instanceof Variable
 							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
 						assign_cr.field.alias_1d_in_helper = cs.ctx.mkOr(assign_cr.field.alias_1d_in_helper, cs.get_pathcondition());
@@ -125,7 +125,7 @@ public class assignment_expr implements Parser<String>{
 					&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 					&& assign_cr.field.dims - assign_cr.indexs.size() >= 2){
 				
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(assign_cr.field instanceof Variable
 							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
 						assign_cr.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(assign_cr.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
@@ -163,7 +163,7 @@ public class assignment_expr implements Parser<String>{
 			//篩型の検証
 			System.out.println("check refinement type");
 			if(assign_cr.field.hava_refinement_type()){
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(assign_cr.field.dims >= 2 && assign_cr.field.have_index_access(cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
 						cs.solver.push();
 						if(assign_cr.field instanceof Variable
@@ -193,7 +193,7 @@ public class assignment_expr implements Parser<String>{
 				}
 			}
 			//配列がエイリアスしたときに、右辺の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
-			if(cs.in_helper){
+			if(cs.in_helper || cs.in_no_refinement_type){
 				if(assign_cr.field.hava_refinement_type() && assign_cr.field.have_index_access(cs) 
 						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 						&& assign_cr.field.dims - assign_cr.indexs.size() >= 2){
@@ -254,7 +254,7 @@ public class assignment_expr implements Parser<String>{
 					&& cr_r.field != null && cr_r.field.hava_refinement_type() && cr_r.field.have_index_access(cs) 
 					&& cr_l.field.dims - cr_l.indexs.size() >= 1){
 				
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(cr_l.field instanceof Variable){
 						cr_l.field.alias_1d_in_helper = cs.ctx.mkOr(cr_l.field.alias_1d_in_helper, cs.get_pathcondition());
 					}
@@ -275,7 +275,7 @@ public class assignment_expr implements Parser<String>{
 					&& cr_r.field != null && cr_r.field.hava_refinement_type() && cr_r.field.have_index_access(cs) 
 					&& cr_l.field.dims - cr_l.indexs.size() >= 2){
 				
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(cr_l.field instanceof Variable){
 						cr_l.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(cr_l.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}

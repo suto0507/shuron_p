@@ -30,6 +30,7 @@ public class Test_shuron_examples {
 		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\method_call_in_rt_good.java"));
 		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\helper_example.java"));
 		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\helper_array.java"));
+		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\rt_transitivity.java"));
 		
 		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\invalid_examples\\helper_array_loop_invalid.java"));
 		paths.add(Paths.get("\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\invalid_examples\\helper_bad_array_assign_2d.java"));

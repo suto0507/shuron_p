@@ -174,7 +174,7 @@ import system.F_Assign;
 				cs.check_array_alias(cs.return_v, cs.this_field.get_Expr(cs), new ArrayList<IntExpr>(), rc.field, rc.class_expr, rc.indexs);
 				
 				//配列がエイリアスしたときに、右辺(返す値の変数)の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(cs.return_v.hava_refinement_type() && cs.return_v.have_index_access(cs) 
 							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 							&& cs.return_v.dims >= 2){

@@ -20,8 +20,13 @@ public class jml_modifier implements Parser<String>{
 					s.revert(s_backup);
 					st = new string("pure").parse(s,ps);
 				}catch (Exception e3){
-					s.revert(s_backup);
-					st = new string("helper").parse(s,ps);
+					try{
+						s.revert(s_backup);
+						st = new string("helper").parse(s,ps);
+					}catch (Exception e4){
+						s.revert(s_backup);
+						st = new string("no_refinement_type").parse(s,ps);
+					}
 				}
 			}
 		}

@@ -51,7 +51,7 @@ public class local_declaration implements Parser<String>{
 						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 						&& v.dims >= 1){
 					
-					if(cs.in_helper){
+					if(cs.in_helper || cs.in_no_refinement_type){
 						if(v instanceof Variable){
 							v.alias_1d_in_helper = cs.ctx.mkOr(v.alias_1d_in_helper, cs.get_pathcondition());
 						}
@@ -70,7 +70,7 @@ public class local_declaration implements Parser<String>{
 						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 						&& v.dims >= 2){
 					
-					if(cs.in_helper){
+					if(cs.in_helper || cs.in_no_refinement_type){
 						if(v instanceof Variable){
 							v.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(v.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
@@ -85,7 +85,7 @@ public class local_declaration implements Parser<String>{
 				
 				//篩型の検証
 				if(v.hava_refinement_type()){
-					if(cs.in_helper){
+					if(cs.in_helper || cs.in_no_refinement_type){
 						if(v.dims >= 2 && v.have_index_access(cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
 							cs.solver.push();
 							cs.add_constraint(v.alias_in_consutructor_or_2d_in_helper);
@@ -101,7 +101,7 @@ public class local_declaration implements Parser<String>{
 					cs.helper_assigned_fields.add(assigned_field);
 				}
 				//配列がエイリアスしたときに、右辺の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(v.hava_refinement_type() && v.have_index_access(cs) 
 							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 							&& v.dims >= 2){

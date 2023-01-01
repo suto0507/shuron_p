@@ -69,6 +69,7 @@ public class Check_status {
 	
 	
 	public boolean in_helper; //helperメソッドの中かどうか
+	public boolean in_no_refinement_type; //no_refinement_typeメソッドの中かどうか
 	public ArrayList<Helper_assigned_field> helper_assigned_fields;
 	
 	public int invariant_refinement_type_deep_limmit;//invarintどこまで検証するか　また、helperメソッドで普通のメソッドを呼び出す際にどこまで篩型を検証するか　0の時は検証しない
@@ -400,6 +401,7 @@ public class Check_status {
 		cs.use_only_helper_method = this.use_only_helper_method;
 		
 		cs.in_helper = this.in_helper;
+		cs.in_no_refinement_type = this.in_no_refinement_type;
 			
 		cs.helper_assigned_fields = new ArrayList<Helper_assigned_field>();
 		for(Helper_assigned_field assigned_field : this.helper_assigned_fields){

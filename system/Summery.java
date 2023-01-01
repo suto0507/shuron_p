@@ -10,14 +10,14 @@ public class Summery {
 	public List<String> invalids;
 	public List<String> invalid_classes;
 	public List<String> parse_faileds;
-	public List<String> inheritance_faileds;
+	public List<String> preprocessing_faileds;
 	
 	Summery(){
 		valids = new ArrayList<String>();
 		invalids = new ArrayList<String>();
 		invalid_classes = new ArrayList<String>();
 		parse_faileds = new ArrayList<String>();
-		inheritance_faileds = new ArrayList<String>();
+		preprocessing_faileds = new ArrayList<String>();
 	}
 	
 	public void print_summery(){
@@ -28,9 +28,9 @@ public class Summery {
 			System.out.println(" - " + parse_failed);
 		}
 		
-		System.out.println("inheritance fail list");
-		for(String inheritance_fail : inheritance_faileds){
-			System.out.println(" - " + inheritance_fail);
+		System.out.println("preprocessing fail list");
+		for(String preprocessing_fail : preprocessing_faileds){
+			System.out.println(" - " + preprocessing_fail);
 		}
 		
 		System.out.println("valid method list");
@@ -48,7 +48,7 @@ public class Summery {
 			System.out.println(" - " + invalid);
 		}
 		
-		System.out.println("number of inheritance fail " + inheritance_faileds.size());
+		System.out.println("number of preprocessing fail " + preprocessing_faileds.size());
 		System.out.println("number of parse fail " + parse_faileds.size());
 		System.out.println("number of valid methods id " + valids.size() + "/" + (valids.size() + invalids.size()));
 		

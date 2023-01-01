@@ -66,12 +66,8 @@ public class spec_quantified_expr implements Parser<String>{
 		}else if(dims==0){
 			//クラス
 			sort =  cs.ctx.mkUninterpretedSort("Ref");
-		}else if(type.equals("int")&&dims==1){ //配列
-			sort =  cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkIntSort());
-		}else if(type.equals("boolean")&&dims==1){
-			sort =  cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkBoolSort());
-		}else if(dims==1){
-			sort =  cs.ctx.mkArraySort(cs.ctx.mkIntSort(), cs.ctx.mkUninterpretedSort("Ref"));
+		}else if(dims>0){ //配列
+			sort =  cs.ctx.mkUninterpretedSort("ArrayRef");
 		}else{
 			throw new Exception("unexpect quantifier");
 		}

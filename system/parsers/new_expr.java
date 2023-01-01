@@ -200,7 +200,7 @@ public class new_expr implements Parser<String>{
 			
 			
 			//helperメソッドの中でhelperでないメソッドを呼んだ場合、全ての篩型を検証する
-			if(cs.in_helper && !cs.in_helper){
+			if((cs.in_helper || cs.in_no_refinement_type) && !(md.modifiers.is_helper || md.modifiers.is_no_refinement_type)){
 				cs.assert_all_refinement_type();
 			}
 			
@@ -256,7 +256,7 @@ public class new_expr implements Parser<String>{
 					v.assert_refinement(cs, null);//class_Fieldとかは本来resultなどだが、まだできていないオブジェクトなのでnullでいいはず
 				}
 				//配列がエイリアスしたときに、右辺(渡した引数)の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
-				if(cs.in_helper){
+				if(cs.in_helper || cs.in_no_refinement_type){
 					if(v.hava_refinement_type() && v.have_index_access(cs) 
 							&& method_arg_valuse.get(j).field != null && method_arg_valuse.get(j).field.hava_refinement_type() && method_arg_valuse.get(j).field.have_index_access(cs) 
 							&& v.dims >= 2){
@@ -291,23 +291,24 @@ public class new_expr implements Parser<String>{
 				
 				Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
 				
-				//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
-				for(F_Assign fa : assign_cnsts.fst){
-					for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> b_indexs : fa.cnst_array){
-						for(Pair<Expr, List<IntExpr>> assign_indexs : b_indexs.snd){
-							if(assign_indexs.snd.size() < fa.field.dims){
-								fa.field.assert_all_array_assign_in_helper(0, 1, assign_indexs.fst, b_indexs.fst, new ArrayList<IntExpr>(), cs);
+				if(md.modifiers.is_helper || md.modifiers.is_no_refinement_type){
+					//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
+					for(F_Assign fa : assign_cnsts.fst){
+						for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> b_indexs : fa.cnst_array){
+							for(Pair<Expr, List<IntExpr>> assign_indexs : b_indexs.snd){
+								if(assign_indexs.snd.size() < fa.field.dims){
+									fa.field.assert_all_array_assign_in_helper(0, 1, assign_indexs.fst, b_indexs.fst, new ArrayList<IntExpr>(), cs);
+								}
 							}
 						}
 					}
+					//何でも代入できる場合
+					cs.this_field.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, assign_cnsts.snd, new ArrayList<IntExpr>(), cs);
+					
+					for(Variable variable : cs.called_method_args){//引数
+						variable.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, assign_cnsts.snd, new ArrayList<IntExpr>(), cs);
+					}
 				}
-				//何でも代入できる場合
-				cs.this_field.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, assign_cnsts.snd, new ArrayList<IntExpr>(), cs);
-				
-				for(Variable variable : cs.called_method_args){//引数
-					variable.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, assign_cnsts.snd, new ArrayList<IntExpr>(), cs);
-				}
-				
 				
 				for(F_Assign fa : assign_cnsts.fst){
 
@@ -367,14 +368,14 @@ public class new_expr implements Parser<String>{
 				cs.refresh_all_array(assign_cnsts.snd);
 				
 			}else{//assignableを含めた任意の仕様が書かれていない関数
-				//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
-				//何でも代入できる場合
-				//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
-				//何でも代入できる場合
-				cs.this_field.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, cs.ctx.mkBool(true), new ArrayList<IntExpr>(), cs);
-				
-				for(Variable variable : cs.called_method_args){//引数 ちょっと冗長な処理
-					variable.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, cs.ctx.mkBool(true), new ArrayList<IntExpr>(), cs);
+				if(md.modifiers.is_helper || md.modifiers.is_no_refinement_type){
+					//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
+					//何でも代入できる場合
+					cs.this_field.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, cs.ctx.mkBool(true), new ArrayList<IntExpr>(), cs);
+					
+					for(Variable variable : cs.called_method_args){//引数 ちょっと冗長な処理
+						variable.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, cs.ctx.mkBool(true), new ArrayList<IntExpr>(), cs);
+					}
 				}
 
 				
@@ -387,7 +388,7 @@ public class new_expr implements Parser<String>{
 			
 			
 			//helperメソッドやコンストラクターにおける配列のエイリアス
-			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
+			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
 			
 			
 			//事後条件
@@ -524,7 +525,7 @@ public class new_expr implements Parser<String>{
 		
 		//helperメソッドやコンストラクターにおける配列のエイリアス
 		//loop_assign_methodではpre_in_helperなどは用意しない
-		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper, cs.in_constructor);
+		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
 
 		
 		

@@ -557,7 +557,7 @@ public class Field {
 	public void assert_all_array_assign_in_helper(int deep, int deep_limmit, Expr class_expr, BoolExpr condition, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{		
 		if(deep >= deep_limmit) return;
 		
-		if(!(this.dims >= 1 && this.hava_refinement_type() && this.have_index_access(cs) && cs.in_helper))return;
+		if(!(this.dims >= 1 && this.hava_refinement_type() && this.have_index_access(cs) && (cs.in_helper || cs.in_no_refinement_type)))return;
 		
 		ArrayList<IntExpr> fresh_indexs = (ArrayList<IntExpr>) indexs.clone();
 
@@ -590,7 +590,7 @@ public class Field {
 		
 		//メソッドの最初では篩型が満たしていることを仮定していい
 		//フィールドだけ
-		if(cs.in_helper && !(v instanceof Variable)){
+		if((cs.in_helper || cs.in_no_refinement_type) && !(v instanceof Variable)){
 			old_v.add_refinement_constraint(cs.this_old_status, class_expr, true);
 		}
 		
@@ -636,7 +636,7 @@ public class Field {
 	public void ref_constraint(int deep, int deep_limmit, Expr class_expr, ArrayList<IntExpr> indexs, Check_status cs) throws Exception{
 		if(deep >= deep_limmit) return;
 		
-		if(!(this.dims >= 1 && this.hava_refinement_type() && this.have_index_access(cs) && cs.in_helper))return;
+		if(!(this.dims >= 1 && this.hava_refinement_type() && this.have_index_access(cs) && (cs.in_helper || cs.in_no_refinement_type)))return;
 		
 		ArrayList<IntExpr> fresh_indexs = (ArrayList<IntExpr>) indexs.clone();
 

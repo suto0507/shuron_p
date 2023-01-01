@@ -34,111 +34,112 @@ public class compilation_unit implements Parser<String>{
 	}
 	
 	public void preprocessing(List<Pair<String, String>> extends_pairs, Summery summery){
-		pure_modifier();
-		link_inheritance(extends_pairs, summery);
+		try {
+			pure_modifier();
+			link_inheritance(extends_pairs, summery);
+		}catch(Exception e){
+			System.out.println(e);
+			summery.preprocessing_faileds.add("Inheritance failed : "  + summery.file.toString());
+		}
 	}
 	
-	public void link_inheritance(List<Pair<String, String>> extends_pairs, Summery summery){
-		try {
-			//全てのクラスのsuper_classフィールドを埋める
-			for(Pair<String, String> extends_pair : extends_pairs){
-				for(class_declaration class_decl :classes){
-					String extends_class_name = extends_pair.get_snd(class_decl.class_name);
-					if(extends_class_name!=null){//継承の処理
-						class_declaration extends_class = this.search_class(extends_class_name);
-						if(extends_class == null){
-							throw new Exception(extends_class + "don't exist");
-						}
-						class_decl.super_class = extends_class;
-						break;
-					}
-				}
-			}
-			
-			
-			//並び替え
-			List<class_declaration> sorted_classes = new ArrayList<class_declaration>();
-			while(classes.size()!=0){
-				for(class_declaration class_decl : classes){
-					if(class_decl.super_class==null || sorted_classes.contains(class_decl.super_class)){
-						sorted_classes.add(class_decl);
-					}
-				}
-				for(class_declaration class_decl : sorted_classes){
-					classes.remove(class_decl);
-				}
-			}
-			classes = sorted_classes;
-			
-			//メソッドの継承
+	public void link_inheritance(List<Pair<String, String>> extends_pairs, Summery summery) throws Exception{
+		
+		//全てのクラスのsuper_classフィールドを埋める
+		for(Pair<String, String> extends_pair : extends_pairs){
 			for(class_declaration class_decl :classes){
-				if(class_decl.super_class != null){
-					//メソッド
-					for(method_decl super_md : class_decl.super_class.class_block.method_decls){//スーパークラスの各メソッドに関して、オーバーライドされているかによって処理を行う
-						method_decl override_md = null;
-						for(method_decl md : class_decl.class_block.method_decls){
-							if(super_md.ident.equals(md.ident)){
-								override_md = md;
-								break;
-							}
-						}
-						
-						if(override_md == null){//同じメソッドでもサブクラスで検証は行う
-							class_decl.class_block.method_decls.add(super_md.clone_no_refinemet_type());
-						}else{//事前条件、事後条件などの継承
-							if(super_md.method_specification!=null){
-								if(override_md.method_specification!=null && override_md.method_specification.spec_case_seq!=null){
-									throw new Exception("need also");
-								}else if(override_md.method_specification!=null && override_md.method_specification.extending_specification!=null){
-									override_md.method_specification.spec_case_seq = new spec_case_seq();
-									override_md.method_specification.spec_case_seq.generic_spec_cases = new ArrayList<generic_spec_case>();
-									for(generic_spec_case gsc : super_md.method_specification.spec_case_seq.generic_spec_cases){//スーパークラスは既にspec_case_seqで確定しているはず
-										override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
-									}
-									for(generic_spec_case gsc : override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases){//このクラスのもともとあったもの
-										override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
-									}
-								}else{//なんも書いてない場合
-									override_md.method_specification = super_md.method_specification;
-								}
-							}else{//スーパークラスのメソッドに仕様はない場合
-								if(override_md.method_specification!=null && override_md.method_specification.extending_specification!=null){
-									throw new Exception("super method don't have specification.");
-								}
-							}
-						}
+				String extends_class_name = extends_pair.get_snd(class_decl.class_name);
+				if(extends_class_name!=null){//継承の処理
+					class_declaration extends_class = this.search_class(extends_class_name);
+					if(extends_class == null){
+						throw new Exception(extends_class + "don't exist");
 					}
+					class_decl.super_class = extends_class;
+					break;
 				}
 			}
-			
-			
-			
-			//不変条件の継承
-			for(class_declaration class_decl :classes){
-				if(class_decl.super_class != null){
-					for(invariant inv : class_decl.super_class.class_block.invariants){
-						class_decl.class_block.invariants.add(inv);
-					}
+		}
+		
+		
+		//並び替え
+		List<class_declaration> sorted_classes = new ArrayList<class_declaration>();
+		while(classes.size()!=0){
+			for(class_declaration class_decl : classes){
+				if(class_decl.super_class==null || sorted_classes.contains(class_decl.super_class)){
+					sorted_classes.add(class_decl);
 				}
 			}
-			//篩型の継承に関する処理をする
-			for(class_declaration class_decl :classes){
-				if(class_decl.super_class != null){
-					//override-refinement type-clause
-					for(override_refinement_type_clause ortc : class_decl.class_block.override_refinement_type_clauses){
-						ortc.inheritance_refinement_types(class_decl, this);
-					}
-					//メソッド
+			for(class_declaration class_decl : sorted_classes){
+				classes.remove(class_decl);
+			}
+		}
+		classes = sorted_classes;
+		
+		//メソッドの継承
+		for(class_declaration class_decl :classes){
+			if(class_decl.super_class != null){
+				//メソッド
+				for(method_decl super_md : class_decl.super_class.class_block.method_decls){//スーパークラスの各メソッドに関して、オーバーライドされているかによって処理を行う
+					method_decl override_md = null;
 					for(method_decl md : class_decl.class_block.method_decls){
-						md.inheritance_refinement_types(class_decl, this);
+						if(super_md.ident.equals(md.ident)){
+							override_md = md;
+							break;
+						}
 					}
 					
+					if(override_md == null){//同じメソッドでもサブクラスで検証は行う
+						class_decl.class_block.method_decls.add(super_md.clone_no_refinemet_type());
+					}else{//事前条件、事後条件などの継承
+						if(super_md.method_specification!=null){
+							if(override_md.method_specification!=null && override_md.method_specification.spec_case_seq!=null){
+								throw new Exception("need also");
+							}else if(override_md.method_specification!=null && override_md.method_specification.extending_specification!=null){
+								override_md.method_specification.spec_case_seq = new spec_case_seq();
+								override_md.method_specification.spec_case_seq.generic_spec_cases = new ArrayList<generic_spec_case>();
+								for(generic_spec_case gsc : super_md.method_specification.spec_case_seq.generic_spec_cases){//スーパークラスは既にspec_case_seqで確定しているはず
+									override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
+								}
+								for(generic_spec_case gsc : override_md.method_specification.extending_specification.spec_case_seq.generic_spec_cases){//このクラスのもともとあったもの
+									override_md.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
+								}
+							}else{//なんも書いてない場合
+								override_md.method_specification = super_md.method_specification;
+							}
+						}else{//スーパークラスのメソッドに仕様はない場合
+							if(override_md.method_specification!=null && override_md.method_specification.extending_specification!=null){
+								throw new Exception("super method don't have specification.");
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		
+		
+		//不変条件の継承
+		for(class_declaration class_decl :classes){
+			if(class_decl.super_class != null){
+				for(invariant inv : class_decl.super_class.class_block.invariants){
+					class_decl.class_block.invariants.add(inv);
+				}
+			}
+		}
+		//篩型の継承に関する処理をする
+		for(class_declaration class_decl :classes){
+			if(class_decl.super_class != null){
+				//override-refinement type-clause
+				for(override_refinement_type_clause ortc : class_decl.class_block.override_refinement_type_clauses){
+					ortc.inheritance_refinement_types(class_decl, this);
+				}
+				//メソッド
+				for(method_decl md : class_decl.class_block.method_decls){
+					md.inheritance_refinement_types(class_decl, this);
 				}
 				
 			}
-		}catch(Exception e){
-			System.out.println(e);
-			summery.inheritance_faileds.add("Inheritance failed : "  + summery.file.toString());
+			
 		}
 		
 	}

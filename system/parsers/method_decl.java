@@ -101,11 +101,19 @@ public class method_decl implements Parser<String>{
 		cs.return_conditions = new ArrayList<BoolExpr>();
 		
 		
-		if(this.modifiers.is_helper) cs.in_helper = true;
-		
 		
 		//êFÅXÇÃèàóùÇå„Ç≈í«â¡
 		try{//returnÇÃèÄîı
+			
+			if(this.modifiers.is_helper){
+				if(!(this.modifiers.is_pure || this.modifiers.is_private)){
+					throw new Exception("helper method must be private or pure");
+				}
+				cs.in_helper = true;
+			}
+			
+			if(this.modifiers.is_no_refinement_type) cs.in_no_refinement_type = true;
+			
 			if(this.type_spec!=null){
 				cs.return_v = new Variable(cs.Check_status_share.get_tmp_num(), "return", this.type_spec.type.type, this.type_spec.dims, this.type_spec.refinement_type_clause, this.modifiers, cs.this_field.type, cs.ctx.mkBool(false));
 				cs.return_v.temp_num++;
@@ -288,7 +296,7 @@ public class method_decl implements Parser<String>{
 			}
 		}
 		
-		if(cs.in_helper){
+		if(cs.in_helper || cs.in_no_refinement_type){
 			
 			System.out.println("refinement type check : helper method");
 			
@@ -482,8 +490,17 @@ public class method_decl implements Parser<String>{
 	public void pure_modifier(){
 		if(this.modifiers.is_pure && this.method_specification!=null){
 			for(generic_spec_case gsc : this.method_specification.spec_case_seq.generic_spec_cases){
+				if(gsc.simple_spec_body==null)gsc.simple_spec_body = new simple_spec_body();
 				gsc.simple_spec_body.assignable_nothing = true;
 			}
+		}else if(this.modifiers.is_pure && this.method_specification==null){
+			this.method_specification = new method_specification();
+			this.method_specification.spec_case_seq = new spec_case_seq();
+			this.method_specification.spec_case_seq.generic_spec_cases = new ArrayList<generic_spec_case>();
+			generic_spec_case gsc = new generic_spec_case();
+			gsc.simple_spec_body = new simple_spec_body();
+			gsc.simple_spec_body.assignable_nothing = true;
+			this.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
 		}
 	}
 

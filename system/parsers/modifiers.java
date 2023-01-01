@@ -11,6 +11,7 @@ public class modifiers implements Parser<String>{
 	boolean is_pure;
 	boolean is_helper;
 	boolean is_model;
+	boolean is_no_refinement_type;
 	
 	modifiers(){
 		this.is_final = false;
@@ -19,6 +20,7 @@ public class modifiers implements Parser<String>{
 		this.is_pure = false;
 		this.is_helper = false;
 		this.is_model = false;
+		this.is_no_refinement_type = false;
 	}
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -40,6 +42,8 @@ public class modifiers implements Parser<String>{
 					this.is_helper = true;
 				}else if(st.equals("model")){
 					this.is_model = true;
+				}else if(st.equals("no_refinement_type")){
+					this.is_no_refinement_type = true;
 				}
 				ret = ret + st + new newLines().parse(s,ps);
 			}

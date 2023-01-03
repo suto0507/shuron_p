@@ -43,7 +43,7 @@ public class store_ref_expression implements Parser<String>{
 	public Check_return check(Check_status cs) throws Exception{
 		Expr ex = null;
 		Field f = null;
-		Expr class_expr = null;
+		Expr class_expr = cs.instance_expr;
 		List<IntExpr> indexs = new ArrayList<IntExpr>();
 		
 

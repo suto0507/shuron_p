@@ -51,7 +51,7 @@ public class postfix_expr implements Parser<String>{
 		Expr ex = null;
 		Field f = null;
 		String ident = null;
-		Expr class_expr = null;
+		Expr class_expr = cs.instance_expr;
 		boolean is_refine_value = false;
 		
 
@@ -339,7 +339,7 @@ public class postfix_expr implements Parser<String>{
 	public Check_return check_assign(Check_status cs) throws Exception{
 		Expr ex = null;
 		Field f = null;
-		Expr class_expr = null;
+		Expr class_expr = cs.instance_expr;
 		ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 		
 		if(this.primary_suffixs.size() == 0){
@@ -778,7 +778,7 @@ public class postfix_expr implements Parser<String>{
 		Field f = null;
 		Expr ex = null;
 		String ident = null;
-		Expr class_expr = null;
+		Expr class_expr = cs.instance_expr;
 		boolean is_refine_value = false;
 		
 

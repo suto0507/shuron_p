@@ -90,12 +90,12 @@ public class local_declaration implements Parser<String>{
 							cs.solver.push();
 							cs.add_constraint(v.alias_in_consutructor_or_2d_in_helper);
 
-							v.assert_refinement(cs, null);
+							v.assert_refinement(cs, cs.instance_expr);
 							cs.solver.pop();
 						}
 						
 					}else{
-						v.assert_refinement(cs, null);
+						v.assert_refinement(cs, cs.instance_expr);
 					}
 					Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), v, cs.this_field.get_Expr(cs));
 					cs.helper_assigned_fields.add(assigned_field);

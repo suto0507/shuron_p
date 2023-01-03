@@ -2,6 +2,7 @@ package system.parsers;
 
 import com.microsoft.z3.Expr;
 
+import system.Check_return;
 import system.Check_status;
 import system.Parser;
 import system.Parser_status;
@@ -26,11 +27,11 @@ public class java_literal implements Parser<String>{
 		return st;
 	}
 	
-	public Expr check(Check_status cs){
+	public Check_return check(Check_status cs){
 		if(this.boolean_literal!=null){
-			return this.boolean_literal.check(cs);
+			return new Check_return(this.boolean_literal.check(cs), null, null, null, "boolean", 0);
 		}else{
-			return this.integer_literal.check(cs);
+			return new Check_return(this.integer_literal.check(cs), null, null, null, "int", 0);
 		}
 	}
 }

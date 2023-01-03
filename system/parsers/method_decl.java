@@ -17,6 +17,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.Summery;
+import system.Type_info;
 import system.Variable;
 import system.F_Assign;
 
@@ -343,6 +344,20 @@ public class method_decl implements Parser<String>{
 		
 		class_declaration super_class = class_decl.super_class;
 		
+		
+		//ƒRƒ“ƒXƒgƒ‰ƒNƒ^[‚ÍŒp³‚µ‚È‚¢
+		if(this.type_spec == null) return;
+		
+		ArrayList<Type_info> param_types = new ArrayList<Type_info>();
+		for(param_declaration pd : this.formals.param_declarations){
+			param_types.add(new Type_info(pd.type_spec.type.type, pd.type_spec.dims));
+		}
+		
+		//Œp³‚µ‚Ä‚¢‚È‚¢‚È‚ç‰½‚à‚µ‚È‚¢
+		if(cu.search_method(super_class.class_name, this.ident, param_types, false) == null) return;
+		
+		
+		
 		//•Ô‚è’l‚ÌŒ^‚Ìâ¿Œ^
 		
 		//”z—ñ‚É‚ÍV‚µ‚¢â¿Œ^‚ğ‚Â‚¯‚é‚±‚Æ‚ª‚Å‚«‚È‚¢
@@ -350,7 +365,7 @@ public class method_decl implements Parser<String>{
 		
 		boolean exist_super_md = false;
 		while(true){
-			method_decl super_md = cu.search_method(super_class.class_name, this.ident);
+			method_decl super_md = cu.search_method(super_class.class_name, this.ident, param_types, false);
 			if(super_md != null) exist_super_md = true;
 			if(super_md == null || super_md.type_spec.refinement_type_clause==null){//â¿Œ^‚ªŒ©‚Â‚©‚é‚Ü‚Åsuper class‚ğ’Tõ
 				if(super_class.super_class == null){
@@ -447,7 +462,7 @@ public class method_decl implements Parser<String>{
 			v.temp_num=0;
 			
 			while(true){
-				method_decl super_md = cu.search_method(super_class.class_name, this.ident);
+				method_decl super_md = cu.search_method(super_class.class_name, this.ident, param_types, false);
 				if(super_md == null || super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause==null){//â¿Œ^‚ªŒ©‚Â‚©‚é‚Ü‚Åsuper class‚ğ’Tõ
 					if(super_class.super_class == null){
 						if(this.formals.param_declarations.get(i).type_spec.refinement_type_clause!=null){
@@ -532,5 +547,7 @@ public class method_decl implements Parser<String>{
 		}
 		return clone_md;
 	}
+	
+	
 }
 

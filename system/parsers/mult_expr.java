@@ -70,7 +70,7 @@ public class mult_expr implements Parser<String>{
 						);
 			}
 		}
-		return new Check_return(expr, null, null, null);
+		return new Check_return(expr, null, null, null, "int", 0);
 
 	}
 	
@@ -105,7 +105,7 @@ public class mult_expr implements Parser<String>{
 						);
 			}
 		}
-		return new Check_return(expr, null, null, null);
+		return new Check_return(expr, null, null, null, "int", 0);
 
 	}
 	

@@ -208,7 +208,7 @@ public class assignment_expr implements Parser<String>{
 			}
 			
 			
-			return new Check_return(assign_cr.field.get_Expr_with_indexs(assign_cr.class_expr, assign_cr.indexs, cs), assign_cr.field, assign_cr.indexs, assign_cr.class_expr);
+			return new Check_return(assign_cr.field.get_Expr_with_indexs(assign_cr.class_expr, assign_cr.indexs, cs), assign_cr.field, assign_cr.indexs, assign_cr.class_expr, assign_cr.field.type, assign_cr.field.dims - assign_cr.indexs.size());
 		}else{
 			return rc;
 		}

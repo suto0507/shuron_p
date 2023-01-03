@@ -11,6 +11,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.Summery;
+import system.Type_info;
 
 public class compilation_unit implements Parser<String>{
 	List<class_declaration> classes;
@@ -35,11 +36,12 @@ public class compilation_unit implements Parser<String>{
 	
 	public void preprocessing(List<Pair<String, String>> extends_pairs, Summery summery){
 		try {
+			create_constructor();
 			pure_modifier();
 			link_inheritance(extends_pairs, summery);
 		}catch(Exception e){
 			System.out.println(e);
-			summery.preprocessing_faileds.add("Inheritance failed : "  + summery.file.toString());
+			summery.preprocessing_faileds.add("preprocessing failed : "  + summery.file.toString());
 		}
 	}
 	
@@ -83,12 +85,23 @@ public class compilation_unit implements Parser<String>{
 					method_decl override_md = null;
 					for(method_decl md : class_decl.class_block.method_decls){
 						if(super_md.ident.equals(md.ident)){
-							override_md = md;
+							boolean same_type = true;
+							for(int i = 0; i < super_md.formals.param_declarations.size(); i++){
+								if(!(super_md.formals.param_declarations.get(i).type_spec.type.type.equals(md.formals.param_declarations.get(i).type_spec.type.type)
+										&& super_md.formals.param_declarations.get(i).type_spec.dims == md.formals.param_declarations.get(i).type_spec.dims)){
+									same_type = false;
+									break;
+								}
+							}
+							
+							if(same_type) override_md = md;
 							break;
 						}
 					}
 					
-					if(override_md == null){//同じメソッドでもサブクラスで検証は行う
+					if(super_md.type_spec==null){//コンストラクターの継承は行なわない
+						//なにもしない
+					}else if(override_md == null){//同じメソッドでもサブクラスで検証は行う
 						class_decl.class_block.method_decls.add(super_md.clone_no_refinemet_type());
 					}else{//事前条件、事後条件などの継承
 						if(super_md.method_specification!=null){
@@ -154,6 +167,33 @@ public class compilation_unit implements Parser<String>{
 		}
 	}
 	
+	public void create_constructor(){
+		for(class_declaration class_decl : classes){
+			boolean have_constructor = false;
+			for(method_decl md : class_decl.class_block.method_decls){
+				if(md.type_spec==null){
+					have_constructor = true;
+					break;
+				}
+			}
+			if(!have_constructor){
+				method_decl md = new method_decl();
+				md.modifiers = new modifiers();
+				md.modifiers.is_pure = true;
+				md.ident = class_decl.class_name;
+				md.args_num = 0;
+				md.formals = new formals();
+				md.formals.param_declarations = new ArrayList<param_declaration>();
+				md.compound_statement = new compound_statement();
+				md.compound_statement.statements = new ArrayList<statement>();
+				
+				md.class_type_name = class_decl.class_name;
+				
+				class_decl.class_block.method_decls.add(md);
+			}
+		}
+	}
+	
 	public void add_constructor(){
 		for(class_declaration class_decl :classes){
 			//書く
@@ -204,14 +244,16 @@ public class compilation_unit implements Parser<String>{
 	}
 	
 	//オーバーロード対応版
-	public method_decl search_method(String class_name, String method_name , ArrayList<String> arg_types){
+	public method_decl search_method(String class_name, String method_name , ArrayList<Type_info> arg_types, boolean is_constructor){
 		for(class_declaration cd : classes){
 			if(cd.class_name.equals(class_name)){
 				for(method_decl md : cd.class_block.method_decls){
-					if(md.ident.equals(method_name) && md.formals.param_declarations.size() == arg_types.size()){
+					if((md.type_spec == null) == is_constructor &&
+							md.ident.equals(method_name) && md.formals.param_declarations.size() == arg_types.size()){
 						boolean euqal_types = true;
 						for(int i = 0; i < md.formals.param_declarations.size(); i++){
-							if(!md.formals.param_declarations.get(i).type_spec.type.type.equals(arg_types.get(i))){
+							if(!(md.formals.param_declarations.get(i).type_spec.type.type.equals(arg_types.get(i).type)
+									&& md.formals.param_declarations.get(i).type_spec.dims == arg_types.get(i).dims)){
 								euqal_types = false;
 								break;
 							}
@@ -224,10 +266,12 @@ public class compilation_unit implements Parser<String>{
 				while(super_class.super_class != null){
 					super_class = super_class.super_class;
 					for(method_decl md : super_class.class_block.method_decls){
-						if(md.ident.equals(method_name)){
+						if((md.type_spec == null) == is_constructor &&
+								md.ident.equals(method_name) && md.formals.param_declarations.size() == arg_types.size()){
 							boolean euqal_types = true;
 							for(int i = 0; i < md.formals.param_declarations.size(); i++){
-								if(!md.formals.param_declarations.get(i).type_spec.type.type.equals(arg_types.get(i))){
+								if(!(md.formals.param_declarations.get(i).type_spec.type.type.equals(arg_types.get(i).type)
+										&& md.formals.param_declarations.get(i).type_spec.dims == arg_types.get(i).dims)){
 									euqal_types = false;
 									break;
 								}

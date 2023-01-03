@@ -122,7 +122,7 @@ public class store_ref_expression implements Parser<String>{
 				ex = array.index_access_array(ex, index, cs);
 			}
 		}
-		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr);
+		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, f.type, f.dims - indexs.size());
 	}
 
 }

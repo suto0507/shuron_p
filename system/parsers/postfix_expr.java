@@ -20,6 +20,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Quantifier_Variable;
 import system.Source;
+import system.Type_info;
 import system.Variable;
 import system.F_Assign;
 
@@ -52,6 +53,7 @@ public class postfix_expr implements Parser<String>{
 		Field f = null;
 		String ident = null;
 		Expr class_expr = cs.instance_expr;
+		Type_info type_info = null;
 		boolean is_refine_value = false;
 		
 
@@ -72,6 +74,7 @@ public class postfix_expr implements Parser<String>{
 			}
 			
 			ex = cs.instance_expr;
+			type_info = new Type_info(cs.instance_class_name, 0);
 			
 			
 		}else if(this.primary_expr.ident!=null){
@@ -161,15 +164,19 @@ public class postfix_expr implements Parser<String>{
 					}
 				}
 			}
+			type_info = new Type_info(f.type, f.dims);
 		}else if(this.primary_expr.bracket_expression!=null){
 			Check_return cr = this.primary_expr.bracket_expression.check(cs);
 			f = cr.field;
 			ex = cr.expr;
 			class_expr = cr.class_expr;
 			indexs = cr.indexs;
+			type_info = cr.type_info;
 		}else if(this.primary_expr.java_literal!=null){
 			if(this.primary_suffixs.size() == 0){
-				ex = this.primary_expr.java_literal.check(cs);
+				Check_return cr = this.primary_expr.java_literal.check(cs);
+				ex = cr.expr;
+				type_info = cr.type_info;
 			}else{
 				throw new Exception("literal don't have suffix");
 				
@@ -179,35 +186,41 @@ public class postfix_expr implements Parser<String>{
 				if(this.primary_expr.jml_primary.is_result){
 					f = cs.result;
 					ex = f.get_Expr(cs);
+					type_info = new Type_info(f.type, f.dims);
 				}else if(this.primary_expr.jml_primary.old_expression!=null){
 					Check_return cr = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.old_status);
 					f = cr.field;
 					ex = cr.expr;
 					class_expr = cr.class_expr;
 					indexs = cr.indexs;
+					type_info = cr.type_info;
 				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
 					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
+					type_info = new Type_info("boolean", 0);
 					if(this.primary_suffixs.size() != 0) throw new Exception("quantifier don't have suffix");
 				}
 			}else{
 				if(this.primary_expr.jml_primary.is_result){
 					f = cs.return_v;
 					ex = cs.return_expr;
-					//return ex;
+					type_info = new Type_info(f.type, f.dims);
 				}else if(this.primary_expr.jml_primary.old_expression!=null){
 					Check_return cr = this.primary_expr.jml_primary.old_expression.spec_expression.check(cs.this_old_status);
 					f = cr.field;
 					ex = cr.expr;
 					class_expr = cr.class_expr;
 					indexs = cr.indexs;
+					type_info = cr.type_info;
 				}else if(this.primary_expr.jml_primary.spec_quantified_expr!=null){
 					ex = this.primary_expr.jml_primary.spec_quantified_expr.check(cs);
+					type_info = new Type_info("boolean", 0);
 					if(this.primary_suffixs.size() != 0) throw new Exception("quantifier don't have suffix");
 				}
 			}
 		}else if(this.primary_expr.new_expr!=null){
 			f = this.primary_expr.new_expr.check(cs);
 			ex = f.get_Expr(cs);
+			type_info = new Type_info(f.type, f.dims);
 		}else{
 			//return null;
 		}
@@ -229,6 +242,7 @@ public class postfix_expr implements Parser<String>{
 					ex = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), ex);
 					f = null;
 					class_expr = null;
+					type_info = new Type_info("int", 0);
 				}else{
 					Field pre_f = f;
 					class_expr = ex;
@@ -258,6 +272,7 @@ public class postfix_expr implements Parser<String>{
 							throw new Exception(f.type + " don't have " + ps.ident);
 						}
 					}
+					type_info = new Type_info(f.type, f.dims);
 					
 					if(f.hava_refinement_type()){//篩型
 						add_refinement_constraint(cs, f, class_expr);
@@ -314,6 +329,9 @@ public class postfix_expr implements Parser<String>{
 				
 				
 				ident = null;
+				type_info.dims--;
+				
+				
 				if(cs.in_refinement_predicate==true){//篩型の中では配列は使えない
 					if(!f.equals(cs.refined_Field)){
 						if(cs.search_quantifier(f.field_name, cs)==null){
@@ -329,11 +347,12 @@ public class postfix_expr implements Parser<String>{
 				class_expr = null;
 				ident = null;
 				indexs = new ArrayList<IntExpr>();
+				type_info = new Type_info(f.type, f.dims);
 			}
 		}
 
 		
-		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr);
+		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, type_info);
 	}
 	
 	public Check_return check_assign(Check_status cs) throws Exception{
@@ -366,7 +385,7 @@ public class postfix_expr implements Parser<String>{
 			}else{
 				throw new Exception("can't write in lef side");
 			}
-			return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr);
+			return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, f.type, f.dims - indexs.size());
 
 		}else{
 
@@ -466,7 +485,7 @@ public class postfix_expr implements Parser<String>{
 					indexs = new ArrayList<IntExpr>();
 				}
 			}
-			return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr);
+			return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, f.type, f.dims - indexs.size());
 		}
 	}
 
@@ -479,7 +498,18 @@ public class postfix_expr implements Parser<String>{
 		
 		
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(class_type_name);
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident);
+		
+		//引数の処理
+		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
+		ArrayList<Type_info> param_types = new ArrayList<Type_info>();
+		for(int j = 0; j < ps.expression_list.expressions.size(); j++){
+			Check_return cr = ps.expression_list.expressions.get(j).check(cs);
+			method_arg_valuse.add(cr);
+			param_types.add(cr.type_info);
+		}
+		
+		
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, false);
 		if(md == null){
 			throw new Exception("can't find method " + ident + "in class " + class_type_name);
 		}
@@ -525,11 +555,7 @@ public class postfix_expr implements Parser<String>{
 		
 		
 		
-		//引数の処理
-		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
-		for(int j = 0; j < md.formals.param_declarations.size(); j++){
-			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
-		}
+		
 		//関数内の処理
 		cs.in_method_call = true;
 		
@@ -779,6 +805,7 @@ public class postfix_expr implements Parser<String>{
 		Expr ex = null;
 		String ident = null;
 		Expr class_expr = cs.instance_expr;
+		Type_info type_info = null;
 		boolean is_refine_value = false;
 		
 
@@ -793,6 +820,7 @@ public class postfix_expr implements Parser<String>{
 				f = new Dummy_Field(cs.instance_class_name, cs.instance_expr);
 			}
 			ex = cs.instance_expr;
+			type_info = new Type_info(cs.instance_class_name, 0);
 		}else if(this.primary_expr.ident!=null){
 			//ローカル変数
 			if(cs.in_method_call){//関数呼び出し
@@ -822,7 +850,7 @@ public class postfix_expr implements Parser<String>{
 					throw new Exception(cs.instance_class_name + " don't have " + this.primary_expr.ident);
 				}
 			}
-
+			type_info = new Type_info(f.type, f.dims);
 			
 		}else if(this.primary_expr.bracket_expression!=null){
 			Check_return cr = this.primary_expr.bracket_expression.loop_assign(assigned_fields, cs);
@@ -830,9 +858,12 @@ public class postfix_expr implements Parser<String>{
 			ex = cr.expr;
 			class_expr = cr.class_expr;
 			indexs = cr.indexs;
+			type_info = cr.type_info;
 		}else if(this.primary_expr.java_literal!=null){
 			if(this.primary_suffixs.size() == 0){
-				ex = this.primary_expr.java_literal.check(cs);
+				Check_return cr = this.primary_expr.java_literal.check(cs);
+				ex = cr.expr;
+				type_info = cr.type_info;
 			}else{
 				throw new Exception("literal don't have suffix");
 				
@@ -856,6 +887,7 @@ public class postfix_expr implements Parser<String>{
 					ex = (IntExpr) cs.ctx.mkSelect(cs.ctx.mkArrayConst("length", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort()), ex);
 					f = null;
 					class_expr = null;
+					type_info = new Type_info("int", 0);
 				}else{
 					Field pre_f = f;
 					class_expr = ex;
@@ -869,6 +901,7 @@ public class postfix_expr implements Parser<String>{
 								new Exception("method depends on mutable field in refinenment type predicate.");
 							}
 						}
+						type_info = new Type_info(f.type, f.dims);
 					}else{
 						throw new Exception(f.type + " don't have " + ps.ident);
 					}
@@ -894,6 +927,7 @@ public class postfix_expr implements Parser<String>{
 				}
 				ex = array.index_access_array(ex, index, cs);
 				ident = null;
+				type_info.dims--;
 				
 			}else if(ps.is_method){
 				//関数の呼び出し
@@ -902,28 +936,33 @@ public class postfix_expr implements Parser<String>{
 				class_expr = null;
 				ident = null;
 				indexs = new ArrayList<IntExpr>();
+				type_info = new Type_info(f.type, f.dims);
 			}
 		}
 
 		
-		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr);
+		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, type_info);
 	}
 	
 	public Field loop_assign_method(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs, String ident, String class_type_name, Expr ex, ArrayList<IntExpr> indexs, primary_suffix ps)throws Exception{
 		
 		
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(class_type_name);
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident);
+		
+		//引数の処理
+		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
+		ArrayList<Type_info> param_types = new ArrayList<Type_info>();
+		for(int j = 0; j < ps.expression_list.expressions.size(); j++){
+			Check_return cr = ps.expression_list.expressions.get(j).check(cs);
+			method_arg_valuse.add(cr);
+			param_types.add(cr.type_info);
+		}
+		
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, false);
 		if(md == null){
 			throw new Exception("can't find method " + ident);
 		}
 		
-		
-		//引数の処理
-		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
-		for(int j = 0; j < md.formals.param_declarations.size(); j++){
-			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
-		}
 		
 		//関数内の処理
 		cs.in_method_call = true;

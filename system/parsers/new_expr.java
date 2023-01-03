@@ -17,6 +17,7 @@ import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Type_info;
 import system.Variable;
 import system.F_Assign;
 
@@ -188,7 +189,17 @@ public class new_expr implements Parser<String>{
 			if(cd == null){
 				throw new Exception("can't find class " + this.type);
 			}
-			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type);
+			
+			//引数の処理
+			List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
+			ArrayList<Type_info> param_types = new ArrayList<Type_info>();
+			for(int j = 0; j < ps.expression_list.expressions.size(); j++){
+				Check_return cr = ps.expression_list.expressions.get(j).check(cs);
+				method_arg_valuse.add(cr);
+				param_types.add(cr.type_info);
+			}
+			
+			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true);
 			if(md == null){
 				throw new Exception("can't find method " + this.type);
 			}
@@ -205,11 +216,7 @@ public class new_expr implements Parser<String>{
 			}
 			
 			
-			//引数の処理
-			List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
-			for(int j = 0; j < md.formals.param_declarations.size(); j++){
-				method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
-			}
+			
 			
 			//関数内の処理
 			cs.in_method_call = true;
@@ -424,7 +431,7 @@ public class new_expr implements Parser<String>{
 		}else if(this.new_suffix.expression_list!=null){//コンストラクタ
 			Field f = loop_assign_method(assigned_fields, cs, this.new_suffix);
 			Expr ex = f.get_Expr(cs);
-			return new Check_return(ex, f, new ArrayList<IntExpr>(), null);
+			return new Check_return(ex, f, new ArrayList<IntExpr>(), null, f.type, f.dims);
 		}else{
 			return null;
 		}
@@ -436,7 +443,18 @@ public class new_expr implements Parser<String>{
 		if(cd == null){
 			throw new Exception("can't find class " + this.type);
 		}
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type);
+		
+		//引数の処理
+		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
+		ArrayList<Type_info> param_types = new ArrayList<Type_info>();
+		for(int j = 0; j < ps.expression_list.expressions.size(); j++){
+			Check_return cr = ps.expression_list.expressions.get(j).check(cs);
+			method_arg_valuse.add(cr);
+			param_types.add(cr.type_info);
+		}
+		
+		
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true);
 		if(md == null){
 			throw new Exception("can't find method " + this.type);
 		}
@@ -453,11 +471,7 @@ public class new_expr implements Parser<String>{
 		
 		cs.result = result;
 		
-		//引数の処理
-		List<Check_return> method_arg_valuse = new ArrayList<Check_return>();
-		for(int j = 0; j < md.formals.param_declarations.size(); j++){
-			method_arg_valuse.add(ps.expression_list.expressions.get(j).check(cs));
-		}
+		
 		
 		//関数内の処理
 		cs.in_method_call = true;

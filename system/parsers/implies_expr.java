@@ -54,7 +54,7 @@ public class implies_expr implements Parser<String>{
 			
 			cs.pathcondition = pre_pathcondition;
 			
-			return new Check_return(expr, null, null, null);
+			return new Check_return(expr, null, null, null, "boolean", 0);
 		}
 	}
 	
@@ -75,7 +75,7 @@ public class implies_expr implements Parser<String>{
 			
 			cs.pathcondition = pre_pathcondition;
 			
-			return new Check_return(expr, null, null, null);
+			return new Check_return(expr, null, null, null, "boolean", 0);
 		}
 	}
 	

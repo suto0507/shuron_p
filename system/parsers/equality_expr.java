@@ -62,7 +62,7 @@ public class equality_expr implements Parser<String>{
 			}else if(this.op.equals("!=")){
 				expr = cs.ctx.mkDistinct(this.relational_expr1.check(cs).expr,this.relational_expr2.check(cs).expr);
 			}
-			return new Check_return(expr, null, null, null);
+			return new Check_return(expr, null, null, null, "boolean", 0);
 		}
 	}
 	
@@ -81,7 +81,7 @@ public class equality_expr implements Parser<String>{
 			}else if(this.op.equals("!=")){
 				expr = cs.ctx.mkDistinct(this.relational_expr1.loop_assign(assigned_fields, cs).expr,this.relational_expr2.loop_assign(assigned_fields, cs).expr);
 			}
-			return new Check_return(expr, null, null, null);
+			return new Check_return(expr, null, null, null, "boolean", 0);
 		}
 	}
 

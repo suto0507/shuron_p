@@ -17,9 +17,11 @@ public class primary_expr implements Parser<String>{
 	jml_primary jml_primary;
 	String ident;
 	boolean is_this;
+	boolean is_super;
 	
 	primary_expr(){
 		this.is_this = false;
+		this.is_super = false;
 	}
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
@@ -62,9 +64,17 @@ public class primary_expr implements Parser<String>{
 							st = st + this.ident;
 						}catch (Exception e5){
 							s.revert(s_backup);
-							new string("this").parse(s, ps);
-							this.is_this = true;
-							st = st + "this";
+							s_backup = s.clone();
+							try{
+								new string("this").parse(s, ps);
+								this.is_this = true;
+								st = st + "this";
+							}catch (Exception e6){
+								s.revert(s_backup);
+								new string("super").parse(s, ps);
+								this.is_super = true;
+								st = st + "super";
+							}
 						}
 					}
 				}

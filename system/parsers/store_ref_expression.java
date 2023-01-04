@@ -16,6 +16,7 @@ import system.Pair;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Type_info;
 
 public class store_ref_expression implements Parser<String>{
 	store_ref_name store_ref_name;
@@ -58,6 +59,21 @@ public class store_ref_expression implements Parser<String>{
 			}
 			
 			ex = cs.instance_expr;
+		}else if(this.store_ref_name.is_super){
+			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
+			cd = cd.super_class;
+			if(this.store_ref_name_suffix.size() == 0){
+				throw new Exception("Cannot be assigned to \"super\"");
+			}
+			if(cs.this_field.get_Expr(cs).equals(cs.instance_expr)){
+				f = cs.this_field.clone_e();
+				f.type = cd.class_name;
+			}else{
+				f = new Dummy_Field(cd.class_name, cs.instance_expr);
+			}
+			
+			ex = cs.instance_expr;
+			
 		}else if(this.store_ref_name.ident!=null){
 			//ƒ[ƒJƒ‹•Ï”
 			if(cs.in_method_call){//ŠÖ”ŒÄ‚Ño‚µ

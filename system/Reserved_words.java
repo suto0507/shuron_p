@@ -18,6 +18,7 @@ public class Reserved_words {
 		this.reserved_words.add("return");
 		this.reserved_words.add("for");
 		this.reserved_words.add("this");
+		this.reserved_words.add("super");
 		this.reserved_words.add("new");
 		this.reserved_words.add("true");
 		this.reserved_words.add("false");

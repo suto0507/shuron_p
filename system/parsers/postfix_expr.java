@@ -77,6 +77,32 @@ public class postfix_expr implements Parser<String>{
 			type_info = new Type_info(cs.instance_class_name, 0);
 			
 			
+		}else if(this.primary_expr.is_super){
+			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
+			cd = cd.super_class;
+			if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//スーパークラスのコンストラクター
+				method(cs, cd.class_name, cd.class_name, cs.instance_expr, this.primary_suffixs.get(0), true);
+				ex = cs.instance_expr;
+				class_expr = null;
+				ident = null;
+				indexs = new ArrayList<IntExpr>();
+				type_info = new Type_info(cd.class_name, 0);
+				
+				if(this.primary_suffixs.size() > 1){
+					throw new Exception("super constructor can't have suffixs");
+				}
+			}else{
+				if(cs.this_field.get_Expr(cs).equals(cs.instance_expr)){
+					f = cs.this_field.clone_e();
+					f.type = cd.class_name;
+				}else{
+					f = new Dummy_Field(cd.class_name, cs.instance_expr);
+				}
+				
+				ex = cs.instance_expr;
+				type_info = new Type_info(cd.class_name, 0);
+			}
+			
 		}else if(this.primary_expr.ident!=null){
 			
 			Quantifier_Variable quantifier = cs.search_quantifier(this.primary_expr.ident, cs);
@@ -342,12 +368,17 @@ public class postfix_expr implements Parser<String>{
 				
 			}else if(ps.is_method){
 				//関数の呼び出し
-				f = method(cs, ident, f.type, ex, ps);
-				ex = f.get_Expr(cs);
+				f = method(cs, ident, f.type, ex, ps, false);
 				class_expr = null;
 				ident = null;
 				indexs = new ArrayList<IntExpr>();
-				type_info = new Type_info(f.type, f.dims);
+				if(f != null){
+					ex = f.get_Expr(cs);
+					type_info = new Type_info(f.type, f.dims);
+				}else{
+					ex = null;
+					type_info = new Type_info("void", 0);
+				}
 			}
 		}
 
@@ -365,7 +396,10 @@ public class postfix_expr implements Parser<String>{
 			if(this.primary_expr.is_this){
 				//これはアウト
 				throw new Exception("can't assign this");
-			}if(this.primary_expr.ident!=null){
+			}else if(this.primary_expr.is_super){
+				//これはアウト
+				throw new Exception("can't assign this");
+			}else if(this.primary_expr.ident!=null){
 
 				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field.type, cs);
 				if(cs.search_variable(primary_expr.ident)){
@@ -392,6 +426,13 @@ public class postfix_expr implements Parser<String>{
 			String ident = null;
 			if(this.primary_expr.is_this){
 				f = cs.this_field;
+				ex = f.get_Expr(cs);
+			}else if(this.primary_expr.is_super){
+				class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
+				cd = cd.super_class;
+				
+				f = cs.this_field.clone_e();
+				f.type = cd.class_name;
 				ex = f.get_Expr(cs);
 			}else if(this.primary_expr.ident!=null){
 
@@ -477,12 +518,16 @@ public class postfix_expr implements Parser<String>{
 					if(i == this.primary_suffixs.size()-1){
 						throw new Exception("The left-hand side of an assignment must be a variable");
 					}
-					f = method(cs, ident, f.type, ex, ps);
-					ex = f.get_Expr(cs);
-					cs.in_method_call = false;
-					ident = null;
+					f = method(cs, ident, f.type, ex, ps, false);
 					
+					class_expr = null;
+					ident = null;
 					indexs = new ArrayList<IntExpr>();
+					if(f != null){
+						ex = f.get_Expr(cs);
+					}else{
+						ex = null;
+					}
 				}
 			}
 			return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, f.type, f.dims - indexs.size());
@@ -491,7 +536,7 @@ public class postfix_expr implements Parser<String>{
 
 	
 	
-	public Field method(Check_status cs, String ident, String class_type_name, Expr ex, primary_suffix ps)throws Exception{
+	public Field method(Check_status cs, String ident, String class_type_name, Expr ex, primary_suffix ps, boolean is_super_constructor)throws Exception{
 		
 		System.out.println("call method " + ident);
 		
@@ -509,7 +554,7 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, false);
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, is_super_constructor);
 		if(md == null){
 			throw new Exception("can't find method " + ident + "in class " + class_type_name);
 		}
@@ -526,10 +571,13 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		//返り値
-		modifiers m_tmp = new modifiers();
-		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, class_type_name, cs.ctx.mkBool(true));
-		result.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
-		result.temp_num++;
+		Variable result = null;
+		if(!(is_super_constructor || md.type_spec.type.type.equals("void"))){
+			modifiers m_tmp = new modifiers();
+			result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, class_type_name, cs.ctx.mkBool(true));
+			result.alias = cs.ctx.mkBool(true); //引数はエイリアスしている可能性がある。
+			result.temp_num++;
+		}
 		
 		//メソッドの事前条件、事後条件にそのメソッド自身を書いた場合、制約のないただの値として返される。
 		if(cs.in_jml_predicate && cs.used_methods.contains(md))return result;
@@ -542,7 +590,7 @@ public class postfix_expr implements Parser<String>{
 		
 		
 		//コンストラクタでの自インスタンスの関数呼び出し
-		if(cs.in_constructor && ex.equals(cs.this_field.get_Expr(cs))){
+		if(cs.in_constructor && ex.equals(cs.this_field.get_Expr(cs)) && !is_super_constructor){
 			if(!md.modifiers.is_helper)cs.constructor_refinement_check();
 			cs.this_alias = cs.ctx.mkOr(cs.this_alias, cs.get_pathcondition());
 		}
@@ -609,10 +657,12 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		//事前条件
-		System.out.println("method call pre invarinats");
-		if(!md.modifiers.is_helper){
-			BoolExpr pre_invariant_expr = cs.all_invariant_expr();
-			cs.assert_constraint(pre_invariant_expr);
+		if(!is_super_constructor){
+			System.out.println("method call pre invarinats");
+			if(!md.modifiers.is_helper){
+				BoolExpr pre_invariant_expr = cs.all_invariant_expr();
+				cs.assert_constraint(pre_invariant_expr);
+			}
 		}
 		
 
@@ -744,9 +794,11 @@ public class postfix_expr implements Parser<String>{
 				
 		
 		//返り値の処理
-		cs.result = result;
-		if(result.hava_refinement_type()){
-			result.add_refinement_constraint(cs, ex, true);
+		if(result!=null){
+			cs.result = result;
+			if(result.hava_refinement_type()){
+				result.add_refinement_constraint(cs, ex, true);
+			}
 		}
 		
 		//事後条件
@@ -821,6 +873,32 @@ public class postfix_expr implements Parser<String>{
 			}
 			ex = cs.instance_expr;
 			type_info = new Type_info(cs.instance_class_name, 0);
+		}else if(this.primary_expr.is_super){
+			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
+			cd = cd.super_class;
+			if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//スーパークラスのコンストラクター
+				loop_assign_method(assigned_fields, cs, cd.class_name, cd.class_name, cs.instance_expr, this.primary_suffixs.get(0), true);
+				ex = cs.instance_expr;
+				class_expr = null;
+				ident = null;
+				indexs = new ArrayList<IntExpr>();
+				type_info = new Type_info(cd.class_name, 0);
+				
+				if(this.primary_suffixs.size() > 1){
+					throw new Exception("super constructor can't have suffixs");
+				}
+			}else{
+				if(cs.this_field.get_Expr(cs).equals(cs.instance_expr)){
+					f = cs.this_field.clone_e();
+					f.type = cd.class_name;
+				}else{
+					f = new Dummy_Field(cd.class_name, cs.instance_expr);
+				}
+				
+				ex = cs.instance_expr;
+				type_info = new Type_info(cd.class_name, 0);
+			}
+			
 		}else if(this.primary_expr.ident!=null){
 			//ローカル変数
 			if(cs.in_method_call){//関数呼び出し
@@ -931,12 +1009,18 @@ public class postfix_expr implements Parser<String>{
 				
 			}else if(ps.is_method){
 				//関数の呼び出し
-				f = loop_assign_method(assigned_fields, cs, ident, f.type, ex, (ArrayList<IntExpr>) indexs, ps);
-				ex = f.get_Expr(cs);
+				f = loop_assign_method(assigned_fields, cs, ident, f.type, ex, ps, false);
+				
 				class_expr = null;
 				ident = null;
 				indexs = new ArrayList<IntExpr>();
-				type_info = new Type_info(f.type, f.dims);
+				if(f != null){
+					ex = f.get_Expr(cs);
+					type_info = new Type_info(f.type, f.dims);
+				}else{
+					ex = null;
+					type_info = new Type_info("void", 0);
+				}
 			}
 		}
 
@@ -944,7 +1028,7 @@ public class postfix_expr implements Parser<String>{
 		return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, type_info);
 	}
 	
-	public Field loop_assign_method(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs, String ident, String class_type_name, Expr ex, ArrayList<IntExpr> indexs, primary_suffix ps)throws Exception{
+	public Field loop_assign_method(Pair<List<F_Assign>,BoolExpr>assigned_fields, Check_status cs, String ident, String class_type_name, Expr ex, primary_suffix ps, boolean is_super_constructor)throws Exception{
 		
 		
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(class_type_name);
@@ -958,7 +1042,7 @@ public class postfix_expr implements Parser<String>{
 			param_types.add(cr.type_info);
 		}
 		
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, false);
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, is_super_constructor);
 		if(md == null){
 			throw new Exception("can't find method " + ident);
 		}
@@ -1030,9 +1114,12 @@ public class postfix_expr implements Parser<String>{
 		
 		
 		//返り値
-		modifiers m_tmp = new modifiers();
-		Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, class_type_name, cs.ctx.mkBool(true));
-		result.temp_num++;
+		Variable result = null;
+		if(!(is_super_constructor || md.type_spec.type.type.equals("void"))){
+			modifiers m_tmp = new modifiers();
+			result = new Variable(cs.Check_status_share.get_tmp_num(), "return_tmp", md.type_spec.type.type, md.type_spec.dims, md.type_spec.refinement_type_clause, m_tmp, class_type_name, cs.ctx.mkBool(true));
+			result.temp_num++;
+		}
 		
 		cs.in_method_call = false;
 		

@@ -116,63 +116,61 @@ public class class_block implements Parser<String>{
 				
 				
 				//初期化
-				class_declaration class_value = cd;
 				//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため
-				while(class_value!=null){
-					class_block cb = class_value.class_block;
-					
-					BoolExpr alias_2d = cs.ctx.mkBool(true);
-					if(method.type_spec==null) alias_2d = cs.ctx.mkBool(false);//コンストラクタ
-	
-					for(variable_definition vd : cb.variable_definitions){
-						if(vd.modifiers.is_model){
-							cs.search_model_field(vd.variable_decls.ident, cs.this_field.type, cs);
-						}else{
-							//データグループのリストを作る
-							ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
-							for(group_name gn : vd.group_names){
-								String class_type = null;
-								if(gn.is_super){
-									class_type = class_value.super_class.class_name;
-								}else{
-									class_type = class_value.class_name;
-								}
-								
-								String pre_type = cs.this_field.type;
-								cs.this_field.type = class_type;
-								data_groups.add(cs.search_model_field(gn.ident, cs.this_field.type, cs));
-								cs.this_field.type = pre_type;
+				class_block cb = cd.class_block;
+				
+				BoolExpr alias_2d = cs.ctx.mkBool(true);
+				if(method.type_spec==null) alias_2d = cs.ctx.mkBool(false);//コンストラクタ
+
+				for(variable_definition vd : cb.variable_definitions){
+					Field f = null;
+					if(vd.modifiers.is_model){
+						f = cs.search_model_field(vd.variable_decls.ident, cs.this_field.type, cs);
+					}else{
+						//データグループのリストを作る
+						ArrayList<Model_Field> data_groups = new ArrayList<Model_Field>();
+						for(group_name gn : vd.group_names){
+							String class_type = null;
+							if(gn.is_super){
+								class_type = cd.super_class.class_name;
+							}else{
+								class_type = cd.class_name;
 							}
 							
-							Field f = new Field(cs.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
-									, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, cs.this_field.type, alias_2d, data_groups);
-							
-							if(f.modifiers!=null && f.modifiers.is_final) f.final_initialized = false;
-							
-							//initializerが付いていた場合
-							if(vd.variable_decls.initializer!=null && (method.type_spec==null || (vd.modifiers != null && vd.modifiers.is_final))){
-								Check_return init_Expr = vd.variable_decls.initializer.check(cs);
-								Expr field_Expr = cs.ctx.mkSelect(f.get_Expr(cs), cs.this_field.get_Expr(cs));
-								cs.add_constraint(cs.ctx.mkEq(field_Expr, init_Expr.expr));
-								if(method.type_spec==null && (vd.modifiers != null && vd.modifiers.is_final)){
-									f.final_initialized = true;
-								}
-							}
-							
-							//コンストラクタでは、自分のフィールドには問答無用で代入できる
-							if(method.type_spec==null){
-								List<Pair<Expr, List<IntExpr>>> indexs = new ArrayList<Pair<Expr, List<IntExpr>>>();
-								indexs.add(new Pair<Expr, List<IntExpr>>(cs.this_field.get_Expr(cs), new ArrayList<IntExpr>()));
-								f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(cs.ctx.mkBool(true), indexs));
-							}
-							
-							
-							
-							
-							cs.fields.add(f);
+							String pre_type = cs.this_field.type;
+							cs.this_field.type = class_type;
+							data_groups.add(cs.search_model_field(gn.ident, cs.this_field.type, cs));
+							cs.this_field.type = pre_type;
 						}
+						
+						f = new Field(cs.Check_status_share.get_tmp_num(), vd.variable_decls.ident, vd.variable_decls.type_spec.type.type
+								, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, cs.this_field.type, alias_2d, data_groups);
+						
+						if(f.modifiers!=null && f.modifiers.is_final) f.final_initialized = false;
+						
+						//initializerが付いていた場合
+						if(vd.variable_decls.initializer!=null && (method.type_spec==null || (vd.modifiers != null && vd.modifiers.is_final))){
+							Check_return init_Expr = vd.variable_decls.initializer.check(cs);
+							Expr field_Expr = cs.ctx.mkSelect(f.get_Expr(cs), cs.this_field.get_Expr(cs));
+							cs.add_constraint(cs.ctx.mkEq(field_Expr, init_Expr.expr));
+							if(method.type_spec==null && (vd.modifiers != null && vd.modifiers.is_final)){
+								f.final_initialized = true;
+							}
+						}
+						
+						//コンストラクタでは、自分のフィールドには問答無用で代入できる
+						if(method.type_spec==null){
+							List<Pair<Expr, List<IntExpr>>> indexs = new ArrayList<Pair<Expr, List<IntExpr>>>();
+							indexs.add(new Pair<Expr, List<IntExpr>>(cs.this_field.get_Expr(cs), new ArrayList<IntExpr>()));
+							f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(cs.ctx.mkBool(true), indexs));
+						}
+						
+						
+						
+						
+						cs.fields.add(f);
 					}
-					class_value = class_value.super_class;
+					f.constructor_decl_field = true;
 				}
 	
 				method.check(cs, summery);

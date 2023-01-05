@@ -56,11 +56,11 @@ public class local_declaration implements Parser<String>{
 							v.alias_1d_in_helper = cs.ctx.mkOr(v.alias_1d_in_helper, cs.get_pathcondition());
 						}
 						if(rc.field instanceof Variable
-								|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
+								|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field)){
 							rc.field.alias_1d_in_helper = cs.ctx.mkOr(rc.field.alias_1d_in_helper, cs.get_pathcondition());
 						}
 					}else if(cs.in_constructor){
-						if(!(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+						if(!(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field){
 							rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
 					}
@@ -75,7 +75,7 @@ public class local_declaration implements Parser<String>{
 							v.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(v.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
 						if(rc.field instanceof Variable
-								|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
+								|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field)){
 							rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 						}
 					}
@@ -107,7 +107,7 @@ public class local_declaration implements Parser<String>{
 							&& v.dims >= 2){
 						rc.field.assert_refinement(cs, rc.class_expr);
 					}
-				}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+				}else if(cs.in_constructor && rc.field != null && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field){
 					if(v.hava_refinement_type() && v.have_index_access(cs) 
 							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 							&& v.dims >= 1){

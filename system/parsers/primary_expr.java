@@ -18,6 +18,7 @@ public class primary_expr implements Parser<String>{
 	String ident;
 	boolean is_this;
 	boolean is_super;
+	boolean constructor_first;//コンストラクターの最初であるかどうか　superコンストラクターを呼べるのかどうか
 	
 	primary_expr(){
 		this.is_this = false;

@@ -269,7 +269,7 @@ public class new_expr implements Parser<String>{
 							&& v.dims >= 2){
 						method_arg_valuse.get(j).field.assert_refinement(cs, method_arg_valuse.get(j).class_expr);
 					}
-				}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(method_arg_valuse.get(j).class_expr)){
+				}else if(cs.in_constructor && method_arg_valuse.get(j).field!=null && cs.this_field.get_Expr(cs).equals(method_arg_valuse.get(j).class_expr) && method_arg_valuse.get(j).field.constructor_decl_field){
 					if(v.hava_refinement_type() && v.have_index_access(cs) 
 							&& method_arg_valuse.get(j).field != null && method_arg_valuse.get(j).field.hava_refinement_type() && method_arg_valuse.get(j).field.have_index_access(cs) 
 							&& v.dims >= 1){

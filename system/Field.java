@@ -29,6 +29,8 @@ public class Field {
 	
 	//コンストラクタのfinalの初期化状態
 	public boolean final_initialized;
+	//コンストラクタで、そのクラスで定義されたフィールド
+	public boolean constructor_decl_field;
 	
 	//宣言されたクラスの名前
 	public String class_type_name;
@@ -58,6 +60,7 @@ public class Field {
 		this.alias_in_consutructor_or_2d_in_helper = alias_1d_in_helper;
 		this.model_fields = model_fields;
 		this.final_initialized = true;
+		this.constructor_decl_field = false; 
 	}
 	
 	public Field(){}
@@ -69,6 +72,7 @@ public class Field {
 		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		
 		ret.final_initialized = final_initialized;
+		ret.constructor_decl_field = this.constructor_decl_field;
 		ret.alias_in_consutructor_or_2d_in_helper = this.alias_in_consutructor_or_2d_in_helper;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
 		return ret;
 	}
@@ -569,7 +573,7 @@ public class Field {
 		
 		//エイリアスしているときだけでいい
 		if(this instanceof Variable
-				|| (cs.in_constructor && !(this instanceof Variable) && cs.this_field.get_Expr(cs).equals(class_expr))){
+				|| (cs.in_constructor && !(this instanceof Variable) && cs.this_field.get_Expr(cs).equals(class_expr) && this.constructor_decl_field)){
 			cs.add_constraint(this.alias_1d_in_helper);
 		}
 		

@@ -67,14 +67,14 @@ public class assignment_expr implements Parser<String>{
 				ex = cs.ctx.mkOr(ex, cs.assinable_cnst_all);
 				
 				//コンストラクタ
-				if(!(cs.in_constructor&&cs.this_field.equals(assign_cr.class_expr))){
+				if(!(cs.in_constructor && cs.this_field.equals(assign_cr.class_expr))){
 					System.out.println("check assign");
 					cs.assert_constraint(ex);
 				}
 				
 				//finalかどうか
 				if(assign_cr.field.modifiers!=null && assign_cr.field.modifiers.is_final){
-					if(cs.in_constructor&&cs.this_field.equals(assign_cr.class_expr)&&assign_cr.field.final_initialized==false){
+					if(cs.in_constructor && cs.this_field.equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field && assign_cr.field.final_initialized==false){
 						assign_cr.field.final_initialized = true;
 					}else{
 						throw new Exception("Cannot be assigned to " + assign_cr.field.field_name);
@@ -104,18 +104,18 @@ public class assignment_expr implements Parser<String>{
 				
 				if(cs.in_helper || cs.in_no_refinement_type){
 					if(assign_cr.field instanceof Variable
-							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
+							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field)){
 						assign_cr.field.alias_1d_in_helper = cs.ctx.mkOr(assign_cr.field.alias_1d_in_helper, cs.get_pathcondition());
 					}
 					if(rc.field instanceof Variable
-							|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
+							|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field)){
 						rc.field.alias_1d_in_helper = cs.ctx.mkOr(rc.field.alias_1d_in_helper, cs.get_pathcondition());
 					}
 				}else if(cs.in_constructor){
-					if(!(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr)){
+					if(!(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field){
 						assign_cr.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(assign_cr.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
-					if(!(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+					if(!(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field){
 						rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
 				}
@@ -127,11 +127,11 @@ public class assignment_expr implements Parser<String>{
 				
 				if(cs.in_helper || cs.in_no_refinement_type){
 					if(assign_cr.field instanceof Variable
-							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
+							|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field)){
 						assign_cr.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(assign_cr.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
 					if(rc.field instanceof Variable
-							|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr))){
+							|| (cs.in_constructor && !(rc.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field)){
 						rc.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(rc.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
 				}
@@ -167,7 +167,7 @@ public class assignment_expr implements Parser<String>{
 					if(assign_cr.field.dims >= 2 && assign_cr.field.have_index_access(cs)){//2次元以上の配列としてエイリアスしている場合には、篩型の検証をしないといけない
 						cs.solver.push();
 						if(assign_cr.field instanceof Variable
-								|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr))){
+								|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field)){
 							cs.add_constraint(assign_cr.field.alias_in_consutructor_or_2d_in_helper);
 						}
 						assign_cr.field.assert_refinement(cs, assign_cr.class_expr);
@@ -176,7 +176,7 @@ public class assignment_expr implements Parser<String>{
 					
 					Helper_assigned_field assigned_field = new Helper_assigned_field(cs.get_pathcondition(), assign_cr.field, assign_cr.class_expr);
 					cs.helper_assigned_fields.add(assigned_field);
-				}else if(cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr)){
+				}else if(cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field){
 					
 					
 					cs.solver.push();
@@ -199,7 +199,7 @@ public class assignment_expr implements Parser<String>{
 						&& assign_cr.field.dims - assign_cr.indexs.size() >= 2){
 					rc.field.assert_refinement(cs, rc.class_expr);
 				}
-			}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+			}else if(cs.in_constructor && rc.field != null && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field){
 				if(assign_cr.field.hava_refinement_type() && assign_cr.field.have_index_access(cs) 
 						&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 						&& assign_cr.field.dims - assign_cr.indexs.size() >= 1){
@@ -262,10 +262,10 @@ public class assignment_expr implements Parser<String>{
 						cr_r.field.alias_1d_in_helper = cs.ctx.mkOr(cr_r.field.alias_1d_in_helper, cs.get_pathcondition());
 					}
 				}else if(cs.in_constructor){
-					if(!(cr_l.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(cr_l.class_expr)){
+					if(!(cr_l.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(cr_l.class_expr) && cr_l.field.constructor_decl_field){
 						cr_l.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(cr_l.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
-					if(!(cr_r.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(cr_r.class_expr)){
+					if(!(cr_r.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(cr_r.class_expr) && cr_r.field.constructor_decl_field){
 						cr_r.field.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(cr_r.field.alias_in_consutructor_or_2d_in_helper, cs.get_pathcondition());
 					}
 				}

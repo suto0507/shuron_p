@@ -81,6 +81,10 @@ public class postfix_expr implements Parser<String>{
 			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
 			cd = cd.super_class;
 			if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//スーパークラスのコンストラクター
+				if(primary_expr.constructor_first == false){
+					throw new Exception("calling super constructor must be the first statement in a constructor");
+				}
+				
 				method(cs, cd.class_name, cd.class_name, cs.instance_expr, this.primary_suffixs.get(0), true);
 				ex = cs.instance_expr;
 				class_expr = null;
@@ -91,6 +95,8 @@ public class postfix_expr implements Parser<String>{
 				if(this.primary_suffixs.size() > 1){
 					throw new Exception("super constructor can't have suffixs");
 				}
+				
+				return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, type_info);
 			}else{
 				if(cs.this_field.get_Expr(cs).equals(cs.instance_expr)){
 					f = cs.this_field.clone_e();
@@ -556,7 +562,14 @@ public class postfix_expr implements Parser<String>{
 		
 		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, is_super_constructor);
 		if(md == null){
-			throw new Exception("can't find method " + ident + "in class " + class_type_name);
+			String args = "(";
+			for(int i = 0; i < param_types.size(); i++){
+				args += param_types.get(i).type;
+				if(i != param_types.size()-1)args += ", ";
+			}
+			args += ")";
+			
+			throw new Exception("can't find method " + ident + args + " in class " + class_type_name);
 		}
 		
 		if(md.formals.param_declarations.size()!=ps.expression_list.expressions.size()){
@@ -646,7 +659,7 @@ public class postfix_expr implements Parser<String>{
 						&& v.dims >= 2){
 					method_arg_valuse.get(j).field.assert_refinement(cs, method_arg_valuse.get(j).class_expr);
 				}
-			}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(method_arg_valuse.get(j).class_expr)){
+			}else if(cs.in_constructor && method_arg_valuse.get(j).field!=null && cs.this_field.get_Expr(cs).equals(method_arg_valuse.get(j).class_expr) && method_arg_valuse.get(j).field.constructor_decl_field){
 				if(v.hava_refinement_type() && v.have_index_access(cs) 
 						&& method_arg_valuse.get(j).field != null && method_arg_valuse.get(j).field.hava_refinement_type() && method_arg_valuse.get(j).field.have_index_access(cs) 
 						&& v.dims >= 1){
@@ -876,7 +889,10 @@ public class postfix_expr implements Parser<String>{
 		}else if(this.primary_expr.is_super){
 			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
 			cd = cd.super_class;
-			if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//スーパークラスのコンストラクター
+			if(this.primary_suffixs.size() > 0 && this.primary_suffixs.get(0).is_method){//スーパークラスのコンストラクター 書いたけどこれあり得ないのでは？
+				if(primary_expr.constructor_first == false){
+					throw new Exception("calling super constructor must be the first statement in a constructor");
+				}
 				loop_assign_method(assigned_fields, cs, cd.class_name, cd.class_name, cs.instance_expr, this.primary_suffixs.get(0), true);
 				ex = cs.instance_expr;
 				class_expr = null;
@@ -887,6 +903,7 @@ public class postfix_expr implements Parser<String>{
 				if(this.primary_suffixs.size() > 1){
 					throw new Exception("super constructor can't have suffixs");
 				}
+				return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, type_info);
 			}else{
 				if(cs.this_field.get_Expr(cs).equals(cs.instance_expr)){
 					f = cs.this_field.clone_e();

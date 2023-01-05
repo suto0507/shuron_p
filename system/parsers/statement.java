@@ -180,7 +180,7 @@ import system.F_Assign;
 							&& cs.return_v.dims >= 2){
 						rc.field.assert_refinement(cs, rc.class_expr);
 					}
-				}else if(cs.in_constructor && cs.this_field.get_Expr(cs).equals(rc.class_expr)){
+				}else if(cs.in_constructor && rc.field!=null && cs.this_field.get_Expr(cs).equals(rc.class_expr) && rc.field.constructor_decl_field){
 					if(cs.return_v.hava_refinement_type() && cs.return_v.have_index_access(cs) 
 							&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 
 							&& cs.return_v.dims >= 1){
@@ -730,7 +730,7 @@ import system.F_Assign;
 				if(f.temp_num<f_loop.temp_num){
 					if(cs.in_constructor && f.modifiers!=null && f.modifiers.is_final){//コンストラクタのfinalの初期化はloopのなかではできない
 						if(f.final_initialized==false&&f_loop.final_initialized==true){
-							throw new Exception("can not initialized final variable in loop.");
+							throw new Exception("can't initialized final variable in loop.");
 						}
 					}
 					Expr e1 = f.get_Expr(cs);

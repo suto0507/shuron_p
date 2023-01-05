@@ -44,8 +44,7 @@ public class spec_case_seq implements Parser<String>  {
 		for(generic_spec_case gsc : generic_spec_cases){
 			
 			
-			String pre_class_type_name = cs.instance_class_name;
-			cs.instance_class_name = gsc.class_type_name;
+			
 			
 			List<requires_clause> rcs = gsc.get_requires();
 			if(rcs == null || rcs.size()==0){
@@ -56,7 +55,13 @@ public class spec_case_seq implements Parser<String>  {
 				
 				BoolExpr gsc_expr = null;
 				for(requires_clause rc : rcs){
+					String pre_class_type_name = cs.instance_class_name;
+					cs.instance_class_name = gsc.class_type_name;
+					
 					rc.set_expr((BoolExpr) rc.check(cs), cs);
+					
+					cs.instance_class_name = pre_class_type_name;
+					
 					BoolExpr rc_expr = rc.get_expr(cs);
 					if(gsc_expr == null){
 						gsc_expr = rc_expr;
@@ -76,7 +81,7 @@ public class spec_case_seq implements Parser<String>  {
 			}
 			
 			
-			cs.instance_class_name = pre_class_type_name;
+			
 		}
 		
 		if(expr == null) expr = cs.ctx.mkBool(true);

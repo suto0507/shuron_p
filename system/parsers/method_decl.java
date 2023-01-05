@@ -207,7 +207,30 @@ public class method_decl implements Parser<String>{
 			
 			String pre_class_type_name = cs.this_field.type;
 			cs.this_field.type = this.class_type_name;
+			
 			//中身
+			if(this.type_spec==null){//コンストラクタ
+				class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
+				cd = cd.super_class;
+				if(cd != null){//サブクラスのコンストラクター
+					try{
+						postfix_expr pe = this.compound_statement.statements.get(0).expression.assignment_expr.implies_expr.logical_or_expr.logical_and_expr.equality_expr.relational_expr1.additive_expr1.mult_expr1.unary_expr1.postfix_expr;
+						if(pe.primary_expr.is_super && pe.primary_suffixs.size() == 1 && pe.primary_suffixs.get(0).is_method){
+							pe.primary_expr.constructor_first = true;
+						}else{
+							throw new Exception("call super constructor");
+						}
+						
+					}catch(Exception e){//最初のstatementはコンストラクターではない
+						//引数無しでコンストラクタを呼び出す
+						primary_suffix ps = new primary_suffix();
+						ps.expression_list = new expression_list();
+						ps.expression_list.expressions = new ArrayList<expression>();
+						new postfix_expr().method(cs, cd.class_name, cd.class_name, cs.instance_expr, ps, true);
+					}
+					
+				}
+			}
 			this.compound_statement.check(cs);
 			
 			cs.this_field.type = pre_class_type_name;
@@ -515,6 +538,7 @@ public class method_decl implements Parser<String>{
 			generic_spec_case gsc = new generic_spec_case();
 			gsc.simple_spec_body = new simple_spec_body();
 			gsc.simple_spec_body.assignable_nothing = true;
+			gsc.class_type_name = this.class_type_name;
 			this.method_specification.spec_case_seq.generic_spec_cases.add(gsc);
 		}
 	}

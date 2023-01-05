@@ -134,7 +134,7 @@ public class refinement_type implements Parser<String>{
 	public void add_refinement_constraint(Check_status cs, Field refined_Field, Expr refined_Expr, Expr class_Expr, boolean add_once) throws Exception{
 		if(!add_once){
 			if(cs.in_helper || cs.in_no_refinement_type)return;//helperメソッドの中では、フィールドの篩型が成り立つことを前提とできない
-			if((cs.in_constructor && !(refined_Field instanceof Variable) && !class_Expr.equals(cs.this_field.get_Expr(cs))))return;//コンストラクタ内では篩型は保証されない
+			if(cs.in_constructor && !(refined_Field instanceof Variable) && cs.this_field.get_Expr(cs).equals(class_Expr) && refined_Field.constructor_decl_field)return;//コンストラクタ内では篩型は保証されない
 		}
 		
 		

@@ -142,7 +142,7 @@ public class Check_status {
 	//identÇÕxÇ∆Ç©Ç≈åüçı
 	public Field search_field(String ident, String class_type_name, Check_status cs) throws Exception{
 		
-		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_type_name, ident, false);
+		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_type_name, ident, false, this_field.type);
 		
 		if(vd == null){
 			return null;
@@ -191,7 +191,7 @@ public class Check_status {
 	//identÇÕxÇ∆Ç©Ç≈åüçı
 	public Model_Field search_model_field(String ident, String class_type_name, Check_status cs) throws Exception{
 		
-		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_type_name, ident, true);
+		variable_definition vd = this.Check_status_share.compilation_unit.search_field(class_type_name, ident, true, this_field.type);
 		
 		if(vd == null){
 			return null;

@@ -74,7 +74,7 @@ public class override_refinement_type_clause implements Parser<String>{
 		//ŠÖ”‚Ìê‡
 		//“ñd‚Éâ¿Œ^‚ğİ’è‚µ‚Ä‚¢‚È‚¢‚©‚ğŠm”F‚µ‚Ä”½‰f‚³‚¹‚é‚¾‚¯
 		//â¿Œ^‚Ì’†g‚Ìˆ—‚Ímethod_decl‚Å‚â‚é
-		method_decl md = cu.search_method(class_decl.class_name, this.ident, param_types, false);
+		method_decl md = cu.search_method(class_decl.class_name, this.ident, param_types, false, class_decl.class_name);
 		//•Ô‚è’l‚Ìâ¿Œ^
 		if(this.type_or_refinement_type.refinement_type != null){
 			if(md.type_spec.refinement_type_clause==null){

@@ -30,6 +30,8 @@ public class class_block implements Parser<String>{
 	List<override_refinement_type_clause> override_refinement_type_clauses;
 	List<represents_clause> represents_clauses;
 	
+	
+	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		invariants = new ArrayList<invariant>();
 		def_type_clauses = new ArrayList<def_type_clause>();
@@ -90,6 +92,7 @@ public class class_block implements Parser<String>{
 			ret = ret + "<----------\n" + p.st + "\n------->\n";
 		}
 		ret = ret + "}\n";
+		
 		
 		
 		return ret;

@@ -597,16 +597,32 @@ import system.F_Assign;
 				
 			//helperメソッドやコンストラクターの中で、配列としてエイリアスした場合
 			for(Variable v : cs_loop_assign_check.variables){
-				Field cs_v = cs.search_internal_id(v.internal_id);
+				Field cs_v = cs_loop.search_internal_id(v.internal_id);
 				if(cs_v!=null){//ループ内で追加されたローカル変数の場合はnullになる
-					cs_v.alias_1d_in_helper = v.alias_1d_in_helper;
-					cs_v.alias_in_consutructor_or_2d_in_helper = v.alias_in_consutructor_or_2d_in_helper;
+					if(cs_v.alias_1d_in_helper_pre_loop == null){
+						cs_v.alias_1d_in_helper = v.alias_1d_in_helper;
+					}else{
+						cs_v.alias_1d_in_helper = cs.ctx.mkOr(cs_v.alias_1d_in_helper, v.alias_1d_in_helper);
+					}
+					if(cs_v.alias_in_consutructor_or_2d_in_helper == null){
+						cs_v.alias_in_consutructor_or_2d_in_helper = v.alias_in_consutructor_or_2d_in_helper;
+					}else{
+						cs_v.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(cs_v.alias_in_consutructor_or_2d_in_helper, v.alias_in_consutructor_or_2d_in_helper);
+					}
 				}
 			}
 			for(Field f : cs_loop_assign_check.fields){
-				Field cs_f = cs.search_internal_id(f.internal_id);
-				cs_f.alias_1d_in_helper = f.alias_1d_in_helper;
-				cs_f.alias_in_consutructor_or_2d_in_helper = f.alias_in_consutructor_or_2d_in_helper;
+				Field cs_f = cs_loop.search_internal_id(f.internal_id);
+				if(cs_f.alias_1d_in_helper_pre_loop == null){
+					cs_f.alias_1d_in_helper = f.alias_1d_in_helper;
+				}else{
+					cs_f.alias_1d_in_helper = cs.ctx.mkOr(cs_f.alias_1d_in_helper, f.alias_1d_in_helper);
+				}
+				if(cs_f.alias_in_consutructor_or_2d_in_helper == null){
+					cs_f.alias_in_consutructor_or_2d_in_helper = f.alias_in_consutructor_or_2d_in_helper;
+				}else{
+					cs_f.alias_in_consutructor_or_2d_in_helper = cs.ctx.mkOr(cs_f.alias_in_consutructor_or_2d_in_helper, f.alias_in_consutructor_or_2d_in_helper);
+				}
 			}
 			
 			

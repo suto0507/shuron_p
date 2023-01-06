@@ -199,9 +199,20 @@ public class new_expr implements Parser<String>{
 				param_types.add(cr.type_info);
 			}
 			
-			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true);
+			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true, cs.this_field.type);
 			if(md == null){
 				throw new Exception("can't find method " + this.type);
+			}
+			//JMLß‚Å‚Ìg‚¦‚È‚¢‰Â‹«‚ÌŠm”F
+			if(cs.ban_default_visibility){
+				if(md.modifiers!=null&&md.modifiers.is_private==false){
+					throw new Exception("can not use default visibility variable");
+				}
+			}
+			if(cs.ban_private_visibility){
+				if(md.modifiers!=null&&md.modifiers.is_private==true){
+					throw new Exception("can not use private visibility variable");
+				}
 			}
 			
 			//ˆø”‚Ìˆ—
@@ -239,6 +250,16 @@ public class new_expr implements Parser<String>{
 			
 			cs.instance_expr = result.get_Expr(cs);
 			cs.instance_class_name = this.type;
+			
+			//‰Â‹«‚É‚Â‚¢‚Ä
+			boolean pre_ban_private_visibility = cs.ban_private_visibility;
+			boolean pre_ban_default_visibility = cs.ban_default_visibility;
+			cs.ban_default_visibility = false;
+			if(md.modifiers != null && md.modifiers.is_private){
+				cs.ban_private_visibility = false;
+			}else{
+				cs.ban_private_visibility = true;
+			}
 			
 			
 			for(int j = 0; j < md.formals.param_declarations.size(); j++){
@@ -418,6 +439,8 @@ public class new_expr implements Parser<String>{
 			cs.can_not_use_mutable = pre_can_not_use_mutable;
 			cs.in_refinement_predicate = pre_in_refinement_predicate;
 			
+			cs.ban_private_visibility = pre_ban_private_visibility;
+			cs.ban_default_visibility = pre_ban_default_visibility;
 			
 			return result;
 		}else{
@@ -454,7 +477,7 @@ public class new_expr implements Parser<String>{
 		}
 		
 		
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true);
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true, cs.this_field.type);
 		if(md == null){
 			throw new Exception("can't find method " + this.type);
 		}

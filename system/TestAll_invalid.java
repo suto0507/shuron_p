@@ -19,6 +19,7 @@ public class TestAll_invalid {
 		//paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_example.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_array_refinement.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_localarray_index_access.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_array_branch_alias.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_method_assign.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_loop_rt_local_alias.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_helper.java"));
@@ -55,7 +56,7 @@ public class TestAll_invalid {
 			
 			compilation_unit cu = new compilation_unit();
 			try{
-				Parser_status ps = new Parser_status();
+				Parser_status ps = new Parser_status(file.toString());
 				Source s = new Source(st);
 				String parsed = cu.parse(s, ps);
 				System.out.println(parsed + "is parsed");

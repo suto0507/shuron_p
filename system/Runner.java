@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import system.parsers.compilation_unit;
+import system.parsers.class_declaration;
 
 public class Runner {
 	public static void main(String[] args) throws Exception {
@@ -26,6 +27,9 @@ public class Runner {
 		
 		
 		Summery summery = new Summery();
+		compilation_unit base_cu = new compilation_unit();
+		base_cu.classes = new ArrayList<class_declaration>();
+		ArrayList<Pair<String, String>> extends_pairs = new ArrayList<Pair<String, String>>();
 		
 		for(Path file : paths){
 			summery.file = file;
@@ -47,18 +51,24 @@ public class Runner {
 			
 			compilation_unit cu = new compilation_unit();
 			try{
-				Parser_status ps = new Parser_status();
+				Parser_status ps = new Parser_status(file.toString());
 				Source s = new Source(st);
 				String parsed = cu.parse(s, ps);
 				System.out.println(parsed + "is parsed");
 				s.is_parsed(summery);
-				cu.preprocessing(ps.extends_pairs, summery);
-				cu.check(option, summery);
+				
+				//base_cuÇ…èàóùÇèWñÒÇ∑ÇÈ
+				base_cu.classes.addAll(cu.classes);
+				extends_pairs.addAll(ps.extends_pairs);
 			}catch (Exception e){
 				System.out.println(e);
 				System.out.println("Exception!!!");
 			}
 		}
+		
+
+		base_cu.preprocessing(extends_pairs, summery);
+		base_cu.check(option, summery);
 		
 		summery.print_summery();
 	}

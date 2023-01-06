@@ -63,7 +63,7 @@ public class Test_shuron_examples {
 			
 			compilation_unit cu = new compilation_unit();
 			try{
-				Parser_status ps = new Parser_status();
+				Parser_status ps = new Parser_status(file.toString());
 				Source s = new Source(st);
 				String parsed = cu.parse(s, ps);
 				System.out.println(parsed + "is parsed");

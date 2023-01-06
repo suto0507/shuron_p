@@ -41,6 +41,7 @@ public class Test1 {
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\array_method.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_localarray_index_access.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\array_branch_alias.java");
+		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_array_branch_alias.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\method_assign.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_method_assign.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\loop_rt_local_alias.java");
@@ -72,7 +73,7 @@ public class Test1 {
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\sub_constructor.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_sub_constructor.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\overload.java");
-		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_overload.java");
+		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_overload.java");
 		
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\override_type_example.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\inheritance_1.java");
@@ -122,7 +123,7 @@ public class Test1 {
 		
 		compilation_unit cu = new compilation_unit();
 		try{
-			Parser_status ps = new Parser_status();
+			Parser_status ps = new Parser_status(file.toString());
 			Source s = new Source(st);
 			String parsed = cu.parse(s, ps);
 			System.out.println(parsed + "is parsed");

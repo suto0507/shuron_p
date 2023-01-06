@@ -39,6 +39,9 @@ public class Field {
 	//これが関係あるのは、ローカル変数かコンストラクタの中のthisのフィールドだけなので、class_exprはいらない (thisのフィールドでのみ使う)
 	public BoolExpr alias_1d_in_helper;
 	public BoolExpr alias_in_consutructor_or_2d_in_helper;//コンストラクタでは、エイリアスした次元数に関係なく、エイリアス後は篩型を満たす必要がある。
+	//ループの反復の前の検証でエイリアスしているかもしれないやつ
+	public BoolExpr alias_1d_in_helper_pre_loop;
+	public BoolExpr alias_in_consutructor_or_2d_in_helper_pre_loop;
 	
 	//データフィールド
 	public ArrayList<Model_Field> model_fields;
@@ -60,7 +63,7 @@ public class Field {
 		this.alias_in_consutructor_or_2d_in_helper = alias_1d_in_helper;
 		this.model_fields = model_fields;
 		this.final_initialized = true;
-		this.constructor_decl_field = false; 
+		this.constructor_decl_field = false;
 	}
 	
 	public Field(){}
@@ -74,6 +77,9 @@ public class Field {
 		ret.final_initialized = final_initialized;
 		ret.constructor_decl_field = this.constructor_decl_field;
 		ret.alias_in_consutructor_or_2d_in_helper = this.alias_in_consutructor_or_2d_in_helper;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+		
+		ret.alias_1d_in_helper_pre_loop = alias_1d_in_helper_pre_loop;
+		ret.alias_in_consutructor_or_2d_in_helper_pre_loop = alias_in_consutructor_or_2d_in_helper_pre_loop;
 		return ret;
 	}
 	
@@ -405,7 +411,7 @@ public class Field {
 	
 	//finalのフィールドにinitializerが付いていた場合
 	public void set_initialize(Expr class_expr, Check_status cs) throws Exception{
-		variable_definition vd = cs.Check_status_share.compilation_unit.search_field(class_type_name, this.field_name, false);
+		variable_definition vd = cs.Check_status_share.compilation_unit.search_field(class_type_name, this.field_name, false, cs.this_field.type);
 		//initializerが付いていた場合
 		if(vd.variable_decls.initializer!=null && vd.modifiers.is_final){
 			Check_return init_Expr = vd.variable_decls.initializer.check(cs);
@@ -574,7 +580,12 @@ public class Field {
 		//エイリアスしているときだけでいい
 		if(this instanceof Variable
 				|| (cs.in_constructor && !(this instanceof Variable) && cs.this_field.get_Expr(cs).equals(class_expr) && this.constructor_decl_field)){
-			cs.add_constraint(this.alias_1d_in_helper);
+			if(this.alias_1d_in_helper_pre_loop!=null){
+				cs.add_constraint(cs.ctx.mkOr(this.alias_1d_in_helper_pre_loop, this.alias_1d_in_helper));
+			}else{
+				cs.add_constraint(this.alias_1d_in_helper);
+			}
+			
 		}
 		
 		

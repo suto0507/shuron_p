@@ -33,6 +33,7 @@ public class method_decl implements Parser<String>{
 	
 	public String class_type_name;
 	
+	String file_path;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		this.st = "";
@@ -89,6 +90,7 @@ public class method_decl implements Parser<String>{
 			
 			
 		this.class_type_name = ps.class_type_name;
+		this.file_path = ps.file_path;
 		
 		return st;
 	}
@@ -246,11 +248,11 @@ public class method_decl implements Parser<String>{
 			cs.used_methods.remove(this);
 			
 			System.out.println("method \"" + this.ident + "\" is valid\n\n");
-			summery.valids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + summery.file.toString());
+			summery.valids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + this.file_path);
 		}catch(Exception e){
 			System.out.println(e);
 			System.out.println("!!!!!!!!!! method \"" + this.ident + "\" is invalid !!!!!!!!!!\n\n");
-			summery.invalids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + summery.file.toString());
+			summery.invalids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + this.file_path);
 		}
 	}
 	
@@ -377,7 +379,7 @@ public class method_decl implements Parser<String>{
 		}
 		
 		//åpè≥ÇµÇƒÇ¢Ç»Ç¢Ç»ÇÁâΩÇ‡ÇµÇ»Ç¢
-		if(cu.search_method(super_class.class_name, this.ident, param_types, false) == null) return;
+		if(cu.search_method(super_class.class_name, this.ident, param_types, false, class_decl.class_name) == null) return;
 		
 		
 		
@@ -388,7 +390,7 @@ public class method_decl implements Parser<String>{
 		
 		boolean exist_super_md = false;
 		while(true){
-			method_decl super_md = cu.search_method(super_class.class_name, this.ident, param_types, false);
+			method_decl super_md = cu.search_method(super_class.class_name, this.ident, param_types, false, class_decl.class_name);
 			if(super_md != null) exist_super_md = true;
 			if(super_md == null || super_md.type_spec.refinement_type_clause==null){//‚øå^Ç™å©Ç¬Ç©ÇÈÇ‹Ç≈super classÇíTçı
 				if(super_class.super_class == null){
@@ -485,7 +487,7 @@ public class method_decl implements Parser<String>{
 			v.temp_num=0;
 			
 			while(true){
-				method_decl super_md = cu.search_method(super_class.class_name, this.ident, param_types, false);
+				method_decl super_md = cu.search_method(super_class.class_name, this.ident, param_types, false, class_decl.class_name);
 				if(super_md == null || super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause==null){//‚øå^Ç™å©Ç¬Ç©ÇÈÇ‹Ç≈super classÇíTçı
 					if(super_class.super_class == null){
 						if(this.formals.param_declarations.get(i).type_spec.refinement_type_clause!=null){

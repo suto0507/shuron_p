@@ -19,6 +19,7 @@ public class class_declaration implements Parser<String>{
 	public String class_name;
 	public class_block class_block;
 	public class_declaration super_class = null;
+	String file_path;
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		new spaces().parse(s,ps);
@@ -39,6 +40,10 @@ public class class_declaration implements Parser<String>{
 		this.class_block = new class_block();
 		String content = class_block.parse(s,ps);
 		new newLines().parse(s,ps);
+		
+
+		
+		this.file_path = ps.file_path;
 		
 		return "class " + class_name + " " + extends_clause + content;
 	}

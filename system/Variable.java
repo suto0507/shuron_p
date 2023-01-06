@@ -53,6 +53,9 @@ public class Variable extends Field{
 		ret.alias_refined = this.alias_refined;
 		ret.out_loop_v = this.out_loop_v;
 		ret.alias_in_consutructor_or_2d_in_helper = this.alias_in_consutructor_or_2d_in_helper;//新しくフィールドを作る時には、alias_in_helper_or_consutructorとalias_2d_in_helper_or_consutructorは同じ引数から初期化する
+		
+		ret.alias_1d_in_helper_pre_loop = alias_1d_in_helper_pre_loop;
+		ret.alias_in_consutructor_or_2d_in_helper_pre_loop = alias_in_consutructor_or_2d_in_helper_pre_loop;
 		return ret;
 	}
 	

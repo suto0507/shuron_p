@@ -37,6 +37,16 @@ public class invariant implements Parser<String>{
 		String pre_class_type_name = cs.this_field.type;
 		cs.this_field.type = this.class_type_name;
 		
+		boolean pre_ban_private_visibility = cs.ban_private_visibility;
+		boolean pre_ban_default_visibility = cs.ban_default_visibility;
+		if(is_private){
+			cs.ban_private_visibility = false;
+			cs.ban_default_visibility = true;
+		}else{
+			cs.ban_private_visibility = true;
+			cs.ban_default_visibility = false;
+		}
+		
 		boolean pre_use_only_helper_method = cs.use_only_helper_method;
 		cs.use_only_helper_method = true;
 		
@@ -44,6 +54,9 @@ public class invariant implements Parser<String>{
 		
 		cs.this_field.type = pre_class_type_name;
 		cs.use_only_helper_method = pre_use_only_helper_method;
+		
+		cs.ban_private_visibility = pre_ban_private_visibility;
+		cs.ban_default_visibility = pre_ban_default_visibility;
 		
 		return ret_val;
 	}

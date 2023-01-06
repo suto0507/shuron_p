@@ -560,7 +560,7 @@ public class postfix_expr implements Parser<String>{
 		}
 		
 		
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, is_super_constructor);
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, is_super_constructor, cs.this_field.type);
 		if(md == null){
 			String args = "(";
 			for(int i = 0; i < param_types.size(); i++){
@@ -581,6 +581,17 @@ public class postfix_expr implements Parser<String>{
 		}
 		if(cs.use_only_helper_method && !md.modifiers.is_helper){
 			throw new Exception("non helper method in invarinat or in refinement type");
+		}
+		//JML節での使えない可視性の確認
+		if(cs.ban_default_visibility){
+			if(md.modifiers!=null&&md.modifiers.is_private==false){
+				throw new Exception("can not use default visibility variable");
+			}
+		}
+		if(cs.ban_private_visibility){
+			if(md.modifiers!=null&&md.modifiers.is_private==true){
+				throw new Exception("can not use private visibility variable");
+			}
 		}
 		
 		//返り値
@@ -629,6 +640,16 @@ public class postfix_expr implements Parser<String>{
 		cs.instance_class_name = class_type_name;
 		
 		cs.used_methods.add(md);
+		
+		//可視性について
+		boolean pre_ban_private_visibility = cs.ban_private_visibility;
+		boolean pre_ban_default_visibility = cs.ban_default_visibility;
+		cs.ban_default_visibility = false;
+		if(md.modifiers != null && md.modifiers.is_private){
+			cs.ban_private_visibility = false;
+		}else{
+			cs.ban_private_visibility = true;
+		}
 		
 		for(int j = 0; j < md.formals.param_declarations.size(); j++){
 			param_declaration pd = md.formals.param_declarations.get(j);
@@ -838,6 +859,9 @@ public class postfix_expr implements Parser<String>{
 		
 		cs.can_not_use_mutable = pre_can_not_use_mutable;
 		cs.in_refinement_predicate = pre_in_refinement_predicate;
+		
+		cs.ban_private_visibility = pre_ban_private_visibility;
+		cs.ban_default_visibility = pre_ban_default_visibility;
 		
 		cs.used_methods.remove(md);
 		
@@ -1059,7 +1083,7 @@ public class postfix_expr implements Parser<String>{
 			param_types.add(cr.type_info);
 		}
 		
-		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, is_super_constructor);
+		method_decl md = cs.Check_status_share.compilation_unit.search_method(class_type_name, ident, param_types, is_super_constructor, cs.this_field.type);
 		if(md == null){
 			throw new Exception("can't find method " + ident);
 		}

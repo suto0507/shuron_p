@@ -14,7 +14,7 @@ import system.Summery;
 import system.Type_info;
 
 public class compilation_unit implements Parser<String>{
-	List<class_declaration> classes;
+	public List<class_declaration> classes;
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st = "";
 		classes = new ArrayList<class_declaration>();
@@ -102,7 +102,12 @@ public class compilation_unit implements Parser<String>{
 					if(super_md.type_spec==null){//コンストラクターの継承は行なわない
 						//なにもしない
 					}else if(override_md == null){//同じメソッドでもサブクラスで検証は行う
-						class_decl.class_block.method_decls.add(super_md.clone_no_refinemet_type());
+						if(super_md.modifiers!=null && super_md.modifiers.is_private!=true){
+							method_decl md = super_md.clone_no_refinemet_type();
+							md.class_type_name = class_decl.class_name;
+							md.file_path = class_decl.file_path;
+							class_decl.class_block.method_decls.add(md);
+						}
 					}else{//事前条件、事後条件などの継承
 						if(super_md.method_specification!=null){
 							if(override_md.method_specification!=null && override_md.method_specification.spec_case_seq!=null){
@@ -188,15 +193,10 @@ public class compilation_unit implements Parser<String>{
 				md.compound_statement.statements = new ArrayList<statement>();
 				
 				md.class_type_name = class_decl.class_name;
+				md.file_path = class_decl.file_path;
 				
 				class_decl.class_block.method_decls.add(md);
 			}
-		}
-	}
-	
-	public void add_constructor(){
-		for(class_declaration class_decl :classes){
-			//書く
 		}
 	}
 	
@@ -207,7 +207,7 @@ public class compilation_unit implements Parser<String>{
 			}catch(Exception e){
 				System.out.println(e);
 				System.out.println("class " + class_decl.class_name + " is wrong");
-				summery.invalid_classes.add("(class : " + class_decl.class_name + ")" + " " + summery.file.toString());
+				summery.invalid_classes.add("(class : " + class_decl.class_name + ")" + " " + class_decl.file_path);
 			}
 		}
 	}
@@ -221,30 +221,9 @@ public class compilation_unit implements Parser<String>{
 		return null;
 	}
 	
-	public method_decl search_method(String class_name, String method_name){
-		for(class_declaration cd : classes){
-			if(cd.class_name.equals(class_name)){
-				for(method_decl md : cd.class_block.method_decls){
-					if(md.ident.equals(method_name)){
-						return md;
-					}
-				}
-				class_declaration super_class = cd;
-				while(super_class.super_class != null){
-					super_class = super_class.super_class;
-					for(method_decl md : super_class.class_block.method_decls){
-						if(md.ident.equals(method_name)){
-							return md;
-						}
-					}
-				}
-			}
-		}
-		return null;
-	}
 	
 	//オーバーロード対応版
-	public method_decl search_method(String class_name, String method_name , ArrayList<Type_info> arg_types, boolean is_constructor){
+	public method_decl search_method(String class_name, String method_name , ArrayList<Type_info> arg_types, boolean is_constructor, String this_class_name){
 		for(class_declaration cd : classes){
 			if(cd.class_name.equals(class_name)){
 				for(method_decl md : cd.class_block.method_decls){
@@ -259,9 +238,10 @@ public class compilation_unit implements Parser<String>{
 							}
 						}
 						
-						if(euqal_types) return md;
+						if(euqal_types && !(md.modifiers!=null && md.modifiers.is_private && !cd.class_name.equals(this_class_name))) return md;
 					}
 				}
+				/*
 				class_declaration super_class = cd;
 				while(super_class.super_class != null){
 					super_class = super_class.super_class;
@@ -277,10 +257,11 @@ public class compilation_unit implements Parser<String>{
 								}
 							}
 							
-							if(euqal_types) return md;
+							if(euqal_types && !(md.modifiers!=null && md.modifiers.is_private && !super_class.class_name.equals(this_class_name))) return md;
 						}
 					}
 				}
+				*/
 			}
 		}
 		return null;
@@ -298,7 +279,7 @@ public class compilation_unit implements Parser<String>{
 				while(super_class.super_class != null){
 					super_class = super_class.super_class;
 					for(represents_clause rc : super_class.class_block.represents_clauses){
-						if(rc.ident.equals(ident) && !(rc.is_private && super_class.class_name.equals(this_class_name))){
+						if(rc.ident.equals(ident) && !(rc.is_private && !super_class.class_name.equals(this_class_name))){
 							return rc;
 						}
 					}
@@ -309,11 +290,12 @@ public class compilation_unit implements Parser<String>{
 	}
 
 	
-	public variable_definition search_field(String class_name, String field_name, boolean is_model){
+	public variable_definition search_field(String class_name, String field_name, boolean is_model, String this_class_name){
 		for(class_declaration cd : classes){
 			if(cd.class_name.equals(class_name)){
 				for(variable_definition vd : cd.class_block.variable_definitions){
-					if(vd.variable_decls.ident.equals(field_name) && vd.modifiers.is_model==is_model){
+					if(vd.variable_decls.ident.equals(field_name) && vd.modifiers.is_model==is_model
+							 && !(vd.modifiers!=null && vd.modifiers.is_private && !cd.class_name.equals(this_class_name))){
 						return vd;
 					}
 				}
@@ -321,7 +303,8 @@ public class compilation_unit implements Parser<String>{
 				while(super_class.super_class != null){
 					super_class = super_class.super_class;
 					for(variable_definition vd : super_class.class_block.variable_definitions){
-						if(vd.variable_decls.ident.equals(field_name)){
+						if(vd.variable_decls.ident.equals(field_name) && vd.modifiers.is_model==is_model
+								 && !(vd.modifiers!=null && vd.modifiers.is_private && !super_class.class_name.equals(this_class_name))){
 							return vd;
 						}
 					}

@@ -168,7 +168,12 @@ public class assignment_expr implements Parser<String>{
 						cs.solver.push();
 						if(assign_cr.field instanceof Variable
 								|| (cs.in_constructor && !(assign_cr.field instanceof Variable) && cs.this_field.get_Expr(cs).equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field)){
-							cs.add_constraint(assign_cr.field.alias_in_consutructor_or_2d_in_helper);
+							if(assign_cr.field.alias_in_consutructor_or_2d_in_helper_pre_loop != null){
+								cs.add_constraint(cs.ctx.mkOr(assign_cr.field.alias_in_consutructor_or_2d_in_helper_pre_loop, assign_cr.field.alias_in_consutructor_or_2d_in_helper));
+							}else{
+								cs.add_constraint(assign_cr.field.alias_in_consutructor_or_2d_in_helper);
+							}
+							
 						}
 						assign_cr.field.assert_refinement(cs, assign_cr.class_expr);
 						cs.solver.pop();
@@ -183,6 +188,9 @@ public class assignment_expr implements Parser<String>{
 					BoolExpr condition = cs.this_alias;//thisをどこかに渡した後には、篩型の検証をする必要がある
 					if(assign_cr.field.dims >= 1 && assign_cr.field.have_index_access(cs)){//配列としてエイリアスしている場合には、篩型の検証をしないといけない
 						condition = cs.ctx.mkOr(condition, assign_cr.field.alias_in_consutructor_or_2d_in_helper);
+						if(assign_cr.field.alias_in_consutructor_or_2d_in_helper_pre_loop != null){
+							condition = cs.ctx.mkOr(condition, assign_cr.field.alias_in_consutructor_or_2d_in_helper_pre_loop);
+						}
 					}
 					cs.add_constraint(condition);
 

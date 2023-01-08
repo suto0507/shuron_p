@@ -166,6 +166,7 @@ import system.F_Assign;
 				this.compound_statement.check(cs);
 			}else if(this.def_type_clause!=null){
 				cs.local_refinements.add(new Pair<String,refinement_type>(this.def_type_clause.ident,this.def_type_clause.refinement_type));
+				this.def_type_clause.refinement_type.defined_variables.addAll(cs.variables);
 			}else if(this.is_return){
 
 				Check_return rc = this.expression.check(cs);

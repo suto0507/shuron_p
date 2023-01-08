@@ -122,15 +122,15 @@ public class postfix_expr implements Parser<String>{
 				is_refine_value = true;
 			}else{
 				//ローカル変数
-				if(cs.in_method_call){//関数呼び出し
-					if(cs.search_called_method_arg(primary_expr.ident)){
-						f = cs.get_called_method_arg(primary_expr.ident);
+				if(cs.in_refinement_predicate){//篩型
+					if(cs.search_variable(this.primary_expr.ident)){
+						f = cs.get_variable(this.primary_expr.ident);
 						ex = f.get_Expr(cs);
 					}
 					
-				}else if(cs.in_refinement_predicate){//篩型
-					if(cs.search_variable(this.primary_expr.ident)){
-						f = cs.get_variable(this.primary_expr.ident);
+				}else if(cs.in_method_call){//関数呼び出し
+					if(cs.search_called_method_arg(primary_expr.ident)){
+						f = cs.get_called_method_arg(primary_expr.ident);
 						ex = f.get_Expr(cs);
 					}
 					
@@ -671,6 +671,10 @@ public class postfix_expr implements Parser<String>{
 			
 			//篩型の検証
 			if(v.hava_refinement_type()){
+				//篩型の中で使えるローカル変数
+				if(v.refinement_type_clause.refinement_type!=null){
+					v.refinement_type_clause.refinement_type.defined_variables.addAll(cs.called_method_args);
+				}
 				v.assert_refinement(cs, ex);
 			}
 			//配列がエイリアスしたときに、右辺(渡した引数)の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証

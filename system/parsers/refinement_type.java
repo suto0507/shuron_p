@@ -2,6 +2,7 @@ package system.parsers;
 
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.microsoft.z3.*;
 
@@ -19,6 +20,11 @@ public class refinement_type implements Parser<String>{
 	String ident;
 	predicate predicate;
 	public String class_type_name;
+	public ArrayList<Variable> defined_variables;//‚±‚Ìâ¿Œ^‚ª’è‹`‚³‚ê‚½‚Æ‚«‚ÉŠù‚É‘¶İ‚·‚éƒ[ƒJƒ‹•Ï”
+	
+	refinement_type(){
+		defined_variables = new ArrayList<Variable>();
+	}
 	
 	public String parse(Source s,Parser_status ps)throws Exception{
 		String st;
@@ -81,8 +87,6 @@ public class refinement_type implements Parser<String>{
 		cs.refined_Expr = refined_Expr;
 		cs.use_only_helper_method = true;
 		
-		BoolExpr expr = this.predicate.check(cs);
-
 		//‰Â‹«‚É‚Â‚¢‚Ä
 		cs.ban_default_visibility = false;
 		if(refined_Field.modifiers != null && refined_Field.modifiers.is_private){
@@ -90,6 +94,13 @@ public class refinement_type implements Parser<String>{
 		}else{
 			cs.ban_private_visibility = true;
 		}
+		
+		List<Variable> pre_variables = cs.variables;
+		cs.variables = this.defined_variables;
+				
+		BoolExpr expr = this.predicate.check(cs);
+
+		cs.variables = pre_variables;
 		
 		cs.assert_constraint(expr);
 		cs.in_refinement_predicate = false;
@@ -160,10 +171,6 @@ public class refinement_type implements Parser<String>{
 		cs.refined_Expr = refined_Expr;
 		cs.use_only_helper_method = true;
 		
-		
-		BoolExpr expr = this.predicate.check(cs);
-		
-		
 		//‰Â‹«‚É‚Â‚¢‚Ä
 		cs.ban_default_visibility = false;
 		if(refined_Field.modifiers != null && refined_Field.modifiers.is_private){
@@ -171,6 +178,14 @@ public class refinement_type implements Parser<String>{
 		}else{
 			cs.ban_private_visibility = true;
 		}
+
+		List<Variable> pre_variables = cs.variables;
+		cs.variables = this.defined_variables;
+		
+		BoolExpr expr = this.predicate.check(cs);
+		
+		cs.variables = pre_variables;
+		
 		
 		cs.add_constraint(expr);
 		cs.in_refinement_predicate = false;

@@ -281,6 +281,10 @@ public class new_expr implements Parser<String>{
 				
 				//篩型
 				if(v.hava_refinement_type()){
+					//篩型の中で使えるローカル変数
+					if(v.refinement_type_clause.refinement_type!=null){
+						v.refinement_type_clause.refinement_type.defined_variables.addAll(cs.called_method_args);
+					}
 					v.assert_refinement(cs, null);//class_Fieldとかは本来resultなどだが、まだできていないオブジェクトなのでnullでいいはず
 				}
 				//配列がエイリアスしたときに、右辺(渡した引数)の配列の篩型の検証 　　初めてのエイリアスである可能性であるときだけ検証
@@ -297,6 +301,11 @@ public class new_expr implements Parser<String>{
 						method_arg_valuse.get(j).field.assert_refinement(cs, method_arg_valuse.get(j).class_expr);
 					}
 				}
+			}
+			
+			//返り値の篩型の中で使えるローカル変数
+			if(result.refinement_type_clause!=null && result.refinement_type_clause.refinement_type!=null){
+				result.refinement_type_clause.refinement_type.defined_variables.addAll(cs.called_method_args);
 			}
 			
 			//事前条件

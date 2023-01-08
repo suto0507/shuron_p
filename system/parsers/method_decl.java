@@ -137,6 +137,13 @@ public class method_decl implements Parser<String>{
 			
 			//引数
 			this.formals.check(cs);
+			//返り値の篩型で使えるローカル変数
+			if(cs.return_v!=null){
+				if(cs.return_v.hava_refinement_type() && cs.return_v.refinement_type_clause.refinement_type != null){
+					cs.return_v.refinement_type_clause.refinement_type.defined_variables.addAll(cs.variables);
+				}
+			}
+			
 			
 			//newで作るものと参照が被らない
 			cs.this_field.ref_constraint(0, cs.invariant_refinement_type_deep_limmit+1, null, new ArrayList<IntExpr>(), cs);

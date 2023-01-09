@@ -37,11 +37,21 @@ public class compilation_unit implements Parser<String>{
 	public void preprocessing(List<Pair<String, String>> extends_pairs, Summery summery){
 		try {
 			create_constructor();
+		}catch(Exception e){
+			System.out.println(e);
+			summery.preprocessing_faileds.add("create constructor failed : "  + summery.file.toString());
+		}
+		try {
 			pure_modifier();
+		}catch(Exception e){
+			System.out.println(e);
+			summery.preprocessing_faileds.add("pure preprocessing failed : "  + summery.file.toString());
+		}
+		try {
 			link_inheritance(extends_pairs, summery);
 		}catch(Exception e){
 			System.out.println(e);
-			summery.preprocessing_faileds.add("preprocessing failed : "  + summery.file.toString());
+			summery.preprocessing_faileds.add("interitance failed : "  + summery.file.toString());
 		}
 	}
 	
@@ -101,13 +111,16 @@ public class compilation_unit implements Parser<String>{
 					
 					if(super_md.type_spec==null){//コンストラクターの継承は行なわない
 						//なにもしない
-					}else if(override_md == null){//同じメソッドでもサブクラスで検証は行う
+					}else if(override_md == null){
+						//同じメソッドをサブクラスで検証を行う必要はないはず？篩型を新しくする場合だけ
+						/*
 						if(super_md.modifiers!=null && super_md.modifiers.is_private!=true){
 							method_decl md = super_md.clone_no_refinemet_type();
 							md.class_type_name = class_decl.class_name;
 							md.file_path = class_decl.file_path;
 							class_decl.class_block.method_decls.add(md);
 						}
+						*/
 					}else{//事前条件、事後条件などの継承
 						if(super_md.method_specification!=null){
 							if(override_md.method_specification!=null && override_md.method_specification.spec_case_seq!=null){
@@ -241,7 +254,6 @@ public class compilation_unit implements Parser<String>{
 						if(euqal_types && !(md.modifiers!=null && md.modifiers.is_private && !cd.class_name.equals(this_class_name))) return md;
 					}
 				}
-				/*
 				class_declaration super_class = cd;
 				while(super_class.super_class != null){
 					super_class = super_class.super_class;
@@ -261,7 +273,6 @@ public class compilation_unit implements Parser<String>{
 						}
 					}
 				}
-				*/
 			}
 		}
 		return null;

@@ -45,6 +45,7 @@ public class TestAll {
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\model_refinement.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\sub_constructor.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\overload.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\local_in_rt.java"));
 		
 		Summery summery = new Summery();
 		

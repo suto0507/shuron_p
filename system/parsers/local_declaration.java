@@ -19,10 +19,19 @@ import system.Source;
 import system.Variable;
 
 public class local_declaration implements Parser<String>{
+	boolean is_final;
 	variable_decls variable_decls;
 	String st;
 	public String parse(Source s,Parser_status ps)throws Exception{
 		st = "";
+		Source s_backup = s.clone();
+		try{
+			st = st + new string("final").parse(s, ps);
+			st = st + new spaces().parse(s, ps);
+			this.is_final = true;
+		}catch (Exception e){
+			s.revert(s_backup);
+		}
 		variable_decls vd = new variable_decls();
 		st = st + vd.parse(s, ps);
 		this.variable_decls = vd;
@@ -32,7 +41,9 @@ public class local_declaration implements Parser<String>{
 	public Variable check(Check_status cs) throws Exception{
 		System.out.println("/////// " + st);
 		if(cs.search_variable(this.variable_decls.ident)==false){
-			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, null, cs.ctx.mkBool(false));
+			modifiers m = new modifiers();
+			m.is_final = this.is_final;
+			Variable v = cs.add_variable(this.variable_decls.ident, this.variable_decls.type_spec.type.type, this.variable_decls.type_spec.dims, this.variable_decls.type_spec.refinement_type_clause, m, cs.ctx.mkBool(false));
 			
 			if(v.hava_refinement_type()){//â¿Œ^‚Ì’†‚Åg‚¦‚éƒ[ƒJƒ‹•Ï”
 				if(v.refinement_type_clause.refinement_type!=null){

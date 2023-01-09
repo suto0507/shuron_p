@@ -658,6 +658,8 @@ public class Check_status {
 	//assign_field_exprは長さに関する制約で使う
 	public void equal_predicate(Field field_1, ArrayList<IntExpr> indexs_1, Expr class_Expr_1, Field field_2, ArrayList<IntExpr> indexs_2, Expr class_Expr_2) throws Exception{
 		
+		System.out.println("check alias of arrays with refinement type");
+		
 		ArrayList<Expr> field_1_alias_exprs = new ArrayList<Expr>();
 		for(int i = 0; i <= indexs_1.size(); i++){
 			field_1_alias_exprs.add(field_1.get_Expr_with_indexs(class_Expr_1, new ArrayList<IntExpr>(indexs_1.subList(0, i)), this));
@@ -758,7 +760,7 @@ public class Check_status {
 		String ret;
 		
 		//この型を持つ変数の値が変わっても他方の述語は満たされる
-		System.out.println("check refinement type equality 1");
+		System.out.println("check refinement type alias 1");
 		cs.solver.push();
 		
 		field_2.add_refinement_constraint(cs, class_Expr_2, true);
@@ -788,7 +790,7 @@ public class Check_status {
 		cs.solver.pop();
 		
 		//他方の篩型を持つ変数の値が変わってもこの型の述語は満たされる
-		System.out.println("check refinement type equality 2");
+		System.out.println("check refinement type alias 2");
 		cs.solver.push();
 		
 		field_1.add_refinement_constraint(cs, class_Expr_1, true);

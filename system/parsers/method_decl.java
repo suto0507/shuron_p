@@ -97,7 +97,7 @@ public class method_decl implements Parser<String>{
 	
 	public void check(Check_status cs, Summery summery){
 		
-		System.out.println("Verify method " + this.ident);
+		System.out.println("Verify method " + this.ident + "(class : " + this.class_type_name + ")");
 		
 		//初期化
 		cs.md = this;
@@ -372,7 +372,7 @@ public class method_decl implements Parser<String>{
 	
 
 	public void inheritance_refinement_types(class_declaration class_decl, compilation_unit cu) throws Exception{
-		System.out.println("check method type inheritance : " + this.ident);
+		System.out.println("check method type inheritance : " + this.ident + "(class : " + this.class_type_name + ")");
 		
 		class_declaration super_class = class_decl.super_class;
 		
@@ -492,6 +492,13 @@ public class method_decl implements Parser<String>{
 					, this.formals.param_declarations.get(i).type_spec.dims, null, modi, cs.ctx.mkBool(true));
 			
 			v.temp_num=0;
+			//篩型の検証
+			if(v.hava_refinement_type()){
+				//篩型の中で使えるローカル変数
+				if(v.refinement_type_clause.refinement_type!=null){
+					v.refinement_type_clause.refinement_type.defined_variables.addAll(cs.variables);
+				}
+			}
 			
 			while(true){
 				method_decl super_md = cu.search_method(super_class.class_name, this.ident, param_types, false, class_decl.class_name);
@@ -508,6 +515,8 @@ public class method_decl implements Parser<String>{
 					refinement_type this_refinement_type,super_refinement_type;
 					if(this.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type != null){
 						this_refinement_type = this.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type;
+						//篩型の中で使えるローカル変数
+						this_refinement_type.defined_variables.addAll(cs.variables);
 					}else{
 						this_refinement_type = cu.search_refinement_type(class_decl.class_name, this.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
 						if(this_refinement_type==null) throw new Exception("can't find refinement type " + this.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);

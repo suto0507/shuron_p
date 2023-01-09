@@ -70,11 +70,20 @@ public class override_refinement_type_clause implements Parser<String>{
 			param_types.add(rt.snd.type_info(class_decl, cu));
 		}
 		
+		method_decl searched_method = cu.search_method(class_decl.class_name, this.ident, param_types, false, class_decl.class_name);
+		method_decl searched_super_method = cu.search_method(super_class.class_name, this.ident, param_types, false, class_decl.class_name);
+		if(searched_method != searched_super_method){
+			throw new Exception("meothod " + this.ident + "defined in class " + class_decl.class_name);
+		}
+		
+		method_decl md = searched_super_method.clone_no_refinemet_type();
+		md.class_type_name = class_decl.class_name;
+		md.file_path = class_decl.file_path;
+		class_decl.class_block.method_decls.add(md);
 	
 		//ŠÖ”‚Ìê‡
 		//“ñd‚Éâ¿Œ^‚ğİ’è‚µ‚Ä‚¢‚È‚¢‚©‚ğŠm”F‚µ‚Ä”½‰f‚³‚¹‚é‚¾‚¯
 		//â¿Œ^‚Ì’†g‚Ìˆ—‚Ímethod_decl‚Å‚â‚é
-		method_decl md = cu.search_method(class_decl.class_name, this.ident, param_types, false, class_decl.class_name);
 		//•Ô‚è’l‚Ìâ¿Œ^
 		if(this.type_or_refinement_type.refinement_type != null){
 			if(md.type_spec.refinement_type_clause==null){

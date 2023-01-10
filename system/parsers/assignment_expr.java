@@ -50,6 +50,7 @@ public class assignment_expr implements Parser<String>{
 	
 	public Check_return check(Check_status cs) throws Exception{
 		Check_return assign_cr = null;
+		boolean pre_is_rightside = cs.is_rightside;
 		
 		if(this.postfix_expr != null){
 			assign_cr = this.postfix_expr.check_assign(cs);
@@ -91,12 +92,13 @@ public class assignment_expr implements Parser<String>{
 				}
 			}
 			
+			
+			cs.is_rightside = true;
 		}
 		Check_return rc = this.implies_expr.check(cs);
 		
-		
-		
 		if(this.postfix_expr != null){
+			cs.is_rightside = pre_is_rightside;
 			//1次元以上の配列としてエイリアスした場合には、それ以降配列を代入する前に篩型の検証を行わなければならない
 			if(assign_cr.field.hava_refinement_type() && assign_cr.field.have_index_access(cs) 
 					&& rc.field != null && rc.field.hava_refinement_type() && rc.field.have_index_access(cs) 

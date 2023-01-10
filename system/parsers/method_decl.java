@@ -590,6 +590,30 @@ public class method_decl implements Parser<String>{
 		return clone_md;
 	}
 	
+	//ƒƒ\ƒbƒh‚ğ
+	boolean array_alias(Check_status cs){
+		if(!modifiers.is_pure) return true;
+		if(cs.is_rightside){
+			if(type_spec!=null){
+				if(type_spec.type.type.equals("void")){
+					return false;
+				}else if(type_spec.type.type.equals("int") || type_spec.type.type.equals("boolean")){
+					if(type_spec.dims == 0){
+						return false;
+					}else{
+						return true;
+					}
+				}else{
+					return true;
+				}
+			}else{
+				return true;
+			}
+		}else{
+			return false;
+		}
+	}
+	
 	
 }
 

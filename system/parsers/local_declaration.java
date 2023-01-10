@@ -53,7 +53,11 @@ public class local_declaration implements Parser<String>{
 			
 			if(this.variable_decls.initializer != null){
 				
+				boolean pre_is_rightside = cs.is_rightside;
+				cs.is_rightside = true;
 				Check_return rc = this.variable_decls.initializer.check(cs);
+				cs.is_rightside = pre_is_rightside;
+				
 				
 				BoolExpr expr = cs.ctx.mkEq(v.get_Expr_assign(cs), rc.expr);
 				cs.add_constraint(expr);

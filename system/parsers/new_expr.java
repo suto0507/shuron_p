@@ -425,8 +425,9 @@ public class new_expr implements Parser<String>{
 			
 			
 			//helperメソッドやコンストラクターにおける配列のエイリアス
-			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
-			
+			if(md.array_alias(cs)){
+				update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
+			}
 			
 			//事後条件
 			if(!md.modifiers.is_helper){
@@ -571,8 +572,9 @@ public class new_expr implements Parser<String>{
 		
 		//helperメソッドやコンストラクターにおける配列のエイリアス
 		//loop_assign_methodではpre_in_helperなどは用意しない
-		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
-
+		if(md.array_alias(cs)){
+			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
+		}
 		
 		
 		//返り値

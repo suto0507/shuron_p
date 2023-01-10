@@ -76,6 +76,8 @@ public class Check_status {
 	
 	public ArrayList<Pair<Field, Expr>> checked_refinement_type_field;//篩型の制約を既に追加したもの　Fieldとclass_objectのExprのPair    使い切りなのでcloneでは中身は気にしなくていい
 	
+	public boolean is_rightside;
+	
 	//配列のポインターから配列
 	public Array array_arrayref;
 	public Array array_int;
@@ -151,7 +153,7 @@ public class Check_status {
 		String field_name = ident + "_" + vd.class_type_name;
 		
 		for(Field v :fields){
-			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_type_name.equals(class_type_name)){
+			if(field_name.equals(v.field_name + "_" + v.class_type_name)&&v.class_type_name.equals(vd.class_type_name)){
 				return v;
 			}
 		}
@@ -161,10 +163,10 @@ public class Check_status {
 		for(group_name gn : vd.group_names){
 			String class_type = null;
 			if(gn.is_super){
-				class_declaration cd = this.Check_status_share.compilation_unit.search_class(class_type_name);
+				class_declaration cd = this.Check_status_share.compilation_unit.search_class(vd.class_type_name);
 				class_type = cd.super_class.class_name;
 			}else{
-				class_type = class_type_name;
+				class_type = vd.class_type_name;
 			}
 			
 			

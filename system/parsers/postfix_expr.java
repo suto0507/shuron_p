@@ -828,8 +828,9 @@ public class postfix_expr implements Parser<String>{
 		
 		
 		//helperメソッドやコンストラクターにおける配列のエイリアス
-		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
-				
+		if(md.array_alias(cs)){
+			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
+		}
 		
 		//返り値の処理
 		if(result!=null){
@@ -879,7 +880,7 @@ public class postfix_expr implements Parser<String>{
 	    if(cs.refinement_deep <= cs.refinement_deep_limmit){
 	        f.add_refinement_constraint(cs, class_Expr);
 	    }else{
-	        throw new Exception("The depth of refinement type's verification has reached its limit.");
+	        throw new Exception("The depth of refinement type's verification has reached it's limit.");
 	    }
 	    cs.refinement_deep--;
 	}
@@ -1154,8 +1155,9 @@ public class postfix_expr implements Parser<String>{
 		
 		//helperメソッドやコンストラクターにおける配列のエイリアス
 		//loop_assign_methodではpre_in_helperなどは用意しない
-		update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
-
+		if(md.array_alias(cs)){
+			update_alias_in_helper_or_constructor(9999999, cs.get_pathcondition(), cs, cs.in_helper || cs.in_no_refinement_type, cs.in_constructor);
+		}
 		
 		
 		//返り値

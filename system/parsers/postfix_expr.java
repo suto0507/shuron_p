@@ -279,7 +279,7 @@ public class postfix_expr implements Parser<String>{
 					Field pre_f = f;
 					class_expr = ex;
 					
-					Field searched_field = cs.search_field(ps.ident, f.type, cs);
+					Field searched_field = cs.search_field(ps.ident, type_info.type, cs);
 					if(searched_field != null){
 						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
@@ -395,6 +395,7 @@ public class postfix_expr implements Parser<String>{
 	public Check_return check_assign(Check_status cs) throws Exception{
 		Expr ex = null;
 		Field f = null;
+		Type_info type_info = null;
 		Expr class_expr = cs.instance_expr;
 		ArrayList<IntExpr> indexs = new ArrayList<IntExpr>();
 		
@@ -407,7 +408,7 @@ public class postfix_expr implements Parser<String>{
 				throw new Exception("can't assign this");
 			}else if(this.primary_expr.ident!=null){
 
-				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field.type, cs);
+				Field searched_field = cs.search_field(primary_expr.ident, cs.instance_class_name, cs);
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
 					class_expr = cs.this_field.get_Expr(cs);
@@ -419,6 +420,7 @@ public class postfix_expr implements Parser<String>{
 				}else{
 					throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 				}
+				type_info = new Type_info(f.type, f.dims);
 
 			}else if(this.primary_expr.java_literal!=null){
 				throw new Exception("can't assign java literal");
@@ -433,6 +435,7 @@ public class postfix_expr implements Parser<String>{
 			if(this.primary_expr.is_this){
 				f = cs.this_field;
 				ex = f.get_Expr(cs);
+				type_info = new Type_info(cs.instance_class_name, 0);
 			}else if(this.primary_expr.is_super){
 				class_declaration cd = cs.Check_status_share.compilation_unit.search_class(cs.instance_class_name);
 				cd = cd.super_class;
@@ -440,9 +443,10 @@ public class postfix_expr implements Parser<String>{
 				f = cs.this_field.clone_e();
 				f.type = cd.class_name;
 				ex = f.get_Expr(cs);
+				type_info = new Type_info(cd.class_name, 0);
 			}else if(this.primary_expr.ident!=null){
 
-				Field searched_field = cs.search_field(primary_expr.ident, cs.this_field.type, cs);
+				Field searched_field = cs.search_field(primary_expr.ident, cs.instance_class_name, cs);
 				if(cs.search_variable(primary_expr.ident)){
 					f = cs.get_variable(primary_expr.ident);
 					class_expr = cs.this_field.get_Expr(cs);
@@ -458,6 +462,7 @@ public class postfix_expr implements Parser<String>{
 				}else{
 					throw new Exception(cs.this_field.type + " don't have " + this.primary_expr.ident);
 				}
+				type_info = new Type_info(f.type, f.dims);
 
 				
 			}else if(this.primary_expr.bracket_expression!=null){
@@ -466,6 +471,7 @@ public class postfix_expr implements Parser<String>{
 				ex = cr.expr;
 				class_expr = cr.class_expr;
 				indexs = cr.indexs;
+				type_info = cr.type_info;
 			}else if(this.primary_expr.java_literal!=null){
 				throw new Exception("literal don't have suffix");
 			}else{
@@ -479,11 +485,12 @@ public class postfix_expr implements Parser<String>{
 					if(this.primary_suffixs.size() > i+1 && this.primary_suffixs.get(i+1).is_method){
 						ident = ps.ident;
 					}else{
-						Field searched_field = cs.search_field(ps.ident, f.type, cs);
+						Field searched_field = cs.search_field(ps.ident, type_info.type, cs);
 						if(searched_field != null){
 							f = searched_field;
 							class_expr = ex;
 							ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+							type_info = new Type_info(f.type, f.dims);
 						}else{
 							throw new Exception(f.type + " don't have " + ps.ident);
 						}
@@ -519,6 +526,7 @@ public class postfix_expr implements Parser<String>{
 					ex = array.index_access_array(ex, index, cs);
 					
 					ident = null;
+					type_info.dims--;
 				}else if(ps.is_method){
 					//ä÷êîÇÃåƒÇ—èoÇµ
 					if(i == this.primary_suffixs.size()-1){
@@ -531,8 +539,10 @@ public class postfix_expr implements Parser<String>{
 					indexs = new ArrayList<IntExpr>();
 					if(f != null){
 						ex = f.get_Expr(cs);
+						type_info = new Type_info(f.type, f.dims);
 					}else{
 						ex = null;
+						type_info = new Type_info("void", 0);
 					}
 				}
 			}
@@ -1016,7 +1026,7 @@ public class postfix_expr implements Parser<String>{
 					Field pre_f = f;
 					class_expr = ex;
 					
-					Field searched_field = cs.search_field(ps.ident, f.type, cs);
+					Field searched_field = cs.search_field(ps.ident, type_info.type, cs);
 					if(searched_field != null){
 						f = searched_field;
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);

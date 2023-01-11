@@ -214,8 +214,10 @@ public class method_decl implements Parser<String>{
 			}
 			
 			
-			String pre_class_type_name = cs.this_field.type;
-			cs.this_field.type = this.class_type_name;
+			//String pre_class_type_name = cs.this_field.type;
+			//cs.this_field.type = this.class_type_name;
+			String pre_class_type_name = cs.instance_class_name;
+			cs.instance_class_name = this.class_type_name;
 			
 			//中身
 			if(this.type_spec==null){//コンストラクタ
@@ -242,7 +244,8 @@ public class method_decl implements Parser<String>{
 			}
 			this.compound_statement.check(cs);
 			
-			cs.this_field.type = pre_class_type_name;
+			//cs.this_field.type = pre_class_type_name;
+			cs.instance_class_name = pre_class_type_name;
 			
 			//returnしなかった場合の検証
 			cs.used_methods.add(this);

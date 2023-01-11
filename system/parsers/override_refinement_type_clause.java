@@ -77,7 +77,7 @@ public class override_refinement_type_clause implements Parser<String>{
 		}
 		
 		method_decl md = searched_super_method.clone_no_refinemet_type();
-		md.class_type_name = class_decl.class_name;
+		//md.class_type_name = class_decl.class_name;
 		md.file_path = class_decl.file_path;
 		class_decl.class_block.method_decls.add(md);
 	

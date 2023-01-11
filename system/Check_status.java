@@ -88,6 +88,7 @@ public class Check_status {
 	
 	public ArrayList<method_decl> used_methods;//メソッドの事前条件、事後条件にそのメソッド自身を書いた場合、制約のないただの値として返される。
 	
+	public String can_use_type_in_invariant;//invarinatが宣言されたクラス名。このクラスで宣言されたフィールドだけ使用可能
 	
 	public Check_status(compilation_unit cu){
 		this.ctx = new Context(new HashMap<>());

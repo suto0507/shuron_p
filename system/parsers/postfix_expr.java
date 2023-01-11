@@ -195,6 +195,12 @@ public class postfix_expr implements Parser<String>{
 						throw new Exception("can not use private visibility variable");
 					}
 				}
+				if(cs.can_use_type_in_invariant!=null){
+					if(ident == null && //メソッド呼び出しはいい
+							!(cs.can_use_type_in_invariant.equals(f.class_type_name) && class_expr.equals(cs.instance_expr))){
+						throw new Exception("invariant depends on only field of class " + cs.can_use_type_in_invariant);
+					}
+				}
 			}
 			type_info = new Type_info(f.type, f.dims);
 		}else if(this.primary_expr.bracket_expression!=null){
@@ -325,6 +331,12 @@ public class postfix_expr implements Parser<String>{
 					if(cs.ban_private_visibility){
 						if(f.modifiers!=null&&f.modifiers.is_private==true){
 							throw new Exception("can not use private visibility variable");
+						}
+					}
+					if(cs.can_use_type_in_invariant!=null){
+						if(ident == null && //メソッド呼び出しはいい
+								!(cs.can_use_type_in_invariant.equals(f.class_type_name) && class_expr.equals(cs.instance_expr))){
+							throw new Exception("invariant depends on only field of class " + cs.can_use_type_in_invariant);
 						}
 					}
 				}
@@ -854,7 +866,16 @@ public class postfix_expr implements Parser<String>{
 		System.out.println("method call post invarinats");
 		
 		if(!md.modifiers.is_helper){
+			String pre_type = null;
+			if(is_super_constructor){
+				pre_type = cs.this_field.type;
+				cs.this_field.type = md.ident;
+			}
 			BoolExpr post_invariant_expr = cs.all_invariant_expr();
+			if(is_super_constructor){
+				cs.this_field.type = pre_type;
+			}
+			
 			cs.add_constraint(post_invariant_expr);
 		}
 		

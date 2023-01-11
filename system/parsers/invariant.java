@@ -1,5 +1,8 @@
 package system.parsers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 
@@ -7,6 +10,7 @@ import system.Check_status;
 import system.Parser;
 import system.Parser_status;
 import system.Source;
+import system.Variable;
 
 public class invariant implements Parser<String>{
 	String st;
@@ -46,6 +50,10 @@ public class invariant implements Parser<String>{
 			cs.ban_private_visibility = true;
 			cs.ban_default_visibility = false;
 		}
+		List<Variable> pre_variables = cs.variables;
+		cs.variables = new ArrayList<Variable>();
+		cs.can_use_type_in_invariant = this.class_type_name;
+		
 		
 		boolean pre_use_only_helper_method = cs.use_only_helper_method;
 		cs.use_only_helper_method = true;
@@ -57,6 +65,8 @@ public class invariant implements Parser<String>{
 		
 		cs.ban_private_visibility = pre_ban_private_visibility;
 		cs.ban_default_visibility = pre_ban_default_visibility;
+		cs.variables = pre_variables;
+		cs.can_use_type_in_invariant = null;
 		
 		return ret_val;
 	}

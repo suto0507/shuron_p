@@ -483,7 +483,7 @@ public class method_decl implements Parser<String>{
 		for(int i = 0; i < this.formals.param_declarations.size(); i++){
 			
 			//îzóÒÇ…ÇÕêVÇµÇ¢‚øå^ÇÇ¬ÇØÇÈÇ±Ç∆Ç™Ç≈Ç´Ç»Ç¢
-			if(this.formals.param_declarations.get(i).type_spec.dims > 0 && this.formals.param_declarations.get(i).type_spec.refinement_type_clause!=null) throw new Exception("array can not override refinement type");
+			if(this.formals.param_declarations.get(i).type_spec.dims > 0 && this.formals.param_declarations.get(i).type_spec.refinement_type_clause!=null) throw new Exception("array cannot override refinement type");
 			
 			//èàóùÇ∑ÇÈà¯êîÇï\Ç∑Variable
 			modifiers modi = new modifiers();
@@ -522,14 +522,14 @@ public class method_decl implements Parser<String>{
 						this_refinement_type.defined_variables.addAll(cs.variables);
 					}else{
 						this_refinement_type = cu.search_refinement_type(class_decl.class_name, this.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
-						if(this_refinement_type==null) throw new Exception("can't find refinement type " + this.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
+						if(this_refinement_type==null) throw new Exception("cannot find refinement type " + this.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
 					}
 					
 					if(super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type != null){
 						super_refinement_type = super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.refinement_type;
 					}else{
 						super_refinement_type = cu.search_refinement_type(class_decl.class_name, super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
-						if(super_refinement_type==null) throw new Exception("can't find refinement type " + super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
+						if(super_refinement_type==null) throw new Exception("cannot find refinement type " + super_md.formals.param_declarations.get(i).type_spec.refinement_type_clause.ident);
 					}
 					
 					this_refinement_type.check_subtype(v, this_field.get_Expr(cs), super_refinement_type, cs);

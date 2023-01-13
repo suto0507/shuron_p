@@ -35,7 +35,7 @@ public class new_expr implements Parser<String>{
 		this.new_suffix = new new_suffix();
 		st = st + this.new_suffix.parse(s, ps);
 		if(ps.in_jml){
-			throw new Exception("can't use new in jml");
+			throw new Exception("cannot use new in jml");
 		}	
 		return st;
 	}
@@ -187,7 +187,7 @@ public class new_expr implements Parser<String>{
 			
 			class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type);
 			if(cd == null){
-				throw new Exception("can't find class " + this.type);
+				throw new Exception("cannot find class " + this.type);
 			}
 			
 			//à¯êîÇÃèàóù
@@ -201,17 +201,17 @@ public class new_expr implements Parser<String>{
 			
 			method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true, cs.this_field.type);
 			if(md == null){
-				throw new Exception("can't find method " + this.type);
+				throw new Exception("cannot find method " + this.type);
 			}
 			//JMLêﬂÇ≈ÇÃégÇ¶Ç»Ç¢â¬éãê´ÇÃämîF
 			if(cs.ban_default_visibility){
 				if(md.modifiers!=null&&md.modifiers.is_private==false){
-					throw new Exception("can not use default visibility variable");
+					throw new Exception("cannot use default visibility variable");
 				}
 			}
 			if(cs.ban_private_visibility){
 				if(md.modifiers!=null&&md.modifiers.is_private==true){
-					throw new Exception("can not use private visibility variable");
+					throw new Exception("cannot use private visibility variable");
 				}
 			}
 			
@@ -474,7 +474,7 @@ public class new_expr implements Parser<String>{
 		
 		class_declaration cd = cs.Check_status_share.compilation_unit.search_class(this.type);
 		if(cd == null){
-			throw new Exception("can't find class " + this.type);
+			throw new Exception("cannot find class " + this.type);
 		}
 		
 		//à¯êîÇÃèàóù
@@ -489,7 +489,7 @@ public class new_expr implements Parser<String>{
 		
 		method_decl md = cs.Check_status_share.compilation_unit.search_method(this.type, this.type, param_types, true, cs.this_field.type);
 		if(md == null){
-			throw new Exception("can't find method " + this.type);
+			throw new Exception("cannot find method " + this.type);
 		}
 		
 		

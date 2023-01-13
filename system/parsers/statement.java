@@ -747,7 +747,7 @@ import system.F_Assign;
 				if(f.temp_num<f_loop.temp_num){
 					if(cs.in_constructor && f.modifiers!=null && f.modifiers.is_final){//コンストラクタのfinalの初期化はloopのなかではできない
 						if(f.final_initialized==false&&f_loop.final_initialized==true){
-							throw new Exception("can't initialized final variable in loop.");
+							throw new Exception("cannot initialized final variable in loop.");
 						}
 					}
 					Expr e1 = f.get_Expr(cs);

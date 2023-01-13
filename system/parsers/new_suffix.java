@@ -35,7 +35,7 @@ public class new_suffix implements Parser<String>{
 			}
 			st = st + new string(")").parse(s, ps);
 			if(ps.in_jml){
-				throw new Exception("can't use constructor in jml");
+				throw new Exception("cannot use constructor in jml");
 			}
 			this.expression_list = el;
 			this.is_constructor = true;

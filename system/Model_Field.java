@@ -36,7 +36,7 @@ public class Model_Field extends Field{
 		this.alias_in_consutructor_or_2d_in_helper = alias_1d_in_helper;
 		this.model_fields = model_fields;
 		if(this.modifiers.is_final){
-			throw new Exception("model fields can't be modified with final");
+			throw new Exception("model fields cannot be modified with final");
 		}
 	}
 	
@@ -153,7 +153,7 @@ public class Model_Field extends Field{
 				if(rt!=null){
 					rt.add_refinement_constraint(cs, this, ex, class_Expr, add_once);
 				}else{
-	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	                throw new Exception("cannot find refinement type " + this.refinement_type_clause.ident);
 	            }
 			}
 		}
@@ -192,7 +192,7 @@ public class Model_Field extends Field{
 				if(rt!=null){
 					rt.assert_refinement(cs, this, ex, class_Expr);
 				}else{
-	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	                throw new Exception("cannot find refinement type " + this.refinement_type_clause.ident);
 	            }
 			}
 		}

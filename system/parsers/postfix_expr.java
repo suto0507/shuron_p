@@ -93,7 +93,7 @@ public class postfix_expr implements Parser<String>{
 				type_info = new Type_info(cd.class_name, 0);
 				
 				if(this.primary_suffixs.size() > 1){
-					throw new Exception("super constructor can't have suffixs");
+					throw new Exception("super constructor cannot have suffixs");
 				}
 				
 				return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, type_info);
@@ -187,12 +187,12 @@ public class postfix_expr implements Parser<String>{
 				//JML節での使えない可視性の確認
 				if(cs.ban_default_visibility){
 					if(f.modifiers!=null&&f.modifiers.is_private==false){
-						throw new Exception("can not use default visibility variable");
+						throw new Exception("cannot use default visibility variable");
 					}
 				}
 				if(cs.ban_private_visibility){
 					if(f.modifiers!=null&&f.modifiers.is_private==true){
-						throw new Exception("can not use private visibility variable");
+						throw new Exception("cannot use private visibility variable");
 					}
 				}
 				if(cs.can_use_type_in_invariant!=null){
@@ -325,12 +325,12 @@ public class postfix_expr implements Parser<String>{
 					//JML節での使えない可視性の確認
 					if(cs.ban_default_visibility){
 						if(f.modifiers!=null&&f.modifiers.is_private==false){
-							throw new Exception("can not use default visibility variable");
+							throw new Exception("cannot use default visibility variable");
 						}
 					}
 					if(cs.ban_private_visibility){
 						if(f.modifiers!=null&&f.modifiers.is_private==true){
-							throw new Exception("can not use private visibility variable");
+							throw new Exception("cannot use private visibility variable");
 						}
 					}
 					if(cs.can_use_type_in_invariant!=null){
@@ -379,7 +379,7 @@ public class postfix_expr implements Parser<String>{
 				if(cs.in_refinement_predicate==true){//篩型の中では配列は使えない
 					if(!f.equals(cs.refined_Field)){
 						if(cs.search_quantifier(f.field_name, cs)==null){
-							throw new Exception("can not use array in refinement type");
+							throw new Exception("cannot use array in refinement type");
 						}
 					}
 				}
@@ -414,10 +414,10 @@ public class postfix_expr implements Parser<String>{
 		if(this.primary_suffixs.size() == 0){
 			if(this.primary_expr.is_this){
 				//これはアウト
-				throw new Exception("can't assign this");
+				throw new Exception("cannot assign this");
 			}else if(this.primary_expr.is_super){
 				//これはアウト
-				throw new Exception("can't assign this");
+				throw new Exception("cannot assign this");
 			}else if(this.primary_expr.ident!=null){
 
 				Field searched_field = cs.search_field(primary_expr.ident, cs.instance_class_name, cs);
@@ -435,9 +435,9 @@ public class postfix_expr implements Parser<String>{
 				type_info = new Type_info(f.type, f.dims);
 
 			}else if(this.primary_expr.java_literal!=null){
-				throw new Exception("can't assign java literal");
+				throw new Exception("cannot assign java literal");
 			}else{
-				throw new Exception("can't write in lef side");
+				throw new Exception("cannot write in lef side");
 			}
 			return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, f.type, f.dims - indexs.size());
 
@@ -591,7 +591,7 @@ public class postfix_expr implements Parser<String>{
 			}
 			args += ")";
 			
-			throw new Exception("can't find method " + ident + args + " in class " + class_type_name);
+			throw new Exception("cannot find method " + ident + args + " in class " + class_type_name);
 		}
 		
 		if(md.formals.param_declarations.size()!=ps.expression_list.expressions.size()){
@@ -607,12 +607,12 @@ public class postfix_expr implements Parser<String>{
 		//JML節での使えない可視性の確認
 		if(cs.ban_default_visibility){
 			if(md.modifiers!=null&&md.modifiers.is_private==false){
-				throw new Exception("can not use default visibility variable");
+				throw new Exception("cannot use default visibility variable");
 			}
 		}
 		if(cs.ban_private_visibility){
 			if(md.modifiers!=null&&md.modifiers.is_private==true){
-				throw new Exception("can not use private visibility variable");
+				throw new Exception("cannot use private visibility variable");
 			}
 		}
 		
@@ -961,7 +961,7 @@ public class postfix_expr implements Parser<String>{
 				type_info = new Type_info(cd.class_name, 0);
 				
 				if(this.primary_suffixs.size() > 1){
-					throw new Exception("super constructor can't have suffixs");
+					throw new Exception("super constructor cannot have suffixs");
 				}
 				return new Check_return(ex, f, (ArrayList<IntExpr>) indexs, class_expr, type_info);
 			}else{

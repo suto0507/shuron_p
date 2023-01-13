@@ -150,6 +150,7 @@ public class spec_case_seq implements Parser<String>  {
 		return expr;
 	}
 	
+	/*
 	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
 		
 		List<Field> fields = new ArrayList<Field>();
@@ -275,6 +276,74 @@ public class spec_case_seq implements Parser<String>  {
 		}
 		
 		return new Pair<List<F_Assign>, BoolExpr>(f_assigns, all_assign_expr);
+	}
+	*/
+	
+	public Method_Assign assignables(Check_status cs) throws Exception{
+		
+		BoolExpr can_all_assing = null;
+		BoolExpr cannot_all_assing = null;
+		
+		ArrayList<Case_Assign> case_assigns = new ArrayList<Case_Assign>();
+		
+		for(generic_spec_case gsc : generic_spec_cases){
+			
+			String pre_class_type_name = cs.instance_class_name;
+			cs.instance_class_name = gsc.class_type_name;
+			
+			List<assignable_clause> acs = gsc.get_assignable();
+			
+			
+			//éñëOèåè
+			BoolExpr pre_expr = null;
+			
+			List<requires_clause> rcs = gsc.get_requires();
+			if(rcs == null  || rcs.size()==0){
+				pre_expr = cs.ctx.mkBool(true);
+			}else{
+				for(requires_clause rc : rcs){
+					if(pre_expr == null){
+						pre_expr = rc.get_expr(cs);
+					}else{
+						pre_expr = cs.ctx.mkAnd(pre_expr, rc.get_expr(cs));
+					}
+				}
+			}
+			
+			
+			if(acs != null){
+				//assignable
+				
+				ArrayList<Check_return> crs = new ArrayList<Check_return>();
+				
+				for(assignable_clause ac : acs){
+					for(store_ref_expression sre : ac.store_ref_list.store_ref_expressions){
+						Check_return cr = sre.check(cs);
+						
+						crs.add(cr);
+					}
+				}
+				
+				if(cannot_all_assing!=null){
+					cannot_all_assing = pre_expr;
+				}else{
+					cannot_all_assing = cs.ctx.mkOr(cannot_all_assing, pre_expr);
+				}
+				
+				case_assigns.add(new Case_Assign(pre_expr, crs));
+				
+			}else{//âΩÇ≈Ç‡ë„ì¸ÇµÇƒÇ¢Ç¢éñëOèåè
+				if(can_all_assing!=null){
+					can_all_assing = pre_expr;
+				}else{
+					can_all_assing = cs.ctx.mkOr(can_all_assing, pre_expr);
+				}
+			}
+			
+			cs.instance_class_name = pre_class_type_name;
+		}
+		
+		return new Method_Assign(cs.ctx.mkAnd(can_all_assing, cs.ctx.mkNot(cannot_all_assing)), case_assigns);
 	}
 
 	

@@ -279,7 +279,7 @@ public class Check_status {
 				return v;
 			}
 		}
-		throw new Exception("can't find " + ident + "\n");
+		throw new Exception("cannot find " + ident + "\n");
 		//return null;
 	}
 	
@@ -289,7 +289,7 @@ public class Check_status {
 				return v;
 			}
 		}
-		throw new Exception("can't find " + ident + "\n");
+		throw new Exception("cannot find " + ident + "\n");
 		//return null;
 	}
 
@@ -560,7 +560,7 @@ public class Check_status {
 			if(f1.dims>0 && f1.dims!=f1_indexs.size() && f1.hava_refinement_type() && f1.have_index_access(this)){//どっちも篩型を持つ配列
 				this.equal_predicate(f1, f1_indexs, f1_class_object_expr, f2, f2_indexs, f2_class_object_expr);
 			}else if(f1.dims>0 && f1.dims!=f1_indexs.size() && f1 instanceof Variable){//ローカル変数
-				if(((Variable) f1).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+				if(((Variable) f1).out_loop_v) throw new Exception("cannot alias with refined array　in loop");//ループの中ではエイリアスできない
 				
 				Expr alias;
 				if(((Variable) f1).alias == null){
@@ -586,12 +586,12 @@ public class Check_status {
 					((Variable) f1).alias_refined = this.ctx.mkOr(((Variable) f1).alias_refined, pathcondition);
 				}
 			}else{//篩型の安全を保証できないような大入
-				throw new Exception("can not alias with refined array");
+				throw new Exception("cannot alias with refined array");
 			}
 		}else if(f1.dims>0 && f1.dims!=f1_indexs.size()  && f1.hava_refinement_type() && f1.have_index_access(this)){
 			if(f2!=null && f2.dims>0 && f2.dims!=f2_indexs.size() && f2 instanceof Variable){//ローカル変数
 				
-				if(((Variable)f2).out_loop_v) throw new Exception("can not alias with refined array　in loop");//ループの中ではエイリアスできない
+				if(((Variable)f2).out_loop_v) throw new Exception("cannot alias with refined array　in loop");//ループの中ではエイリアスできない
 				
 				Expr alias;
 				if(((Variable) f2).alias == null){
@@ -617,7 +617,7 @@ public class Check_status {
 					((Variable) f2).alias_refined = this.ctx.mkOr(((Variable) f2).alias_refined, pathcondition);
 				}
 			}else{//篩型の安全を保証できないような大入
-				throw new Exception("can not alias with refined array");
+				throw new Exception("cannot alias with refined array");
 			}	
 		}else{ 
 			if(f2!=null && f2.dims>0 && f2.dims!=f2_indexs.size() && f2 instanceof Variable && !(f1 != null && f1.new_array)){//ローカル変数

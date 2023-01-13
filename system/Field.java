@@ -319,7 +319,7 @@ public class Field {
 				if(rt!=null){
 					rt.add_refinement_constraint(cs, this, ex, class_Expr, add_once);
 				}else{
-	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	                throw new Exception("cannot find refinement type " + this.refinement_type_clause.ident);
 	            }
 			}
 		}
@@ -363,7 +363,7 @@ public class Field {
 				if(rt!=null){
 					rt.assert_refinement(cs, this, ex, class_Expr);
 				}else{
-	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	                throw new Exception("cannot find refinement type " + this.refinement_type_clause.ident);
 	            }
 			}
 		}
@@ -399,7 +399,7 @@ public class Field {
 				if(rt!=null){
 					have = have || rt.have_index_access(cs);
 				}else{
-	                throw new Exception("can't find refinement type " + this.refinement_type_clause.ident);
+	                throw new Exception("cannot find refinement type " + this.refinement_type_clause.ident);
 	            }
 			}
 			for(Model_Field mf : this.model_fields){

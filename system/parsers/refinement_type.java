@@ -121,7 +121,7 @@ public class refinement_type implements Parser<String>{
 			if(rt!=null){
 				rt.assert_refinement(cs, refined_Field, refined_Expr, class_Expr);
 			}else{
-				throw new Exception("can't find refinement type " + type.type);
+				throw new Exception("cannot find refinement type " + type.type);
 			}
 		}
 		
@@ -206,7 +206,7 @@ public class refinement_type implements Parser<String>{
 			if(rt!=null){
 				rt.add_refinement_constraint(cs, refined_Field, refined_Expr, class_Expr, add_once);
 			}else{
-				throw new Exception("can't find refinement type " + type.type);
+				throw new Exception("cannot find refinement type " + type.type);
 			}
 		}
 		
@@ -249,7 +249,7 @@ public class refinement_type implements Parser<String>{
 			if(rt!=null){
 				return rt.base_type(cu);
 			}else{
-				throw new Exception("can't find base type " + type.type);
+				throw new Exception("cannot find base type " + type.type);
 			}
 		}
 	}

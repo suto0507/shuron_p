@@ -326,6 +326,8 @@ public class Check_status {
             System.out.println(model.toString());
             throw new Exception("!invalid assert!");
 
+        }else if(solver.check() == Status.UNKNOWN){
+        	throw new Exception("Time Out");
         }else{
         	System.out.println("this assert is correct");
         }

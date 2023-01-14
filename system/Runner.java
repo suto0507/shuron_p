@@ -20,6 +20,8 @@ public class Runner {
 				option.refinement_deep_limmit = Integer.parseInt(args[++i]);
 			}else if(args[i].equals("-field_limmit")){
 				option.invariant_refinement_type_deep_limmit = Integer.parseInt(args[++i]);
+			}else if(args[i].equals("-timeout")){
+				option.timeout = Integer.parseInt(args[++i]);
 			}else{
 				paths.add(Paths.get(args[i]));
 			}

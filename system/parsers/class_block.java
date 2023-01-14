@@ -4,11 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.microsoft.z3.ArrayExpr;
-import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Context;
-import com.microsoft.z3.Expr;
-import com.microsoft.z3.IntExpr;
+import com.microsoft.z3.*;
 
 import system.Check_return;
 import system.Check_status;
@@ -107,6 +103,10 @@ public class class_block implements Parser<String>{
 				Check_status cs = new Check_status(cu);
 				cs.refinement_deep_limmit = option.refinement_deep_limmit;
 				cs.invariant_refinement_type_deep_limmit = option.invariant_refinement_type_deep_limmit;
+				if(option.timeout >= 0){
+					Global.setParameter("timeout", Integer.toString(option.timeout));
+				}
+				
 				
 				modifiers m = new modifiers();
 				m.is_final = true;

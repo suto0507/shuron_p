@@ -8,6 +8,7 @@ public class Summery {
 	public Path file;
 	public List<String> valids;
 	public List<String> invalids;
+	public List<String> timeouts;
 	public List<String> invalid_classes;
 	public List<String> parse_faileds;
 	public List<String> preprocessing_faileds;
@@ -15,6 +16,7 @@ public class Summery {
 	Summery(){
 		valids = new ArrayList<String>();
 		invalids = new ArrayList<String>();
+		timeouts = new ArrayList<String>();
 		invalid_classes = new ArrayList<String>();
 		parse_faileds = new ArrayList<String>();
 		preprocessing_faileds = new ArrayList<String>();
@@ -43,6 +45,11 @@ public class Summery {
 			System.out.println(" - " + invalid);
 		}
 		
+		System.out.println("time out method list");
+		for(String timeout : timeouts){
+			System.out.println(" - " + timeout);
+		}
+		
 		System.out.println("invalid class list");
 		for(String invalid : invalid_classes){
 			System.out.println(" - " + invalid);
@@ -50,7 +57,7 @@ public class Summery {
 		
 		System.out.println("number of preprocessing fail " + preprocessing_faileds.size());
 		System.out.println("number of parse fail " + parse_faileds.size());
-		System.out.println("number of valid methods id " + valids.size() + "/" + (valids.size() + invalids.size()));
+		System.out.println("number of valid methods id " + valids.size() + "/" + (valids.size() + invalids.size() + timeouts.size()));
 		
 	}
 }

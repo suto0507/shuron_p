@@ -267,9 +267,14 @@ public class method_decl implements Parser<String>{
 			System.out.println("method \"" + this.ident + "\" is valid\n\n");
 			summery.valids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + this.file_path);
 		}catch(Exception e){
-			System.out.println(e);
-			System.out.println("!!!!!!!!!! method \"" + this.ident + "\" is invalid !!!!!!!!!!\n\n");
-			summery.invalids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + this.file_path);
+			if(e.getMessage().equals("Time Out")){
+	        	System.out.println("!!!!!!!!!method \"" + this.ident + "\" : Time Out!!!!!!!!!!!!!!!!!");
+	        	summery.timeouts.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + this.file_path);
+			}else{
+				System.out.println(e);
+				System.out.println("!!!!!!!!!! method \"" + this.ident + "\" is invalid !!!!!!!!!!\n\n");
+				summery.invalids.add("" + this.ident + "(class : " + this.class_type_name + ")" + " " + this.file_path);
+			}
 		}
 	}
 	

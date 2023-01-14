@@ -15,7 +15,6 @@ public class Dummy_Field extends Field {
 		this.type = type;
 		this.expr = expr;
 		dims = 0;
-		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>>();
 		this.model_fields = new ArrayList<Model_Field>();
 	}
 	

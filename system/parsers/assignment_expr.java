@@ -55,24 +55,7 @@ public class assignment_expr implements Parser<String>{
 		if(this.postfix_expr != null){
 			assign_cr = this.postfix_expr.check_assign(cs);
 			//代入していいかどうかの検証
-			if(!(assign_cr.field instanceof Variable)){//フィールドかどうか？
-				//assignしていいか
-				
-				BoolExpr ex;
-				
-				
-				ex = assign_cr.field.assign_index_expr(assign_cr.class_expr, assign_cr.indexs, cs);
-				
-				
-				//何でも代入していい
-				ex = cs.ctx.mkOr(ex, cs.assinable_cnst_all);
-				
-				//コンストラクタ
-				if(!(cs.in_constructor && cs.this_field.equals(assign_cr.class_expr))){
-					System.out.println("check assign");
-					cs.assert_constraint(ex);
-				}
-				
+			if(!(assign_cr.field instanceof Variable) && assign_cr.indexs.size() == 0){//フィールドへの代入できるかの検証を行う
 				//finalかどうか
 				if(assign_cr.field.modifiers!=null && assign_cr.field.modifiers.is_final){
 					if(cs.in_constructor && cs.this_field.equals(assign_cr.class_expr) && assign_cr.field.constructor_decl_field && assign_cr.field.final_initialized==false){
@@ -81,6 +64,34 @@ public class assignment_expr implements Parser<String>{
 						throw new Exception("Cannot be assigned to " + assign_cr.field.field_name);
 					}
 				}
+				
+				//assignしていいか
+				BoolExpr assignable_condition = cs.method_assign.assign_condition(assign_cr.field, assign_cr.class_expr, cs);
+				
+				//何でも代入していい
+				//作られたインスタンスのフィールドにも代入していい
+				ArrayExpr alloc = cs.ctx.mkArrayConst("alloc", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+				assignable_condition = cs.ctx.mkOr(assignable_condition, cs.ctx.mkGe(cs.ctx.mkSelect(alloc, assign_cr.class_expr), cs.ctx.mkInt(0)), cs.method_assign.all_assign_condition);
+				
+				
+				System.out.println("check assign");
+				cs.assert_constraint(assignable_condition);
+				
+				
+			}else if(assign_cr.indexs.size() > 0){//配列の要素への代入
+				//assignしていいか
+				Expr array_ref = assign_cr.field.get_Expr_with_indexs(assign_cr.class_expr, new ArrayList<IntExpr>(assign_cr.indexs.subList(0, assign_cr.indexs.size()-1)), cs);
+				IntExpr index = assign_cr.indexs.get(assign_cr.indexs.size()-1);
+				BoolExpr assignable_condition = cs.method_assign.assign_condition(array_ref, index, cs);
+				
+				//何でも代入していい
+				//作られたインスタンスのフィールドにも代入していい
+				ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
+				assignable_condition = cs.ctx.mkOr(assignable_condition, cs.ctx.mkGe(cs.ctx.mkSelect(alloc, array_ref), cs.ctx.mkInt(0)), cs.method_assign.all_assign_condition);
+				
+				
+				System.out.println("check assign");
+				cs.assert_constraint(assignable_condition);
 			}
 			
 			//左辺のExpr
@@ -238,18 +249,14 @@ public class assignment_expr implements Parser<String>{
 			for(F_Assign f_i : assigned_fields.fst){
 				if(f_i.field.equals(cr_l.field, cs) ){//見つかったら追加する
 					find_field = true;
-					ArrayList<Pair<Expr,List<IntExpr>>> indexs =  new ArrayList<Pair<Expr,List<IntExpr>>>();
-					indexs.add(new Pair(cr_l.class_expr, cr_l.indexs));
-					f_i.cnst_array.add(new Pair<BoolExpr,List<Pair<Expr,List<IntExpr>>>>(cs.get_pathcondition(), indexs));
+					f_i.cnst_array.add(new Pair<BoolExpr,Pair<Expr,List<IntExpr>>>(cs.get_pathcondition(), new Pair(cr_l.class_expr, cr_l.indexs)));
 					break;
 				}
 			}
 			//見つからなかったら新しくフィールドごと追加する
 			if(!find_field){
-				List<Pair<BoolExpr,List<Pair<Expr,List<IntExpr>>>>> b_is = new ArrayList<Pair<BoolExpr,List<Pair<Expr,List<IntExpr>>>>>();
-				ArrayList<Pair<Expr,List<IntExpr>>> indexs = new ArrayList<Pair<Expr,List<IntExpr>>>();
-				indexs.add(new Pair(cr_l.class_expr, cr_l.indexs));
-				b_is.add(new Pair(cs.get_pathcondition(), indexs));
+				List<Pair<BoolExpr,Pair<Expr,List<IntExpr>>>> b_is = new ArrayList<Pair<BoolExpr,Pair<Expr,List<IntExpr>>>>();
+				b_is.add(new Pair(cs.get_pathcondition(), new Pair(cr_l.class_expr, cr_l.indexs)));
 				assigned_fields.fst.add(new F_Assign(cr_l.field, b_is));
 			}
 			

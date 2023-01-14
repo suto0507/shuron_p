@@ -46,9 +46,6 @@ public class Check_status {
 	public boolean after_return;
 	public Check_status this_old_status; // this_old_statusのthis_old_statusにはこのインスタンスが入る
 	
-	//assignable
-	public BoolExpr assinable_cnst_all;//フィールドに代入できる条件
-	
 	//JML節の中の可視性の確認
 	public boolean ban_private_visibility;
 	public boolean ban_default_visibility;
@@ -89,6 +86,8 @@ public class Check_status {
 	public ArrayList<method_decl> used_methods;//メソッドの事前条件、事後条件にそのメソッド自身を書いた場合、制約のないただの値として返される。
 	
 	public String can_use_type_in_invariant;//invarinatが宣言されたクラス名。このクラスで宣言されたフィールドだけ使用可能
+	
+	public Method_Assign method_assign;
 	
 	public Check_status(compilation_unit cu){
 		this.ctx = new Context(new HashMap<>());
@@ -383,7 +382,6 @@ public class Check_status {
 		
 		cs.this_old_status = this.this_old_status;
 				
-		cs.assinable_cnst_all = this.assinable_cnst_all;
 		
 		cs.right_side_status = this.right_side_status;
 		
@@ -422,6 +420,8 @@ public class Check_status {
 		cs.this_alias = this.this_alias;
 		
 		cs.used_methods = this.used_methods;
+		
+		cs.method_assign = this.method_assign;
 		
 		return cs;
 	}

@@ -9,9 +9,12 @@ import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
+import system.Case_Assign;
+import system.Check_return;
 import system.Check_status;
 import system.Field;
 import system.Helper_assigned_field;
+import system.Method_Assign;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -199,18 +202,22 @@ public class method_decl implements Parser<String>{
 				if(this.modifiers.is_private==false){
 					cs.ban_private_visibility = true;
 				}
-				Pair<List<F_Assign>, BoolExpr> assign_cnsts = this.method_specification.assignables(cs);
-				//各フィールドの代入条件を各フィールドに持たせる
-				for(F_Assign fa : assign_cnsts.fst){
-					fa.field.assinable_cnst_indexs.addAll(fa.cnst_array);
-				}
-				//どのフィールドにも代入できる条件
-				cs.assinable_cnst_all = assign_cnsts.snd;
-				
-				
+				cs.method_assign = this.method_specification.assignables(cs);
 				cs.ban_private_visibility = false;
 			}else{//何でも代入していい
-				cs.assinable_cnst_all = cs.ctx.mkBool(true);
+				cs.method_assign = new Method_Assign(cs.ctx.mkBool(true));
+			}
+			
+			//コンストラクタでは、自分のフィールドには問答無用で代入できる
+			if(this.type_spec==null){
+				for(Field f : cs.fields){
+					if(f.constructor_decl_field){
+						//代入が制限されているそれぞれの仕様ケースに追加する
+						for(Case_Assign ca : cs.method_assign.case_assigns){
+							ca.field_assigns.add(new Check_return(cs.ctx.mkSelect(f.get_Expr(cs), cs.this_field.get_Expr(cs)), f, new ArrayList<IntExpr>(), cs.this_field.get_Expr(cs), f.type, f.dims));
+						}
+					}
+				}
 			}
 			
 			

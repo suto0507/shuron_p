@@ -34,6 +34,8 @@ public class TestAll_invalid {
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_sub_constructor.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_overload.java"));
 		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_invariant.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_assign_test.java"));
+		paths.add(Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_assign_test2.java"));
 		
 		Summery summery = new Summery();
 		

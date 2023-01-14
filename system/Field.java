@@ -22,8 +22,7 @@ public class Field {
 	public refinement_type_clause refinement_type_clause;
 	public modifiers modifiers;
 	
-	//要素が無かったら、何にも代入できない状態であるべき
-	public List<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>> assinable_cnst_indexs;//配列の要素に代入できる条件
+	
 	
 	public boolean new_array;//newとかで生成された配列　
 	
@@ -56,7 +55,6 @@ public class Field {
 		this.dims = dims;
 		this.refinement_type_clause = refinement_type_clause;
 		this.modifiers = modifiers;
-		this.assinable_cnst_indexs = new ArrayList<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>>();
 		this.class_type_name = class_type_name;
 		this.new_array = false;
 		this.alias_1d_in_helper = alias_1d_in_helper;
@@ -72,7 +70,6 @@ public class Field {
 	public Field clone_e() throws Exception{
 		Field ret = new Field(this.internal_id, this.field_name, this.type, this.dims, this.refinement_type_clause, this.modifiers, class_type_name, alias_1d_in_helper, model_fields);
 		ret.temp_num = this.temp_num;
-		ret.assinable_cnst_indexs = this.assinable_cnst_indexs;
 		
 		ret.final_initialized = final_initialized;
 		ret.constructor_decl_field = this.constructor_decl_field;
@@ -252,36 +249,6 @@ public class Field {
 		for(Model_Field mf : this.model_fields){
 			mf.tmp_plus_with_data_group(class_expr, condition, cs);
 		}
-	}
-	
-	
-	public BoolExpr assign_index_expr(Expr class_expr, List<IntExpr> index_expr, Check_status cs){
-		BoolExpr equal_cnsts = cs.ctx.mkBool(false);
-		BoolExpr not_equal_cnsts = cs.ctx.mkBool(true);
-		for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> assinable_cnst_index :assinable_cnst_indexs){
-			BoolExpr equal = cs.ctx.mkBool(false);
-			for(Pair<Expr, List<IntExpr>> expr_index : assinable_cnst_index.snd){
-				if(expr_index.snd.size()==0 && expr_index.snd.size() == index_expr.size()){
-					equal = cs.ctx.mkOr(equal, cs.ctx.mkEq(expr_index.fst, class_expr));//class_exprと一致するものだけ考える
-				}else if(expr_index.snd.size()>0 && expr_index.snd.size() == index_expr.size()){
-					BoolExpr index_equal = null;
-					for(int i = 0; i<expr_index.snd.size(); i++){
-						if(index_equal == null){
-							index_equal = cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i));
-						}else{
-							index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(index_expr.get(i), expr_index.snd.get(i)));
-						}
-					}
-					index_equal = cs.ctx.mkAnd(index_equal, cs.ctx.mkEq(expr_index.fst, class_expr));//class_exprと一致するものだけ考える
-					equal = cs.ctx.mkOr(equal, index_equal);
-				}
-			}
-			BoolExpr not_equal = cs.ctx.mkNot(equal);
-			equal_cnsts = cs.ctx.mkOr(equal_cnsts, cs.ctx.mkAnd(equal, assinable_cnst_index.fst));
-			not_equal_cnsts = cs.ctx.mkAnd(not_equal_cnsts, cs.ctx.mkImplies(not_equal, cs.ctx.mkNot(assinable_cnst_index.fst)));
-		}
-		
-		return cs.ctx.mkAnd(equal_cnsts, not_equal_cnsts);
 	}
 	
 	

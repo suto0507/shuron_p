@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
@@ -117,6 +118,10 @@ public class class_block implements Parser<String>{
 				cs.instance_expr = this_field.get_Expr(cs);
 				cs.instance_class_name = cd.class_name;
 				
+				//コンストラクタで新しく作ったrefは被らないことを表すための制約
+				ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+				BoolExpr constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, this_field.get_Expr(cs)), cs.ctx.mkInt(0));//thisは0で固定にする
+				cs.add_constraint(constraint);
 				
 				//初期化
 				//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため
@@ -161,12 +166,7 @@ public class class_block implements Parser<String>{
 							}
 						}
 						
-						//コンストラクタでは、自分のフィールドには問答無用で代入できる
-						if(method.type_spec==null){
-							List<Pair<Expr, List<IntExpr>>> indexs = new ArrayList<Pair<Expr, List<IntExpr>>>();
-							indexs.add(new Pair<Expr, List<IntExpr>>(cs.this_field.get_Expr(cs), new ArrayList<IntExpr>()));
-							f.assinable_cnst_indexs.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(cs.ctx.mkBool(true), indexs));
-						}
+						
 						
 						
 						

@@ -10,6 +10,7 @@ import system.Parser;
 import system.Parser_status;
 import system.Source;
 import system.F_Assign;
+import system.Method_Assign;
 
 public class method_specification implements Parser<String> {
 	spec_case_seq spec_case_seq;
@@ -38,7 +39,7 @@ public class method_specification implements Parser<String> {
 		return spec_case_seq.ensures_expr(cs);
 	}
 	
-	public Pair<List<F_Assign>, BoolExpr> assignables(Check_status cs) throws Exception{
+	public Method_Assign assignables(Check_status cs) throws Exception{
 		return spec_case_seq.assignables(cs);
 	}
 }

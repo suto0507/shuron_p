@@ -8,8 +8,8 @@ import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
 public class Case_Assign{
-	BoolExpr pre_condition;//事前条件
-	List<Check_return> field_assigns;//代入を行うフィールド、フィールドを持つインスタンス、インデックス
+	public BoolExpr pre_condition;//事前条件
+	public List<Check_return> field_assigns;//代入を行うフィールド、フィールドを持つインスタンス、インデックス
 	
 	public Case_Assign(BoolExpr pre_condition, List<Check_return> field_assigns){
 		this.pre_condition = pre_condition;

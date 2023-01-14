@@ -13,6 +13,7 @@ import system.Array;
 import system.Check_return;
 import system.Check_status;
 import system.Field;
+import system.Method_Assign;
 import system.Pair;
 import system.Parser;
 import system.Parser_status;
@@ -241,7 +242,7 @@ public class new_expr implements Parser<String>{
 			cs.result = result;
 			
 			//newで新しく作ったrefは被らないことを表すための制約
-			ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+			ArrayExpr alloc = cs.ctx.mkArrayConst("alloc", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
 			BoolExpr constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, result.get_Expr(cs)), cs.ctx.mkInt(cs.Check_status_share.get_tmp_num()));
 			cs.add_constraint(constraint);
 			
@@ -326,83 +327,53 @@ public class new_expr implements Parser<String>{
 				//何もしない
 			}else if(md.method_specification != null){
 				
-				Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
+				Method_Assign method_assign = md.method_specification.assignables(cs);
 				
 				if(md.modifiers.is_helper || md.modifiers.is_no_refinement_type){
-					//helperメソッド、コンストラクタでは、代入前に検証が必要な場合がある
-					for(F_Assign fa : assign_cnsts.fst){
-						for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> b_indexs : fa.cnst_array){
-							for(Pair<Expr, List<IntExpr>> assign_indexs : b_indexs.snd){
-								if(assign_indexs.snd.size() < fa.field.dims){
-									fa.field.assert_all_array_assign_in_helper(0, 1, assign_indexs.fst, b_indexs.fst, new ArrayList<IntExpr>(), cs);
-								}
-							}
-						}
+					//helperメソッド、コンストラクタでは、配列は代入前に検証が必要な場合がある
+					ArrayList<Pair<Check_return, BoolExpr>> array_assigns = method_assign.array_assign(cs);
+					for(Pair<Check_return, BoolExpr> array_assign : array_assigns){
+						array_assign.fst.field.assert_all_array_assign_in_helper(0, 1, array_assign.fst.class_expr, array_assign.snd, new ArrayList<IntExpr>(), cs);
 					}
+					
 					//何でも代入できる場合
-					cs.this_field.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, assign_cnsts.snd, new ArrayList<IntExpr>(), cs);
+					cs.this_field.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, method_assign.all_assign_condition, new ArrayList<IntExpr>(), cs);
 					
-					for(Variable variable : cs.called_method_args){//引数
-						variable.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, assign_cnsts.snd, new ArrayList<IntExpr>(), cs);
+					for(Variable variable : cs.called_method_args){//引数 ちょっと冗長な処理
+						variable.assert_all_array_assign_in_helper(0, cs.invariant_refinement_type_deep_limmit+1, null, method_assign.all_assign_condition, new ArrayList<IntExpr>(), cs);
 					}
 				}
 				
-				for(F_Assign fa : assign_cnsts.fst){
-
-					BoolExpr assign_expr = null;
-					
-					//引数のフィールドに代入する場合には、紐づけられたフィールドに代入する
-					if(fa.field instanceof Variable && ((Variable)fa.field).arg_field!=null && !((fa.field.type.equals("int") || fa.field.type.equals("boolean")) && fa.field.dims==0)){
-						fa.field = ((Variable)fa.field).arg_field;
-					}
-					
-					//配列の要素に代入できる制約
-					if(fa.cnst_array.size()>0){
-						for(int i = 0; i <= fa.field.dims; i++){//各次元に関して
-							List<IntExpr> index_expr = new ArrayList<IntExpr>();
-							for(int j = 0; j < i; j++){
-								index_expr.add(cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.tmp_num));
-							}
-							Expr tmp_class_expr = cs.ctx.mkConst("tmpRef" + cs.Check_status_share.get_tmp_num(), cs.ctx.mkUninterpretedSort("Ref"));
-							BoolExpr call_assign_expr = fa.assign_index_expr(tmp_class_expr, index_expr, cs);
-							BoolExpr field_assign_expr = fa.field.assign_index_expr(tmp_class_expr, index_expr, cs);
-							
-							if(assign_expr == null){
-								assign_expr = cs.ctx.mkImplies(call_assign_expr, field_assign_expr);
-							}else{
-								assign_expr = cs.ctx.mkAnd(assign_expr, cs.ctx.mkImplies(call_assign_expr, field_assign_expr));
-							}
-						}
-					}else{
-						assign_expr = cs.ctx.mkBool(true);
-					}
-					//何でも代入していい
-					assign_expr = cs.ctx.mkOr(assign_expr, cs.assinable_cnst_all);
-					
-					System.out.println("check assign");
-					cs.assert_constraint(assign_expr);
-					
-					//実際に代入する制約を追加する
-					System.out.println("assign " + fa.field.field_name);
-					
-					
-					//代入
-					if(fa.cnst_array.size()>0){
-						fa.assign_fresh_value(cs);
-					}
-					
-					
+				System.out.println("check assign");
+				for(Field f : method_assign.fields){//フィールドへの代入ができるかの検証
+					Expr tmp_class_expr = cs.ctx.mkConst("tmpRef" + cs.Check_status_share.get_tmp_num(), cs.ctx.mkUninterpretedSort("Ref"));
+					BoolExpr assign_condition = method_assign.assign_condition(f, tmp_class_expr, cs);
+					BoolExpr assignable_condition = cs.method_assign.assign_condition(f, tmp_class_expr, cs);
+					alloc = cs.ctx.mkArrayConst("alloc", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+					assignable_condition = cs.ctx.mkOr(assignable_condition, cs.ctx.mkGe(cs.ctx.mkSelect(alloc, tmp_class_expr), cs.ctx.mkInt(0)), cs.method_assign.all_assign_condition);
+					cs.assert_constraint(cs.ctx.mkImplies(assign_condition, assignable_condition));
 				}
+				//配列への代入ができるかの検証
+				IntExpr tmp_index = cs.ctx.mkIntConst("tmpIdex" + cs.Check_status_share.get_tmp_num());
+				Expr tmp_array_ref = cs.ctx.mkConst("tmpArrayRef" + cs.Check_status_share.get_tmp_num(), cs.ctx.mkUninterpretedSort("ArrayRef"));
+				BoolExpr assign_condition = method_assign.assign_condition(tmp_array_ref, tmp_index, cs);
+				BoolExpr assignable_condition = cs.method_assign.assign_condition(tmp_array_ref, tmp_index, cs);
+				alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
+				assignable_condition = cs.ctx.mkOr(assignable_condition, cs.ctx.mkGe(cs.ctx.mkSelect(alloc, tmp_array_ref), cs.ctx.mkInt(0)), cs.method_assign.all_assign_condition);
+				cs.assert_constraint(cs.ctx.mkImplies(assign_condition, assignable_condition));
 				
+				//実際に代入する
+				System.out.println("assign fields");
+				method_assign.assign_all(cs);
 				
 				//assign_cnsts.fstに含まれないものは、assign_cnsts.sndのときに代入を行う
-				cs.assert_constraint(cs.ctx.mkImplies(assign_cnsts.snd, cs.assinable_cnst_all));
+				cs.assert_constraint(cs.ctx.mkImplies(method_assign.all_assign_condition, cs.method_assign.all_assign_condition));
 				for(Field field : cs.fields){
-					cs.add_constraint(cs.ctx.mkImplies(cs.ctx.mkNot(assign_cnsts.snd), cs.ctx.mkEq(field.get_Expr(cs), field.get_Expr_assign(cs))));
-					field.tmp_plus_with_data_group(assign_cnsts.snd, cs);
+					cs.add_constraint(cs.ctx.mkImplies(cs.ctx.mkNot(method_assign.all_assign_condition), cs.ctx.mkEq(field.get_Expr(cs), field.get_Expr_assign(cs))));
+					field.tmp_plus_with_data_group(method_assign.all_assign_condition, cs);
 				}
 				
-				cs.refresh_all_array(assign_cnsts.snd);
+				cs.refresh_all_array(method_assign.all_assign_condition);
 				
 			}else{//assignableを含めた任意の仕様が書かれていない関数
 				if(md.modifiers.is_helper || md.modifiers.is_no_refinement_type){
@@ -538,32 +509,8 @@ public class new_expr implements Parser<String>{
 		if(md.method_specification != null){
 			md.method_specification.requires_expr(cs);//事前条件は作る必要がある	
 			
-			
-			Pair<List<F_Assign>, BoolExpr> assign_cnsts = md.method_specification.assignables(cs);
-			for(F_Assign fa : assign_cnsts.fst){
-				
-				boolean find_field = false;
-				for(F_Assign f_i : assigned_fields.fst){
-					if(f_i.field.equals(fa.field, cs) ){//見つかったら追加する
-						find_field = true;
-						for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> b_i : fa.cnst_array){
-							f_i.cnst_array.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(cs.ctx.mkAnd(cs.get_pathcondition(), b_i.fst), b_i.snd));
-						}
-						break;
-					}
-				}
-				//見つからなかったら新しくフィールドごと追加する
-				if(!find_field){
-					List<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>> b_is = new ArrayList<Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>>();
-					for(Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>> b_i : fa.cnst_array){
-						b_is.add(new Pair<BoolExpr,List<Pair<Expr, List<IntExpr>>>>(cs.ctx.mkAnd(cs.get_pathcondition(), b_i.fst), b_i.snd));
-					}
-					assigned_fields.fst.add(new F_Assign(fa.field, b_is));
-				}
-			}
-			
-			//なんでも代入できる場合
-			assigned_fields.snd = cs.ctx.mkOr(assigned_fields.snd, cs.ctx.mkAnd(cs.get_pathcondition(), assign_cnsts.snd));
+			Method_Assign method_assign = md.method_specification.assignables(cs);
+			method_assign.loop_assign(assigned_fields, cs);
 		}else{
 			//assignableを含めた任意の仕様が書かれていない関数
 			assigned_fields.snd = cs.ctx.mkOr(assigned_fields.snd, cs.get_pathcondition());

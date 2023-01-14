@@ -29,9 +29,9 @@
 ```
 
 ### コマンドの実行例
-- この例では、A.javaとB_valid.javaに関して検証を行う
+- この例では、A.javaとB_valid.javaに関して検証を行う()
 
 - また、オプションとして篩型の制約を追加する深度を設定している。
 ```
-java -jar s_jml.jar C:\...\A.java C:\...\B_valid.java -refinement_type_limmit 20
+java -jar s_jml.jar C:\Users\user\Documents\A.java C:\Users\user\Documents\B_valid.java -refinement_type_limmit 20
 ```

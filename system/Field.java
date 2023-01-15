@@ -119,6 +119,7 @@ public class Field {
 		}else{
 			expr = cs.ctx.mkSelect(this.get_Expr(cs), class_expr);
 		}
+		this.set_ref_info(expr, cs);
 		for(int i = 0; i < indexs.size(); i++){
 			Array array;
 			if(i<this.dims-1){
@@ -185,10 +186,14 @@ public class Field {
 		}else if(this.dims==0){
 			//ƒNƒ‰ƒX
 			String ret = "freshRef" + cs.Check_status_share.get_tmp_num();;
-			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("Ref"));
+			Expr ref =  cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("Ref"));
+			this.set_ref_info(ref, cs);
+			return ref;
 		}else if(this.dims>0){ //”z—ñ
 			String ret = "freshArrayRef" + cs.Check_status_share.get_tmp_num();;
-			return cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"));
+			Expr ref =  cs.ctx.mkConst(ret, cs.ctx.mkUninterpretedSort("ArrayRef"));
+			this.set_ref_info(ref, cs);
+			return ref;
 		}
 		throw new Exception("unexpect variable");
 	}
@@ -696,6 +701,21 @@ public class Field {
 	
 		for(Field f : cd.all_field(cs)){
 			f.assert_all_refinement_type(deep+1, deep_limmit, expr, fresh_indexs, cs);
+		}
+	}
+	
+	//Ref‚âArrayRef‚ÉŒ^‚Ìî•ñ‚ð—^‚¦‚é
+	public void set_ref_info(Expr ref, Check_status cs) throws Exception{
+		if(this.dims > 0){
+			ArrayExpr dim_expr = cs.ctx.mkArrayConst("dim_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
+			cs.add_constraint(cs.ctx.mkEq(cs.ctx.mkSelect(dim_expr, ref), cs.ctx.mkInt(this.dims)));
+			ArrayExpr type_expr = cs.ctx.mkArrayConst("type_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkStringSort());
+			cs.add_constraint(cs.ctx.mkEq(cs.ctx.mkSelect(type_expr, ref), cs.ctx.mkString(this.type)));
+		}else{
+			if(!(this.type.equals("int") || this.type.equals("boolean"))){
+				ArrayExpr type_expr = cs.ctx.mkArrayConst("type_ref", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkStringSort());
+				cs.add_constraint(cs.ctx.mkEq(cs.ctx.mkSelect(type_expr, ref), cs.ctx.mkString(this.type)));
+			}
 		}
 	}
 

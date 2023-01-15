@@ -100,6 +100,7 @@ public class store_ref_expression implements Parser<String>{
 					throw new Exception(cs.this_field.type + " don't have " + this.store_ref_name.ident);
 				}
 			}
+			f.set_ref_info(ex, cs);
 			
 		}
 		//suffix‚É‚Â‚¢‚Ä
@@ -112,6 +113,7 @@ public class store_ref_expression implements Parser<String>{
 						f = searched_field;
 						class_expr = ex;
 						ex = cs.ctx.mkSelect((ArrayExpr)f.get_Expr(cs), ex);
+						f.set_ref_info(ex, cs);
 					}else{
 						throw new Exception(ps.ident + " don't exist");
 					}

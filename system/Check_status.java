@@ -55,6 +55,7 @@ public class Check_status {
 	public int refinement_deep, refinement_deep_limmit;
 	
 	public boolean in_constructor;
+	public boolean in_constructor_precondition;
 	
 	public boolean can_not_use_mutable;//篩型の中のメソッド呼び出し
 	

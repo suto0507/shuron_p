@@ -100,7 +100,7 @@ public class method_decl implements Parser<String>{
 	
 	public void check(Check_status cs, Summery summery){
 		
-		System.out.println("Verify method " + this.ident + "(class : " + this.class_type_name + ")");
+		
 		
 		//初期化
 		cs.md = this;
@@ -177,6 +177,7 @@ public class method_decl implements Parser<String>{
 			
 			}else{//コンストラクタ
 				cs.in_constructor = true;
+				cs.in_constructor_precondition = true;
 			}
 			
 
@@ -193,9 +194,9 @@ public class method_decl implements Parser<String>{
 				
 				cs.ban_private_visibility = false;
 			}
-			
 			cs.used_methods.remove(this);
-		
+
+			cs.in_constructor_precondition = false;
 			
 
 			if(this.method_specification != null){

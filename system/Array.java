@@ -2,6 +2,7 @@ package system;
 
 import java.util.ArrayList;
 
+import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
@@ -24,8 +25,16 @@ public class Array {
 		return new_array;
 	}
 	
-	public Expr index_access_array(Expr ref_expr, IntExpr index, Check_status cs){
-		return cs.ctx.mkSelect(cs.ctx.mkSelect(array, ref_expr), index);
+	public Expr index_access_array(Expr ref_expr, IntExpr index, Check_status cs) throws Exception{
+		Expr ret =  cs.ctx.mkSelect(cs.ctx.mkSelect(array, ref_expr), index);
+		if(ret.getSort().equals(cs.ctx.mkUninterpretedSort("ArrayRef"))){
+			ArrayExpr dim_expr = cs.ctx.mkArrayConst("dim_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkIntSort());
+			cs.add_constraint(cs.ctx.mkEq(cs.ctx.mkSelect(dim_expr, ret), cs.ctx.mkSub(cs.ctx.mkSelect(dim_expr, ref_expr), cs.ctx.mkInt(1))));
+			ArrayExpr type_expr = cs.ctx.mkArrayConst("type_array", cs.ctx.mkUninterpretedSort("ArrayRef"), cs.ctx.mkStringSort());
+			cs.add_constraint(cs.ctx.mkEq(cs.ctx.mkSelect(type_expr, ret), cs.ctx.mkSelect(type_expr, ref_expr)));
+		}
+		
+		return ret;
 	}
 	
 	public Expr get_array(Expr ref_expr, IntExpr index, Check_status cs){

@@ -100,6 +100,9 @@ public class class_block implements Parser<String>{
 		
 		for(method_decl method :method_decls){
 			if(!(method.modifiers != null && method.modifiers.is_model)){//modelメソッドは検証する必要はない
+				
+				System.out.println("Verify method " + method.ident + "(class : " + method.class_type_name + ")");
+				
 				Check_status cs = new Check_status(cu);
 				cs.refinement_deep_limmit = option.refinement_deep_limmit;
 				cs.invariant_refinement_type_deep_limmit = option.invariant_refinement_type_deep_limmit;
@@ -122,6 +125,9 @@ public class class_block implements Parser<String>{
 				ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
 				BoolExpr constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, this_field.get_Expr(cs)), cs.ctx.mkInt(0));//thisは0で固定にする
 				cs.add_constraint(constraint);
+				
+				//型の制約
+				this_field.set_ref_info(cs.instance_expr, cs);
 				
 				//初期化
 				//このクラスが持っているフィールドは予め追加しておく　コンストラクタでの検証のため

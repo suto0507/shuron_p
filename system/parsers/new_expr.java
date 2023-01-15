@@ -47,6 +47,7 @@ public class new_expr implements Parser<String>{
 			ret = new Variable(cs.Check_status_share.get_tmp_num(), "new_" + this.type + "_array_tmp", this.type, this.new_suffix.array_decl.dims, null, new modifiers(), cs.this_field.type, cs.ctx.mkBool(false));
 			ret.temp_num++;
 			ret.new_array = true;
+			ret.set_ref_info(ret.get_Expr(cs), cs);
 			
 
 			List<IntExpr> lengths = this.new_suffix.array_decl.check(cs);
@@ -240,6 +241,7 @@ public class new_expr implements Parser<String>{
 			Variable result = new Variable(cs.Check_status_share.get_tmp_num(), "class_" + this.type + "_constructor_tmp", this.type, 0, null, md.modifiers, this.type, cs.ctx.mkBool(false));
 			result.temp_num++;
 			cs.result = result;
+			result.set_ref_info(result.get_Expr(cs), cs);
 			
 			//new‚ÅV‚µ‚­ì‚Á‚½ref‚Í”í‚ç‚È‚¢‚±‚Æ‚ğ•\‚·‚½‚ß‚Ì§–ñ
 			ArrayExpr alloc = cs.ctx.mkArrayConst("alloc", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());

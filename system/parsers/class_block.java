@@ -122,9 +122,11 @@ public class class_block implements Parser<String>{
 				cs.instance_class_name = cd.class_name;
 				
 				//コンストラクタで新しく作ったrefは被らないことを表すための制約
-				ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
-				BoolExpr constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, this_field.get_Expr(cs)), cs.ctx.mkInt(0));//thisは0で固定にする
-				cs.add_constraint(constraint);
+				if(method.type_spec==null){
+					ArrayExpr alloc = cs.ctx.mkArrayConst("alloc_array", cs.ctx.mkUninterpretedSort("Ref"), cs.ctx.mkIntSort());
+					BoolExpr constraint = cs.ctx.mkEq(cs.ctx.mkSelect(alloc, this_field.get_Expr(cs)), cs.ctx.mkInt(0));//thisは0で固定にする
+					cs.add_constraint(constraint);
+				}
 				
 				//型の制約
 				this_field.set_ref_info(cs.instance_expr, cs);
@@ -171,12 +173,6 @@ public class class_block implements Parser<String>{
 								f.final_initialized = true;
 							}
 						}
-						
-						
-						
-						
-						
-						
 						cs.fields.add(f);
 					}
 					f.constructor_decl_field = true;

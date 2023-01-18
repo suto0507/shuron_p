@@ -894,7 +894,7 @@ public class postfix_expr implements Parser<String>{
 	}
 
 	void add_refinement_constraint(Check_status cs, Field f, Expr class_Expr) throws Exception{
-	    System.out.println(f.field_name + " has refinement type");
+	    //System.out.println(f.field_name + " has refinement type");
     
 	    cs.refinement_deep++;
 	    if(cs.refinement_deep <= cs.refinement_deep_limmit){

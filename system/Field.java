@@ -277,6 +277,7 @@ public class Field {
 		cs.checked_refinement_type_field.add(new Pair(this, class_Expr));
 		
 		if(this.refinement_type_clause!=null){
+			System.out.println(this.field_name + " has refinement type");
 			Expr ex = null;
 			if(this instanceof Variable){
 				ex = get_Expr(cs);
@@ -321,6 +322,7 @@ public class Field {
 		cs.checked_refinement_type_field.add(new Pair(this, class_Expr));
 		
 		if(this.refinement_type_clause!=null){
+			System.out.println("assert refinement type of " + this.field_name);
 			Expr ex = null;
 			if(this instanceof Variable){
 				ex = get_Expr(cs);

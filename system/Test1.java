@@ -85,7 +85,8 @@ public class Test1 {
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\assign_test2.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_assign_test2.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\assign_test3.java");
-		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_jml.java");
+		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\invalid\\invalid_jml.java");
+		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\valid\\constructor_test.java");
 		
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\override_type_example.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\inheritance_1.java");
@@ -114,11 +115,12 @@ public class Test1 {
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\shuron_examples\\benchmark\\Clock\\clock_sjml_refinement_type_no_comment.java");
 		
 
-		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\run_example\\inheritance.java");
+		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\invalid_example.java");
+		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\run_example\\inheritance\\inheritance.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\run_example\\model.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\run_example\\array.java");
 		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\run_example\\method.java");
-		//Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\run_example\\helper.java");
+		Path file = Paths.get("C:\\Users\\suto0\\Documents\\ラボ\\shuron\\testcases\\shuron_examples\\run_example\\helper.java");
 		Summery summery = new Summery();
 		summery.file = file;
 		

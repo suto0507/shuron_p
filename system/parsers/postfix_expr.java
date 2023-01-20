@@ -278,9 +278,13 @@ public class postfix_expr implements Parser<String>{
 			add_refinement_constraint(cs, f, cs.instance_expr);
 		}
 		
-		//コンストラクタの中ではthisは使えない
-		if(cs.in_constructor_precondition && (cs.instance_expr.equals(ex) || cs.instance_expr.equals(class_expr))){
-			throw new Exception("cannot use \"this\" in precondition of constructor");
+		//コンストラクタの中ではthisは使えない メソッドは許す ローカル変数も許さないといけない
+		if(f != null && cs.in_constructor_precondition 
+				&& (cs.this_field.get_Expr(cs).equals(ex) && ident == null  && !(this.primary_suffixs.size() >= 2 && (this.primary_suffixs.get(1).is_method))
+						|| cs.this_field.get_Expr(cs).equals(class_expr) && ident == null && !(f instanceof Variable))){
+			if(!(f.modifiers!=null && f.modifiers.is_final && f.final_initialized)){//初期値が与えられている定数は使ってよい
+				throw new Exception("cannot use field of \"this\" in precondition of constructor");
+			}
 		}
 		
 		

@@ -170,8 +170,9 @@ public class Check_status {
 				class_type = vd.class_type_name;
 			}
 			
-			
-			data_groups.add(search_model_field(gn.ident, class_type, this));
+			Model_Field mf = search_model_field(gn.ident, class_type, this);
+			if(mf == null) throw new Exception(class_type + " don't have " + gn.ident);
+			data_groups.add(mf);
 		}
 		
 		Field f = new Field(this.Check_status_share.get_tmp_num(), ident, vd.variable_decls.type_spec.type.type, vd.variable_decls.type_spec.dims, vd.variable_decls.type_spec.refinement_type_clause, vd.modifiers, vd.class_type_name, cs.ctx.mkBool(true), data_groups);

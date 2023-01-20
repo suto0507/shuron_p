@@ -155,7 +155,9 @@ public class class_block implements Parser<String>{
 							
 							String pre_type = cs.this_field.type;
 							cs.this_field.type = class_type;
-							data_groups.add(cs.search_model_field(gn.ident, cs.this_field.type, cs));
+							Model_Field mf = cs.search_model_field(gn.ident, cs.this_field.type, cs);
+							if(mf == null) throw new Exception(cs.this_field.type + " don't have " + gn.ident);
+							data_groups.add(mf);
 							cs.this_field.type = pre_type;
 						}
 						
